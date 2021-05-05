@@ -1,0 +1,41 @@
+name: Build and test
+
+on:
+  push:
+    branches:
+      - '!main'
+  pull_request:
+
+jobs:
+  build_and_test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name : Checkout Repo
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.102
+
+    - name: Add dotnet-format problem matcher
+      uses: xt0rted/dotnet-format-problem-matcher@v1
+
+    - name: Restore dotnet tools
+      uses: xt0rted/dotnet-tool-restore@v1
+
+    - name: Run dotnet format
+      uses: xt0rted/dotnet-format@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install dependencies
+      run: dotnet restore jobba.sln
+
+    - name: Build
+      run: dotnet build jobba.sln --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal

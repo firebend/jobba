@@ -348,3 +348,12 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# Mac
+.DS_Store
+
+# Rider
+.idea/
+.idea/*
+
+dist/
