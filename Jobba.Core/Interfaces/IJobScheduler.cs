@@ -7,7 +7,7 @@ namespace Jobba.Core.Interfaces
 {
     public interface IJobScheduler
     {
-        Task ScheduleJobAsync<TJob, TJobParams, TJobState>(JobRequest<TJobParams, TJobState> request, CancellationToken cancellationToken);
+        Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> request, CancellationToken cancellationToken);
 
         Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken);
     }

@@ -5,8 +5,8 @@ namespace Jobba.Core.Interfaces
 {
     public interface IJobCancellationTokenStore
     {
-        CancellationTokenSource CreateJobCancellationToken(Guid jobId, CancellationToken cancellationToken);
+        CancellationToken CreateJobCancellationToken(Guid jobId, CancellationToken cancellationToken);
 
-        bool CancelJob(Guid id, CancellationToken cancellationToken);
+        bool CancelJob(Guid id);
     }
 }

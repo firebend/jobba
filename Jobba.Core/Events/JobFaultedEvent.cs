@@ -8,5 +8,15 @@ namespace Jobba.Core.Events
         /// The id of the job that has faulted.
         /// </summary>
         public Guid JobId { get; set; }
+
+        public JobFaultedEvent()
+        {
+
+        }
+
+        public JobFaultedEvent(Guid jobId)
+        {
+            JobId = jobId;
+        }
     }
 }

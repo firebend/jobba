@@ -1,11 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces.Subscribers
 {
     public interface IOnJobFaultedSubscriber
     {
-        Task OnJobFaultedAsync(Guid jobId, CancellationToken cancellationToken);
+        Task OnJobFaultedAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken);
     }
 }

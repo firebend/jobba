@@ -8,5 +8,15 @@ namespace Jobba.Core.Events
         /// The id of the job that was completed.
         /// </summary>
         public Guid JobId { get; set; }
+
+        public JobCompletedEvent()
+        {
+
+        }
+
+        public JobCompletedEvent(Guid jobId)
+        {
+            JobId = jobId;
+        }
     }
 }

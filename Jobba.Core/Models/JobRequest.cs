@@ -28,5 +28,17 @@ namespace Jobba.Core.Models
         /// The type of the job to run
         /// </summary>
         public Type JobType { get; set; }
+
+        /// <summary>
+        /// True if the job is a restart; otherwise, false.
+        /// </summary>
+        public bool IsRestart { get; set; }
+
+        /// <summary>
+        /// The id of the job being restarted.
+        /// </summary>
+        public Guid JobId { get; set; }
+
+        public int NumberOfTries { get; set; } = 1;
     }
 }

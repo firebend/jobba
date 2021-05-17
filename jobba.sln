@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Core", "Jobba.Core\Jobba.Core.csproj", "{35996E87-397F-46F8-A253-A80B7F2F4DCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Tests", "Jobba.Tests\Jobba.Tests.csproj", "{2ECB8185-9260-4251-9971-CE7BB401F45C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,17 @@ Global
 		{35996E87-397F-46F8-A253-A80B7F2F4DCA}.Release|x64.Build.0 = Release|Any CPU
 		{35996E87-397F-46F8-A253-A80B7F2F4DCA}.Release|x86.ActiveCfg = Release|Any CPU
 		{35996E87-397F-46F8-A253-A80B7F2F4DCA}.Release|x86.Build.0 = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|x64.Build.0 = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Debug|x86.Build.0 = Debug|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|x64.ActiveCfg = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|x64.Build.0 = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|x86.ActiveCfg = Release|Any CPU
+		{2ECB8185-9260-4251-9971-CE7BB401F45C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

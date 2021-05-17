@@ -8,5 +8,15 @@ namespace Jobba.Core.Events
         /// The id of the job that was cancelled.
         /// </summary>
         public Guid JobId { get; set; }
+
+        public JobCancelledEvent()
+        {
+
+        }
+
+        public JobCancelledEvent(Guid jobId)
+        {
+            JobId = jobId;
+        }
     }
 }
