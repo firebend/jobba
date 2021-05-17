@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Models
 {
-    public class JobStartContext<TJob, TJobParams, TJobState>
+    public class JobStartContext<TJobParams, TJobState>
     {
         /// <summary>
         /// The parameters to start the job with.

@@ -1,10 +1,8 @@
 using System;
-using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models
 {
-    public class JobRequest<TJob, TJobParams, TJobState>
-        where TJob : IJob
+    public class JobRequest<TJobParams, TJobState>
     {
         /// <summary>
         /// A description of what the job is doing.
@@ -29,6 +27,6 @@ namespace Jobba.Core.Models
         /// <summary>
         /// The type of the job to run
         /// </summary>
-        public Type JobType { get; } = typeof(TJob);
+        public Type JobType { get; set; }
     }
 }
