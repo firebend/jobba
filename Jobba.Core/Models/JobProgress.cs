@@ -7,26 +7,26 @@ namespace Jobba.Core.Models
         /// <summary>
         /// The job's id.
         /// </summary>
-        public Guid JobId {get; set;}
+        public Guid JobId { get; set; }
 
         /// <summary>
         /// A progress update message.
         /// </summary>
-        public string Message {get;set;}
+        public string Message { get; set; }
 
         /// <summary>
         /// The date the progress occurred.
         /// </summary>
-        public DateTimeOffset Date {get;set;}
+        public DateTimeOffset Date { get; set; }
 
         /// <summary>
         /// A custom job state to save progress information with.
         /// </summary>
-        public TJobState JobState {get;set;}
+        public TJobState JobState { get; set; }
 
         /// <summary>
         /// The percentage complete
         /// </summary>
-        public decimal Progress {get;set;}
+        public decimal Progress { get; set; }
     }
 }

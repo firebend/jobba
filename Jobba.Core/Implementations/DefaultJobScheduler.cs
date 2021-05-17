@@ -52,7 +52,10 @@ namespace Jobba.Core.Implementations
 
             var context = new JobStartContext<TJobParams, TJobState>
             {
-                JobId = jobInfo.Id, JobParameters = request.JobParameters, JobState = request.InitialJobState, StartTime = jobInfo.EnqueuedTime
+                JobId = jobInfo.Id,
+                JobParameters = request.JobParameters,
+                JobState = request.InitialJobState,
+                StartTime = jobInfo.EnqueuedTime
             };
 
             var _ = Task.Run(() => job.StartAsync(context, token), token);

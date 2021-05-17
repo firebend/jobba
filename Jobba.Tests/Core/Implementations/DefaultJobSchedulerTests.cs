@@ -11,7 +11,6 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Tests.AutoMoqCustomizations;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -45,7 +44,7 @@ namespace Jobba.Tests.Core.Implementations
 
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.AddJobAsync(request, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobInfo<object, object> {Id = Guid.NewGuid()});
+                .ReturnsAsync(new JobInfo<object, object> { Id = Guid.NewGuid() });
 
             var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
             publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
@@ -62,8 +61,8 @@ namespace Jobba.Tests.Core.Implementations
             jobInfo.Should().NotBeNull();
             publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
             publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<object,object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object,object>>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
+            job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

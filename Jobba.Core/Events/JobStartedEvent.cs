@@ -1,5 +1,4 @@
 using System;
-using Jobba.Core.Models;
 
 namespace Jobba.Core.Events
 {

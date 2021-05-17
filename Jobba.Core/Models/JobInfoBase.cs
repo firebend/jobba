@@ -7,37 +7,37 @@ namespace Jobba.Core.Models
         /// <summary>
         /// The job's id
         /// </summary>
-        public Guid Id {get;set;}
+        public Guid Id { get; set; }
 
         /// <summary>
         /// The type of job that was enqueued
         /// </summary>
-        public string JobType {get; set;}
+        public string JobType { get; set; }
 
         /// <summary>
         /// The job's description
         /// </summary>
-        public string Description {get;set;}
+        public string Description { get; set; }
 
         /// <summary>
         /// The last progress logged for the job.
         /// </summary>
-        public decimal LastProgressPercentage {get;set;}
+        public decimal LastProgressPercentage { get; set; }
 
         /// <summary>
         /// The last date progress was logged for the job.
         /// </summary>
-        public DateTimeOffset LastProgressDate {get;set;}
+        public DateTimeOffset LastProgressDate { get; set; }
 
         /// <summary>
         /// The Job's status
         /// </summary>
-        public JobStatus Status {get;set;}
+        public JobStatus Status { get; set; }
 
         /// <summary>
         /// The time the job was started
         /// </summary>
-        public DateTimeOffset EnqueuedTime {get;set;}
+        public DateTimeOffset EnqueuedTime { get; set; }
 
         /// <summary>
         /// If the job has faulted the reason it did.

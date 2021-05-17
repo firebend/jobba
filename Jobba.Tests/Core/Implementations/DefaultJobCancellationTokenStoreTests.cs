@@ -30,7 +30,6 @@ namespace Jobba.Tests.Core.Implementations
         public void Default_Job_Cancellation_Token_Store_Should_Not_Cancel_When_Job_Id_Does_Not_Exist()
         {
             //arrange
-            var token = new CancellationToken();
             var store = new DefaultJobCancellationTokenStore();
             var jobId = Guid.NewGuid();
 

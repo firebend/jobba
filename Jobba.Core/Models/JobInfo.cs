@@ -6,11 +6,11 @@ namespace Jobba.Core.Models
         /// <summary>
         /// The parameters that were passed to the job.
         /// </summary>
-        public TJobParams JobParameters {get;set;}
+        public TJobParams JobParameters { get; set; }
 
         /// <summary>
         /// The current state of the job.
         /// </summary>
-        public TJobState CurrentState {get;set;}
+        public TJobState CurrentState { get; set; }
     }
 }
