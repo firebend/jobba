@@ -18,6 +18,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
+      <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
     </ItemGroup>
 
 </Project>
