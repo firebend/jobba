@@ -15,7 +15,7 @@ namespace Jobba.Store.Mongo.Interfaces
 
         Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
 
-        Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken = default);
+        Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken);
 
         Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken);
     }

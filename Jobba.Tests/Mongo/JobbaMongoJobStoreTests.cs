@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
@@ -8,6 +10,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
 using Jobba.Store.Mongo.Models;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MongoDB.Driver;
 using Moq;
@@ -23,8 +26,9 @@ namespace Jobba.Tests.Mongo
             public string Fake { get; set; }
         }
 
-        private static IFixture SetUpFixture()
+        private static (IFixture fixture, Mock<IMongoCollection<Foo>> mongoCollection) SetUpFixture(Foo[] foos = null)
         {
+            foos ??= Array.Empty<Foo>();
             var fixture = new Fixture();
 
             var mockCollection = fixture.Freeze<Mock<IMongoCollection<Foo>>>();
@@ -32,6 +36,7 @@ namespace Jobba.Tests.Mongo
             var mockClient = fixture.Freeze<Mock<IMongoClient>>();
             var mockEntityConfiguration = fixture.Freeze<Mock<IJobbaEntityConfigurationProvider<Foo>>>();
             var mockGuidGenerator = fixture.Freeze<Mock<IJobbaGuidGenerator>>();
+            var mockAsyncCursor = new Mock<IAsyncCursor<Foo>>();
 
             mockDatabase.Setup(d => d.GetCollection<Foo>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>())).Returns(mockCollection.Object);
 
@@ -43,16 +48,42 @@ namespace Jobba.Tests.Mongo
             mockGuidGenerator.Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Guid.NewGuid());
 
+            var seq = mockAsyncCursor.SetupSequence(x => x.MoveNext(It.IsAny<CancellationToken>()));
+
+            for (var i = 0; i < foos.Length; i++)
+            {
+                seq.Returns(true);
+            }
+
+            seq.Returns(false);
+
+            var seqAsync = mockAsyncCursor.SetupSequence(x => x.MoveNextAsync(It.IsAny<CancellationToken>()));
+
+            for (var i = 0; i < foos.Length; i++)
+            {
+                seqAsync.ReturnsAsync(true);
+            }
+
+            seqAsync.ReturnsAsync(false);
+
+            mockAsyncCursor.SetupGet(x => x.Current).Returns(foos);
+
+            mockCollection.Setup(x => x.FindAsync(
+                    It.IsAny<FilterDefinition<Foo>>(),
+                    It.IsAny<FindOptions<Foo>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockAsyncCursor.Object);
+
             fixture.Customize(new AutoMoqCustomization());
 
-            return fixture;
+            return (fixture, mockCollection);
         }
 
         [TestMethod]
         public async Task Jobba_Mongo_Job_Store_Should_Add()
         {
             //arrange
-            var fixture = SetUpFixture();
+            var (fixture, _) = SetUpFixture();
             var foo = fixture.Create<Foo>();
 
             var service = fixture.Create<JobbaMongoJobStore<Foo>>();
@@ -69,7 +100,7 @@ namespace Jobba.Tests.Mongo
         public async Task Jobba_Mongo_Job_Store_Should_Add_And_Set_Id()
         {
             //arrange
-            var fixture = SetUpFixture();
+            var (fixture, _) = SetUpFixture();
             var foo = fixture.Create<Foo>();
             foo.Id = Guid.Empty;
 
@@ -81,6 +112,38 @@ namespace Jobba.Tests.Mongo
             //assert
             added.Should().NotBeNull();
             added.Id.Should().NotBeEmpty();
+        }
+
+        [TestMethod]
+        public async Task Jobba_Mongo_Job_Store_Should_Update()
+        {
+            //arrange
+            var id = Guid.NewGuid();
+            var foo = new Foo {Id = id, Fake = "you's real af"};
+            var (fixture, collection) = SetUpFixture(new [] {foo});
+            var patch = new JsonPatchDocument<Foo>();
+            patch.Replace(x => x.Fake, "you's fake af");
+
+            collection.Setup(x => x.FindOneAndReplaceAsync(
+                    It.IsAny<FilterDefinition<Foo>>(),
+                    It.IsAny<Foo>(),
+                    It.IsAny<FindOneAndReplaceOptions<Foo>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FilterDefinition<Foo> _, Foo entity, FindOneAndReplaceOptions<Foo> _, CancellationToken _) =>
+                {
+                    Console.WriteLine("booh");
+                    return entity;
+                });
+
+            var service = fixture.Create<JobbaMongoJobStore<Foo>>();
+
+            //act
+            var updated = await service.UpdateAsync(id, patch, default);
+
+            //assert
+            updated.Should().NotBeNull();
+            updated.Id.Should().NotBeEmpty();
+            updated.Fake.Should().BeEquivalentTo("you's fake af");
         }
     }
 }

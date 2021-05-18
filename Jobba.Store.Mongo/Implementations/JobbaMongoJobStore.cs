@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,6 @@ using Jobba.Store.Mongo.Interfaces;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 
 namespace Jobba.Store.Mongo.Implementations
 {
@@ -26,13 +26,24 @@ namespace Jobba.Store.Mongo.Implementations
             _guidGenerator = guidGenerator;
         }
 
-        public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
-            => RetryErrorAsync(() => GetCollection().AsQueryable().Where(filter).ToListAsync(cancellationToken));
+        protected Task<IAsyncCursor<TEntity>> FilterCollection(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken) =>
+            RetryErrorAsync(() => GetCollection().FindAsync(Builders<TEntity>.Filter.Where(filter), new FindOptions<TEntity>(), cancellationToken));
 
-        public Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
-            => RetryErrorAsync(() => GetCollection().AsQueryable().Where(filter).FirstOrDefaultAsync(cancellationToken));
+        public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+        {
+           var asyncCursor = await FilterCollection(filter, cancellationToken);
+           var list = await asyncCursor.ToListAsync(cancellationToken);
+           return list;
+        }
 
-        public async Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken = default)
+        public async Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+        {
+            var asyncCursor = await FilterCollection(filter, cancellationToken);
+            var entity = await asyncCursor.FirstOrDefaultAsync(cancellationToken);
+            return entity;
+        }
+
+        public async Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken)
         {
             var entity = await GetFirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
