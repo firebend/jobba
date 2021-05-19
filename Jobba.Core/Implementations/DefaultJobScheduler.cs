@@ -40,8 +40,14 @@ namespace Jobba.Core.Implementations
                 jobInfo = await _jobStore.AddJobAsync(request, cancellationToken);
             }
 
-            await _publisher.PublishWatchJobEventAsync(new JobWatchEvent(jobInfo.Id), cancellationToken);
-            var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobInfo.Id, cancellationToken);
+            var jobId = jobInfo.Id;
+
+            await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow,  cancellationToken);
+
+            var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
+
+            var watchEvent = new JobWatchEvent(jobId, typeof(TJobParams).ToString(), typeof(TJobState).ToString());
+            await _publisher.PublishWatchJobEventAsync(watchEvent, request.JobWatchInterval, cancellationToken);
 
             using var scope = _serviceProvider.CreateScope();
 
@@ -58,9 +64,21 @@ namespace Jobba.Core.Implementations
                 StartTime = jobInfo.EnqueuedTime
             };
 
-            var _ = Task.Run(() => job.StartAsync(context, token), token);
+            var _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow,  cancellationToken);
+                    await job.StartAsync(context, token);
+                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    await _jobStore.LogFailureAsync(jobId, ex, cancellationToken);
+                }
+            }, token);
 
-            await _publisher.PublishJobStartedEvent(new JobStartedEvent(jobInfo.Id), token);
+            await _publisher.PublishJobStartedEvent(new JobStartedEvent(jobId), token);
 
             return jobInfo;
         }

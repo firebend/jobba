@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
@@ -129,11 +127,7 @@ namespace Jobba.Tests.Mongo
                     It.IsAny<Foo>(),
                     It.IsAny<FindOneAndReplaceOptions<Foo>>(),
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync((FilterDefinition<Foo> _, Foo entity, FindOneAndReplaceOptions<Foo> _, CancellationToken _) =>
-                {
-                    Console.WriteLine("booh");
-                    return entity;
-                });
+                .ReturnsAsync((FilterDefinition<Foo> _, Foo entity, FindOneAndReplaceOptions<Foo> _, CancellationToken _) => entity);
 
             var service = fixture.Create<JobbaMongoJobStore<Foo>>();
 

@@ -53,5 +53,7 @@ namespace Jobba.Core.Models
         /// How many times the job has already been tried.
         /// </summary>
         public int CurrentNumberOfTries { get; set; }
+
+        public TimeSpan JobWatchInterval { get; set; }
     }
 }
