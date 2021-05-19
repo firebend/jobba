@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.JsonPatch;
 
 namespace Jobba.Store.Mongo.Interfaces
 {
-    public interface IMongoJobStore<TEntity>
+    public interface IMongoJobRepository<TEntity>
         where TEntity : class, IJobbaEntity
     {
         Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);

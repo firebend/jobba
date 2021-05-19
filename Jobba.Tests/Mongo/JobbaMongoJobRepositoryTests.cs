@@ -16,7 +16,7 @@ using Moq;
 namespace Jobba.Tests.Mongo
 {
     [TestClass]
-    public class JobbaMongoJobStoreTests
+    public class JobbaMongoJobRepositoryTests
     {
         public class Foo : IJobbaEntity
         {
@@ -78,13 +78,13 @@ namespace Jobba.Tests.Mongo
         }
 
         [TestMethod]
-        public async Task Jobba_Mongo_Job_Store_Should_Add()
+        public async Task Jobba_Mongo_Job_Repository_Should_Add()
         {
             //arrange
             var (fixture, _) = SetUpFixture();
             var foo = fixture.Create<Foo>();
 
-            var service = fixture.Create<JobbaMongoJobStore<Foo>>();
+            var service = fixture.Create<JobbaMongoJobRepository<Foo>>();
 
             //act
             var added = await service.AddAsync(foo, default);
@@ -95,14 +95,14 @@ namespace Jobba.Tests.Mongo
         }
 
         [TestMethod]
-        public async Task Jobba_Mongo_Job_Store_Should_Add_And_Set_Id()
+        public async Task Jobba_Mongo_Job_Repository_Should_Add_And_Set_Id()
         {
             //arrange
             var (fixture, _) = SetUpFixture();
             var foo = fixture.Create<Foo>();
             foo.Id = Guid.Empty;
 
-            var service = fixture.Create<JobbaMongoJobStore<Foo>>();
+            var service = fixture.Create<JobbaMongoJobRepository<Foo>>();
 
             //act
             var added = await service.AddAsync(foo, default);
@@ -113,7 +113,7 @@ namespace Jobba.Tests.Mongo
         }
 
         [TestMethod]
-        public async Task Jobba_Mongo_Job_Store_Should_Update()
+        public async Task Jobba_Mongo_Job_Repository_Should_Update()
         {
             //arrange
             var id = Guid.NewGuid();
@@ -129,7 +129,7 @@ namespace Jobba.Tests.Mongo
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync((FilterDefinition<Foo> _, Foo entity, FindOneAndReplaceOptions<Foo> _, CancellationToken _) => entity);
 
-            var service = fixture.Create<JobbaMongoJobStore<Foo>>();
+            var service = fixture.Create<JobbaMongoJobRepository<Foo>>();
 
             //act
             var updated = await service.UpdateAsync(id, patch, default);

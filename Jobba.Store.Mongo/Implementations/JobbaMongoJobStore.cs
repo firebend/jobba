@@ -1,75 +1,83 @@
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Interfaces;
-using Jobba.Store.Mongo.Abstractions;
+using Jobba.Core.Interfaces.Repositories;
+using Jobba.Core.Models;
+using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Interfaces;
 using Microsoft.AspNetCore.JsonPatch;
-using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    public class JobbaMongoJobStore<TEntity> : JobbaMongoEntityClient<TEntity>,  IMongoJobStore<TEntity>
-        where TEntity : class, IJobbaEntity
+    //todo: write test
+    public class JobbaMongoJobStore : IJobStore
     {
-        private readonly IJobbaGuidGenerator _guidGenerator;
+        private readonly IMongoJobRepository<JobEntity> _jobRepository;
 
-        public JobbaMongoJobStore(IMongoClient client,
-            ILogger<JobbaMongoJobStore<TEntity>> logger,
-            IJobbaEntityConfigurationProvider<TEntity> entityConfigurationProvider,
-            IJobbaGuidGenerator guidGenerator) : base(client, logger, entityConfigurationProvider)
+        public JobbaMongoJobStore(IMongoJobRepository<JobEntity> jobRepository)
         {
-            _guidGenerator = guidGenerator;
+            _jobRepository = jobRepository;
         }
 
-        protected Task<IAsyncCursor<TEntity>> FilterCollection(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken) =>
-            RetryErrorAsync(() => GetCollection().FindAsync(Builders<TEntity>.Filter.Where(filter), new FindOptions<TEntity>(), cancellationToken));
-
-        public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+        public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
+            CancellationToken cancellationToken)
         {
-           var asyncCursor = await FilterCollection(filter, cancellationToken);
-           var list = await asyncCursor.ToListAsync(cancellationToken);
-           return list;
+            var added = await _jobRepository.AddAsync(JobEntity.FromRequest(jobRequest), cancellationToken);
+            var info = added.ToJobInfo<TJobParams, TJobState>();
+            return info;
         }
 
-        public async Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+        public async Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
         {
-            var asyncCursor = await FilterCollection(filter, cancellationToken);
-            var entity = await asyncCursor.FirstOrDefaultAsync(cancellationToken);
-            return entity;
+            var patch = new JsonPatchDocument<JobEntity>();
+            patch.Replace(x => x.CurrentNumberOfTries, attempts);
+
+            var updated = await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+            var info = updated.ToJobInfo<TJobParams, TJobState>();
+            return info;
         }
 
-        public async Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken)
+        public async Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken)
         {
-            var entity = await GetFirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            var patch = new JsonPatchDocument<JobEntity>();
+            patch.Replace(x => x.Status, status);
+            patch.Replace(x => x.LastProgressDate, date);
 
-            if (entity == null)
-            {
-                return null;
-            }
-
-            patch.ApplyTo(entity);
-
-            var options = new FindOneAndReplaceOptions<TEntity> {ReturnDocument = ReturnDocument.After, IsUpsert = true};
-            var filterDef = Builders<TEntity>.Filter.Where(x => x.Id == id);
-
-            var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));
-            return result;
+            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
         }
 
-        public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
+        public async Task LogProgressAsync<TJobParams, TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
         {
-            if (entity.Id == Guid.Empty)
-            {
-                entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-            }
+            var jobId = jobProgress.JobId;
+            var patch = new JsonPatchDocument<JobEntity>();
+            var progressEntity = JobProgressEntity.FromJobProgress(jobProgress);
+            patch.Add(x => x.Progresses, progressEntity);
 
-            await RetryErrorAsync(() => GetCollection().InsertOneAsync(entity, new InsertOneOptions(), cancellationToken));
+            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+        }
 
-            return entity;
+        public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
+        {
+            var patch = new JsonPatchDocument<JobEntity>();
+            patch.Replace(x => x.FaultedReason, ex.ToString());
+
+            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+        }
+
+        public async Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
+        {
+            var entity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+
+            var jobInfoBase = entity?.ToJobInfoBase();
+            return jobInfoBase;
+        }
+
+        public async Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
+        {
+            var entity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+
+            var jobInfo = entity?.ToJobInfo<TJobParams, TJobState>();
+            return jobInfo;
         }
     }
 }

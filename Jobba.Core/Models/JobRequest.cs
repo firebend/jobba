@@ -39,6 +39,14 @@ namespace Jobba.Core.Models
         /// </summary>
         public Guid JobId { get; set; }
 
+        /// <summary>
+        /// The number of tries the job has be enqueued.
+        /// </summary>
         public int NumberOfTries { get; set; } = 1;
+
+        /// <summary>
+        /// The maximum number of times the job can be tried.
+        /// </summary>
+        public int MaxNumberOfTries { get; set; } = 1;
     }
 }

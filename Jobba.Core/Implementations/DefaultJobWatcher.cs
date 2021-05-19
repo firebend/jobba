@@ -8,7 +8,6 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations
 {
-    //todo: tests
     //notes: this class is better if its a generic so we can start the request of the job and pull back the parameters and states as typed objects
     // if we register this watcher when we add a job, we can resolve it from the IoC container in our JobWatchEventSubscriber
     // in the subscriber the event will have the types as strings
