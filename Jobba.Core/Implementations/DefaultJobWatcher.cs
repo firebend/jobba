@@ -55,7 +55,7 @@ namespace Jobba.Core.Implementations
                         JobId = job.Id,
                         JobType = Type.GetType(job.JobType),
                         JobWatchInterval = job.JobWatchInterval,
-                        NumberOfTries = job.CurrentNumberOfTries++,
+                        NumberOfTries = job.CurrentNumberOfTries + 1,
                         JobParameters = job.JobParameters,
                         InitialJobState = job.CurrentState
                     };
