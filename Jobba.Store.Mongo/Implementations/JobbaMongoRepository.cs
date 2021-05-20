@@ -12,7 +12,7 @@ using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>,  IJobbaMongoRepository<TEntity>
+    public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJobbaMongoRepository<TEntity>
         where TEntity : class, IJobbaEntity
     {
         private readonly IJobbaGuidGenerator _guidGenerator;
@@ -30,9 +30,9 @@ namespace Jobba.Store.Mongo.Implementations
 
         public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
         {
-           var asyncCursor = await FilterCollection(filter, cancellationToken);
-           var list = await asyncCursor.ToListAsync(cancellationToken);
-           return list;
+            var asyncCursor = await FilterCollection(filter, cancellationToken);
+            var list = await asyncCursor.ToListAsync(cancellationToken);
+            return list;
         }
 
         public async Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ namespace Jobba.Store.Mongo.Implementations
 
             patch.ApplyTo(entity);
 
-            var options = new FindOneAndReplaceOptions<TEntity> {ReturnDocument = ReturnDocument.After, IsUpsert = true};
+            var options = new FindOneAndReplaceOptions<TEntity> { ReturnDocument = ReturnDocument.After, IsUpsert = true };
             var filterDef = Builders<TEntity>.Filter.Where(x => x.Id == id);
 
             var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));

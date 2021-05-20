@@ -111,7 +111,7 @@ namespace Jobba.Tests.Mongo
             repo.Verify(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
                 It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" &&  (JobStatus)operation.value == JobStatus.Completed) &&
+                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Completed) &&
                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.LastProgressDate)}" && (DateTimeOffset)operation.value == now)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -141,8 +141,8 @@ namespace Jobba.Tests.Mongo
             repo.Verify(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
                 It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" &&  (JobStatus)operation.value == JobStatus.Faulted) &&
-                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.FaultedReason)}" && (string) operation.value == ex.ToString())),
+                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Faulted) &&
+                    patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.FaultedReason)}" && (string)operation.value == ex.ToString())),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -160,7 +160,7 @@ namespace Jobba.Tests.Mongo
 
             var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.GetFirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<JobEntity,bool>>>(), It.IsAny<CancellationToken>()))
+                    It.IsAny<Expression<Func<JobEntity, bool>>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jobEntity);
 
             var service = fixture.Create<JobbaMongoJobStore>();

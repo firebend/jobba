@@ -42,7 +42,7 @@ namespace Jobba.Core.Implementations
 
             var jobId = jobInfo.Id;
 
-            await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow,  cancellationToken);
+            await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
 
             var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
 
@@ -68,7 +68,7 @@ namespace Jobba.Core.Implementations
             {
                 try
                 {
-                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow,  cancellationToken);
+                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, cancellationToken);
                     await job.StartAsync(context, token);
                     await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
                 }

@@ -32,7 +32,7 @@ namespace Jobba.Tests.Core.Implementations
             job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> {{typeof(IJob<object, object>), job.Object}}));
+            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
 
             fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
@@ -43,7 +43,7 @@ namespace Jobba.Tests.Core.Implementations
 
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.AddJobAsync(request, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobInfo<object, object> {Id = jobId});
+                .ReturnsAsync(new JobInfo<object, object> { Id = jobId });
 
             store.Setup(x => x.SetJobStatusAsync(It.IsAny<Guid>(), It.IsAny<JobStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
@@ -68,9 +68,9 @@ namespace Jobba.Tests.Core.Implementations
             publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
             store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
             job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -85,7 +85,7 @@ namespace Jobba.Tests.Core.Implementations
             job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> {{typeof(IJob<object, object>), job.Object}}));
+            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
 
             fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
@@ -97,7 +97,7 @@ namespace Jobba.Tests.Core.Implementations
 
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobInfo<object, object> {Id = jobId, CurrentNumberOfTries = 2, MaxNumberOfTries = 5});
+                .ReturnsAsync(new JobInfo<object, object> { Id = jobId, CurrentNumberOfTries = 2, MaxNumberOfTries = 5 });
 
             var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
             publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
@@ -119,9 +119,9 @@ namespace Jobba.Tests.Core.Implementations
             publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
             store.Verify(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()), Times.Once);
             job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -136,7 +136,7 @@ namespace Jobba.Tests.Core.Implementations
             job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
                 .Throws(new Exception());
 
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> {{typeof(IJob<object, object>), job.Object}}));
+            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
 
             fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
@@ -148,7 +148,7 @@ namespace Jobba.Tests.Core.Implementations
 
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobInfo<object, object> {Id = jobId, CurrentNumberOfTries = 2, MaxNumberOfTries = 5});
+                .ReturnsAsync(new JobInfo<object, object> { Id = jobId, CurrentNumberOfTries = 2, MaxNumberOfTries = 5 });
 
             store.Setup(x => x.LogFailureAsync(It.IsAny<Guid>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
@@ -173,8 +173,8 @@ namespace Jobba.Tests.Core.Implementations
             publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
             store.Verify(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()), Times.Once);
             job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()) ,Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
             store.Verify(x => x.LogFailureAsync(It.IsAny<Guid>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }

@@ -41,7 +41,7 @@ namespace Jobba.Tests.Mongo
             mockClient.Setup(c => c.GetDatabase(It.IsAny<string>(), It.IsAny<MongoDatabaseSettings>())).Returns(mockDatabase.Object);
 
             mockEntityConfiguration.Setup(x => x.GetConfiguration())
-                .Returns(new JobbaEntityConfiguration {Collection = "fake", Database = "af"});
+                .Returns(new JobbaEntityConfiguration { Collection = "fake", Database = "af" });
 
             mockGuidGenerator.Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Guid.NewGuid());
@@ -117,8 +117,8 @@ namespace Jobba.Tests.Mongo
         {
             //arrange
             var id = Guid.NewGuid();
-            var foo = new Foo {Id = id, Fake = "you's real af"};
-            var (fixture, collection) = SetUpFixture(new [] {foo});
+            var foo = new Foo { Id = id, Fake = "you's real af" };
+            var (fixture, collection) = SetUpFixture(new[] { foo });
             var patch = new JsonPatchDocument<Foo>();
             patch.Replace(x => x.Fake, "you's fake af");
 

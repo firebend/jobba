@@ -86,7 +86,7 @@ namespace Jobba.Core.Models.Entities
             Description = Description,
             Id = Id,
             Status = Status,
-            CurrentState = (TJobState) JobState,
+            CurrentState = (TJobState)JobState,
             EnqueuedTime = EnqueuedTime,
             FaultedReason = FaultedReason,
             JobParameters = (TJobParams)JobParameters,
