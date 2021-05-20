@@ -34,7 +34,7 @@ namespace Jobba.Tests.Mongo
             var jobRequest = fixture.Create<JobRequest<Foo, Foo>>();
             var jobEntity = JobEntity.FromRequest(jobRequest);
 
-            var repo = fixture.Freeze<Mock<IMongoJobRepository<JobEntity>>>();
+            var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jobEntity);
 
@@ -63,7 +63,7 @@ namespace Jobba.Tests.Mongo
             var fixture = new Fixture();
             fixture.Customize(new AutoMoqCustomization());
 
-            var repo = fixture.Freeze<Mock<IMongoJobRepository<JobEntity>>>();
+            var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.UpdateAsync(
                     It.IsAny<Guid>(),
                     It.IsAny<JsonPatchDocument<JobEntity>>(),
@@ -93,7 +93,7 @@ namespace Jobba.Tests.Mongo
             var fixture = new Fixture();
             fixture.Customize(new AutoMoqCustomization());
 
-            var repo = fixture.Freeze<Mock<IMongoJobRepository<JobEntity>>>();
+            var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.UpdateAsync(
                     It.IsAny<Guid>(),
                     It.IsAny<JsonPatchDocument<JobEntity>>(),
@@ -123,7 +123,7 @@ namespace Jobba.Tests.Mongo
             var fixture = new Fixture();
             fixture.Customize(new AutoMoqCustomization());
 
-            var repo = fixture.Freeze<Mock<IMongoJobRepository<JobEntity>>>();
+            var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.UpdateAsync(
                     It.IsAny<Guid>(),
                     It.IsAny<JsonPatchDocument<JobEntity>>(),
@@ -158,7 +158,7 @@ namespace Jobba.Tests.Mongo
             var jobEntity = fixture.Create<JobEntity>();
             jobEntity.Id = jobId;
 
-            var repo = fixture.Freeze<Mock<IMongoJobRepository<JobEntity>>>();
+            var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
             repo.Setup(x => x.GetFirstOrDefaultAsync(
                     It.IsAny<Expression<Func<JobEntity,bool>>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jobEntity);

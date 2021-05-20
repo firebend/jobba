@@ -9,20 +9,20 @@ using Microsoft.AspNetCore.JsonPatch;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    //todo: write test
+    //todo: break out progress into its own repo and mongo collection
     public class JobbaMongoJobStore : IJobStore
     {
-        private readonly IMongoJobRepository<JobEntity> _jobRepository;
+        private readonly IJobbaMongoRepository<JobEntity> _repository;
 
-        public JobbaMongoJobStore(IMongoJobRepository<JobEntity> jobRepository)
+        public JobbaMongoJobStore(IJobbaMongoRepository<JobEntity> repository)
         {
-            _jobRepository = jobRepository;
+            _repository = repository;
         }
 
         public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
             CancellationToken cancellationToken)
         {
-            var added = await _jobRepository.AddAsync(JobEntity.FromRequest(jobRequest), cancellationToken);
+            var added = await _repository.AddAsync(JobEntity.FromRequest(jobRequest), cancellationToken);
             var info = added.ToJobInfo<TJobParams, TJobState>();
             return info;
         }
@@ -32,7 +32,7 @@ namespace Jobba.Store.Mongo.Implementations
             var patch = new JsonPatchDocument<JobEntity>();
             patch.Replace(x => x.CurrentNumberOfTries, attempts);
 
-            var updated = await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+            var updated = await _repository.UpdateAsync(jobId, patch, cancellationToken);
             var info = updated.ToJobInfo<TJobParams, TJobState>();
             return info;
         }
@@ -43,7 +43,7 @@ namespace Jobba.Store.Mongo.Implementations
             patch.Replace(x => x.Status, status);
             patch.Replace(x => x.LastProgressDate, date);
 
-            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+            await _repository.UpdateAsync(jobId, patch, cancellationToken);
         }
 
         public async Task LogProgressAsync<TJobParams, TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ namespace Jobba.Store.Mongo.Implementations
             var progressEntity = JobProgressEntity.FromJobProgress(jobProgress);
             patch.Add(x => x.Progresses, progressEntity);
 
-            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+            await _repository.UpdateAsync(jobId, patch, cancellationToken);
         }
 
         public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
@@ -62,12 +62,12 @@ namespace Jobba.Store.Mongo.Implementations
             patch.Replace(x => x.FaultedReason, ex.ToString());
             patch.Replace(x => x.Status, JobStatus.Faulted);
 
-            await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
+            await _repository.UpdateAsync(jobId, patch, cancellationToken);
         }
 
         public async Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
         {
-            var entity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+            var entity = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
 
             var jobInfoBase = entity?.ToJobInfoBase();
             return jobInfoBase;
@@ -75,7 +75,7 @@ namespace Jobba.Store.Mongo.Implementations
 
         public async Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
         {
-            var entity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+            var entity = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
 
             var jobInfo = entity?.ToJobInfo<TJobParams, TJobState>();
             return jobInfo;

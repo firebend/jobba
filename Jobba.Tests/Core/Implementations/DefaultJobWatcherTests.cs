@@ -150,15 +150,15 @@ namespace Jobba.Tests.Core.Implementations
             mockJobStore.Verify(x => x.GetJobByIdAsync<FooParams, FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
             mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()), Times.Never);
             mockJobScheduler.Verify(x => x.ScheduleJobAsync(
-                It.Is<JobRequest<FooParams,FooState>>(x =>
-                    x.JobId == jobId &&
-                     x.IsRestart &&
-                     x.JobType == typeof(object) &&
-                     x.Description == "Fake" &&
-                     x.JobWatchInterval == TimeSpan.FromSeconds(10) &&
-                     x.NumberOfTries == 2 &&
-                     x.JobParameters.Foo == "fake params" &&
-                     x.InitialJobState.Foo == "fake state"
+                It.Is<JobRequest<FooParams,FooState>>(request =>
+                    request.JobId == jobId &&
+                     request.IsRestart &&
+                     request.JobType == typeof(object) &&
+                     request.Description == "Fake" &&
+                     request.JobWatchInterval == TimeSpan.FromSeconds(10) &&
+                     request.NumberOfTries == 2 &&
+                     request.JobParameters.Foo == "fake params" &&
+                     request.InitialJobState.Foo == "fake state"
                 ),
                 It.IsAny<CancellationToken>()),
                 Times.Once);

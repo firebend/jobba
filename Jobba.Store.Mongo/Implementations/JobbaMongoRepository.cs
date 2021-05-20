@@ -12,13 +12,13 @@ using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    public class JobbaMongoJobRepository<TEntity> : JobbaMongoEntityClient<TEntity>,  IMongoJobRepository<TEntity>
+    public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>,  IJobbaMongoRepository<TEntity>
         where TEntity : class, IJobbaEntity
     {
         private readonly IJobbaGuidGenerator _guidGenerator;
 
-        public JobbaMongoJobRepository(IMongoClient client,
-            ILogger<JobbaMongoJobRepository<TEntity>> logger,
+        public JobbaMongoRepository(IMongoClient client,
+            ILogger<JobbaMongoRepository<TEntity>> logger,
             IJobbaEntityConfigurationProvider<TEntity> entityConfigurationProvider,
             IJobbaGuidGenerator guidGenerator) : base(client, logger, entityConfigurationProvider)
         {
