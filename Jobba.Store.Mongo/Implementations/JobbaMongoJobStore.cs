@@ -60,6 +60,7 @@ namespace Jobba.Store.Mongo.Implementations
         {
             var patch = new JsonPatchDocument<JobEntity>();
             patch.Replace(x => x.FaultedReason, ex.ToString());
+            patch.Replace(x => x.Status, JobStatus.Faulted);
 
             await _jobRepository.UpdateAsync(jobId, patch, cancellationToken);
         }
