@@ -8,10 +8,10 @@ namespace Jobba.Core.Interfaces.Repositories
     public interface IJobStore
     {
         Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, CancellationToken cancellationToken);
-        Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken);
-        Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken);
 
-        Task LogProgressAsync<TJobParams, TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken);
+        Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken);
+
+        Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken);
 
         Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken);
 
