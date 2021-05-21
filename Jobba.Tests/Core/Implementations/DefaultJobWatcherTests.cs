@@ -60,8 +60,8 @@ namespace Jobba.Tests.Core.Implementations
 
             mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.Is<JobWatchEvent>(e =>
                     e.JobId == jobId &&
-                    e.ParamsTypeName == typeof(FooParams).FullName &&
-                    e.StateTypeName == typeof(FooState).FullName),
+                    e.ParamsTypeName == typeof(FooParams).AssemblyQualifiedName &&
+                    e.StateTypeName == typeof(FooState).AssemblyQualifiedName),
                 It.Is<TimeSpan>(t => t == timeSpan),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -116,7 +116,7 @@ namespace Jobba.Tests.Core.Implementations
                     Status = JobStatus.Faulted,
                     CurrentNumberOfTries = 1,
                     MaxNumberOfTries = 3,
-                    JobType = typeof(object).FullName,
+                    JobType = typeof(object).AssemblyQualifiedName,
                     Description = "Fake",
                     CurrentState = new FooState { Foo = "fake state" },
                     JobParameters = new FooParams { Foo = "fake params" }

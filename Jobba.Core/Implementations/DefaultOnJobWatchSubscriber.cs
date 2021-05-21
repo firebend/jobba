@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.Core.Implementations
 {
-    //todo: test
     public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
     {
         private readonly IServiceProvider _serviceProvider;
@@ -22,16 +21,28 @@ namespace Jobba.Core.Implementations
         {
             if (string.IsNullOrWhiteSpace(jobWatchEvent.ParamsTypeName))
             {
-                return;
+                throw new ArgumentException("No job parameters type name provided.", nameof(jobWatchEvent));
             }
 
             if (string.IsNullOrWhiteSpace(jobWatchEvent.StateTypeName))
             {
-                return;
+                throw new ArgumentException("No job state type name provided.", nameof(jobWatchEvent));
             }
 
             var jobParametersType = Type.GetType(jobWatchEvent.ParamsTypeName);
+
+            if (jobParametersType == null)
+            {
+                throw new Exception($"Could not find type for parameters: {jobWatchEvent.ParamsTypeName}");
+            }
+
             var jobStateType = Type.GetType(jobWatchEvent.StateTypeName);
+
+            if (jobStateType == null)
+            {
+                throw new Exception($"Could not find type for state : {jobWatchEvent.StateTypeName}");
+            }
+
             var jobWatcherType = typeof(IJobWatcher<,>).MakeGenericType(jobParametersType, jobStateType);
 
             using var scope = _serviceProvider.CreateScope();
@@ -39,14 +50,14 @@ namespace Jobba.Core.Implementations
 
             if (watcher == null)
             {
-                return;
+                throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
             }
 
             var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync));
 
             if (methodInfo == null)
             {
-                return;
+                throw new Exception("Could not find job watcher watch job method.");
             }
 
             var invokeReturn = methodInfo.Invoke(watcher, new object[] { jobWatchEvent.JobId, cancellationToken });

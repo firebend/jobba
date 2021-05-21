@@ -7,7 +7,6 @@ using Jobba.Core.Interfaces.Subscribers;
 
 namespace Jobba.Core.Implementations
 {
-    //todo: write test
     public class DefaultOnJobCancelSubscriber : IOnJobCancelSubscriber
     {
         private readonly IJobCancellationTokenStore _cancellationTokenStore;
@@ -17,7 +16,7 @@ namespace Jobba.Core.Implementations
             _cancellationTokenStore = cancellationTokenStore;
         }
 
-        public Task<bool> CancelJob(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
+        public Task<bool> CancelJobAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
         {
             if (cancelJobEvent.JobId == Guid.Empty)
             {

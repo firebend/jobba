@@ -38,7 +38,7 @@ namespace Jobba.Core.Implementations
 
             if (job.Status is JobStatus.InProgress or JobStatus.Enqueued)
             {
-                var watchEvent = new JobWatchEvent(job.Id, typeof(TJobParams).FullName, typeof(TJobState).FullName);
+                var watchEvent = new JobWatchEvent(job.Id, typeof(TJobParams).AssemblyQualifiedName, typeof(TJobState).AssemblyQualifiedName);
                 await _publisher.PublishWatchJobEventAsync(watchEvent, job.JobWatchInterval, cancellationToken);
                 return;
             }
