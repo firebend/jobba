@@ -5,6 +5,7 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Interfaces.Repositories
 {
+    //todo: impl
     public interface IJobListStore
     {
         Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken);

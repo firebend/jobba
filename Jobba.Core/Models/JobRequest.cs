@@ -48,5 +48,18 @@ namespace Jobba.Core.Models
         /// The maximum number of times the job can be tried.
         /// </summary>
         public int MaxNumberOfTries { get; set; } = 1;
+
+        public static JobRequest<TJobParams, TJobState> FromJobInfo(JobInfo<TJobParams, TJobState> info) => new()
+        {
+            Description = info.Description,
+            IsRestart = true,
+            JobId = info.Id,
+            JobParameters = info.JobParameters,
+            JobType = Type.GetType(info.JobType),
+            InitialJobState = info.CurrentState,
+            JobWatchInterval = info.JobWatchInterval,
+            NumberOfTries = info.CurrentNumberOfTries + 1,
+            MaxNumberOfTries = info.MaxNumberOfTries
+        };
     }
 }

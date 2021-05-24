@@ -16,7 +16,6 @@ namespace Jobba.Tests.Core.Abstractions
     {
         private class JerbParameters
         {
-            public string Param { get; set; }
         }
 
         private class JerbState

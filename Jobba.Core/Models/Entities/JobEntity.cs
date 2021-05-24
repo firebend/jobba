@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models.Entities
@@ -62,7 +61,9 @@ namespace Jobba.Core.Models.Entities
 
         public object JobState { get; set; }
 
-        public List<JobProgressEntity> Progresses { get; set; }
+        public string JobStateTypeName { get; set; }
+
+        public string JobParamsTypeName { get; set; }
 
         public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest) => new()
         {
@@ -78,7 +79,9 @@ namespace Jobba.Core.Models.Entities
             CurrentNumberOfTries = jobRequest.NumberOfTries,
             MaxNumberOfTries = jobRequest.MaxNumberOfTries,
             JobParameters = jobRequest.JobParameters,
-            JobState = jobRequest.InitialJobState
+            JobState = jobRequest.InitialJobState,
+            JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
+            JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName
         };
 
         public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>() => new()
@@ -95,7 +98,9 @@ namespace Jobba.Core.Models.Entities
             LastProgressDate = LastProgressDate,
             LastProgressPercentage = LastProgressPercentage,
             CurrentNumberOfTries = CurrentNumberOfTries,
-            MaxNumberOfTries = MaxNumberOfTries
+            MaxNumberOfTries = MaxNumberOfTries,
+            JobParamsTypeName = JobParamsTypeName,
+            JobStateTypeName = JobStateTypeName
         };
 
         public JobInfoBase ToJobInfoBase() => new()

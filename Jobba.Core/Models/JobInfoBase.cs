@@ -55,5 +55,7 @@ namespace Jobba.Core.Models
         public int CurrentNumberOfTries { get; set; }
 
         public TimeSpan JobWatchInterval { get; set; }
+        public string JobStateTypeName { get; set; }
+        public string JobParamsTypeName { get; set; }
     }
 }

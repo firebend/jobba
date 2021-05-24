@@ -12,7 +12,8 @@ namespace Jobba.Core.Interfaces
         Task PublishJobCompletedEventAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken);
         Task PublishJobFaultedEventAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken);
         Task PublishJobProgressEventAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken);
-        Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan dealy, CancellationToken cancellationToken);
+        Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken);
         Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken);
+        Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken);
     }
 }
