@@ -4,7 +4,6 @@ using Jobba.Store.Mongo.Interfaces;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    //todo: write tests
     public class JobbaMongoRetryService : IJobbaMongoRetryService
     {
         public async Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries)

@@ -1,8 +1,9 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models.Entities
 {
-    public class JobProgressEntity
+    public class JobProgressEntity : IJobbaEntity
     {
         /// <summary>
         /// The job's id.
@@ -37,5 +38,7 @@ namespace Jobba.Core.Models.Entities
             JobId = progress.JobId,
             JobState = progress.JobState
         };
+
+        public Guid Id { get; set; }
     }
 }

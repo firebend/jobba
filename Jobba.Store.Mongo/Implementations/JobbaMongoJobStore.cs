@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.JsonPatch;
 
 namespace Jobba.Store.Mongo.Implementations
 {
-    //todo: break out progress into its own repo and mongo collection
     public class JobbaMongoJobStore : IJobStore
     {
         private readonly IJobbaMongoRepository<JobEntity> _repository;
@@ -42,16 +41,6 @@ namespace Jobba.Store.Mongo.Implementations
             var patch = new JsonPatchDocument<JobEntity>();
             patch.Replace(x => x.Status, status);
             patch.Replace(x => x.LastProgressDate, date);
-
-            await _repository.UpdateAsync(jobId, patch, cancellationToken);
-        }
-
-        public async Task LogProgressAsync<TJobParams, TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
-        {
-            var jobId = jobProgress.JobId;
-            var patch = new JsonPatchDocument<JobEntity>();
-            var progressEntity = JobProgressEntity.FromJobProgress(jobProgress);
-            patch.Add(x => x.Progresses, progressEntity);
 
             await _repository.UpdateAsync(jobId, patch, cancellationToken);
         }

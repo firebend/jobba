@@ -7,10 +7,8 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Abstractions
 {
-    //todo: write test
     public abstract class AbstractJobBaseClass<TJobParams, TJobState> : IJob<TJobParams, TJobState>
     {
-        //todo: write impl
         private readonly IJobProgressStore _progressStore;
         private Guid _jobId;
 
