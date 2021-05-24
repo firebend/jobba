@@ -121,6 +121,7 @@ namespace Jobba.Tests.Mongo
             var (fixture, collection) = SetUpFixture(new[] { foo });
             var patch = new JsonPatchDocument<Foo>();
             patch.Replace(x => x.Fake, "you's fake af");
+            fixture.Register<IJobbaMongoRetryService>(() => new JobbaMongoRetryService());
 
             collection.Setup(x => x.FindOneAndReplaceAsync(
                     It.IsAny<FilterDefinition<Foo>>(),

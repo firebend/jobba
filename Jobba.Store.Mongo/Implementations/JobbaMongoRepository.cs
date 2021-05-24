@@ -20,7 +20,8 @@ namespace Jobba.Store.Mongo.Implementations
         public JobbaMongoRepository(IMongoClient client,
             ILogger<JobbaMongoRepository<TEntity>> logger,
             IJobbaEntityConfigurationProvider<TEntity> entityConfigurationProvider,
-            IJobbaGuidGenerator guidGenerator) : base(client, logger, entityConfigurationProvider)
+            IJobbaGuidGenerator guidGenerator,
+            IJobbaMongoRetryService retryService) : base(client, logger, entityConfigurationProvider, retryService)
         {
             _guidGenerator = guidGenerator;
         }

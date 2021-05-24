@@ -11,7 +11,8 @@ namespace Jobba.Store.Mongo.Abstractions
 
         public JobbaMongoEntityClient(IMongoClient client,
             ILogger logger,
-            IJobbaEntityConfigurationProvider<TEntity> entityConfigurationProvider) : base(client, logger)
+            IJobbaEntityConfigurationProvider<TEntity> entityConfigurationProvider,
+            IJobbaMongoRetryService retryService) : base(client, logger, retryService)
         {
             EntityConfiguration = entityConfigurationProvider.GetConfiguration();
         }
