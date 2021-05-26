@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.HostedServices
 {
-    //todo: test
     public class JobbaHostedService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
@@ -27,7 +26,7 @@ namespace Jobba.Core.HostedServices
 
             if (jobScheduler != null)
             {
-                return jobScheduler.RestartFaultedJobs(stoppingToken);
+                return jobScheduler.RestartFaultedJobsAsync(stoppingToken);
             }
 
             _logger.LogCritical("Could not resolve job scheduler");

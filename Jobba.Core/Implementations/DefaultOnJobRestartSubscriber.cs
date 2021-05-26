@@ -9,7 +9,6 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations
 {
-    //todo: test
     public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
     {
         private readonly IJobLockService _jobLockService;

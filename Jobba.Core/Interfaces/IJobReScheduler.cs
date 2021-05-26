@@ -5,6 +5,6 @@ namespace Jobba.Core.Interfaces
 {
     public interface IJobReScheduler
     {
-        Task RestartFaultedJobs(CancellationToken cancellationToken);
+        Task RestartFaultedJobsAsync(CancellationToken cancellationToken);
     }
 }

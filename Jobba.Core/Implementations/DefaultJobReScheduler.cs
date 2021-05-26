@@ -8,7 +8,6 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations
 {
-    //todo: test
     public class DefaultJobReScheduler : IJobReScheduler
     {
         private readonly IJobEventPublisher _jobEventPublisher;
@@ -21,7 +20,7 @@ namespace Jobba.Core.Implementations
             _jobEventPublisher = jobEventPublisher;
         }
 
-        public async Task RestartFaultedJobs(CancellationToken cancellationToken)
+        public async Task RestartFaultedJobsAsync(CancellationToken cancellationToken)
         {
             var jobs = await _jobListStore.GetJobsToRetry(cancellationToken);
             var jobsArray = jobs ?? new JobInfoBase[0];
