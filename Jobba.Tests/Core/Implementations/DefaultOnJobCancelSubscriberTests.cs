@@ -38,7 +38,7 @@ namespace Jobba.Tests.Core.Implementations
             var service = fixture.Create<DefaultOnJobCancelSubscriber>();
 
             //act
-            var result = await service.CancelJobAsync(cancelEvent, default);
+            var result = await service.OnJobCancellationRequestAsync(cancelEvent, default);
 
             //assert
             result.Should().BeTrue();
@@ -66,7 +66,7 @@ namespace Jobba.Tests.Core.Implementations
             var service = fixture.Create<DefaultOnJobCancelSubscriber>();
 
             //act
-            var result = await service.CancelJobAsync(cancelEvent, default);
+            var result = await service.OnJobCancellationRequestAsync(cancelEvent, default);
 
             //assert
             result.Should().BeFalse();

@@ -19,7 +19,7 @@ namespace Jobba.Core.Implementations
             _jobEventPublisher = jobEventPublisher;
         }
 
-        public Task<bool> CancelJobAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
+        public Task<bool> OnJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
         {
             if (cancelJobEvent.JobId == Guid.Empty)
             {
