@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
@@ -28,6 +29,12 @@ namespace Jobba.Tests.Core.Implementations
                 .Setup(x => x.CancelJob(It.IsAny<Guid>()))
                 .Returns(true);
 
+            var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
+            mockPublisher.Setup(x => x.PublishJobCancelledEventAsync(
+                It.IsAny<JobCancelledEvent>(),
+                It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
             var service = fixture.Create<DefaultOnJobCancelSubscriber>();
 
             //act
@@ -36,6 +43,10 @@ namespace Jobba.Tests.Core.Implementations
             //assert
             result.Should().BeTrue();
             mockCancellationTokenStore.Verify(x => x.CancelJob(It.Is<Guid>(guid => guid == jobId)), Times.Once);
+
+            mockPublisher.Verify(x => x.PublishJobCancelledEventAsync(
+                It.Is<JobCancelledEvent>(@event => @event.JobId == cancelEvent.JobId),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]

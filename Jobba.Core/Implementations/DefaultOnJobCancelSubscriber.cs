@@ -10,10 +10,13 @@ namespace Jobba.Core.Implementations
     public class DefaultOnJobCancelSubscriber : IOnJobCancelSubscriber
     {
         private readonly IJobCancellationTokenStore _cancellationTokenStore;
+        private readonly IJobEventPublisher _jobEventPublisher;
 
-        public DefaultOnJobCancelSubscriber(IJobCancellationTokenStore cancellationTokenStore)
+        public DefaultOnJobCancelSubscriber(IJobCancellationTokenStore cancellationTokenStore,
+            IJobEventPublisher jobEventPublisher)
         {
             _cancellationTokenStore = cancellationTokenStore;
+            _jobEventPublisher = jobEventPublisher;
         }
 
         public Task<bool> CancelJobAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
@@ -24,6 +27,12 @@ namespace Jobba.Core.Implementations
             }
 
             var wasCancelled = _cancellationTokenStore.CancelJob(cancelJobEvent.JobId);
+
+            if (wasCancelled)
+            {
+                _jobEventPublisher.PublishJobCancelledEventAsync(new JobCancelledEvent(cancelJobEvent.JobId), cancellationToken);
+            }
+
             return Task.FromResult(wasCancelled);
         }
     }

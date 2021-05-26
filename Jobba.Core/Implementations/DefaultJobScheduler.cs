@@ -71,10 +71,12 @@ namespace Jobba.Core.Implementations
                     await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, cancellationToken);
                     await job.StartAsync(context, token);
                     await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
+                    await _publisher.PublishJobCompletedEventAsync(new JobCompletedEvent(jobId), cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     await _jobStore.LogFailureAsync(jobId, ex, cancellationToken);
+                    await _publisher.PublishJobFaultedEventAsync(new JobFaultedEvent(jobId), cancellationToken);
                 }
             }, token);
 

@@ -94,6 +94,7 @@ namespace Jobba.Tests.Core.Implementations
             request.IsRestart = true;
             request.JobType = typeof(IJob<object, object>);
             request.NumberOfTries = 2;
+            request.JobWatchInterval = TimeSpan.FromMinutes(1);
 
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
@@ -115,13 +116,43 @@ namespace Jobba.Tests.Core.Implementations
 
             //assert
             jobInfo.Should().NotBeNull();
-            publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
-            publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()), Times.Once);
-            job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
+            publisher.Verify(x => x.PublishJobStartedEvent(
+                It.Is<JobStartedEvent>(x => x.JobId == jobId),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            publisher.Verify(x => x.PublishWatchJobEventAsync(
+                It.Is<JobWatchEvent>(jobWatchEvent => jobWatchEvent.JobId == jobId),
+                It.Is<TimeSpan>(timeSpan => timeSpan ==  TimeSpan.FromMinutes(1)),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            publisher.Verify(x => x.PublishJobCompletedEventAsync(
+                It.Is<JobCompletedEvent>(jobCompletedEvent => jobCompletedEvent.JobId == jobId),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobAttempts<object, object>(
+                jobId,
+                2,
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            job.Verify(x => x.StartAsync(
+                It.IsAny<JobStartContext<object, object>>(),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            store.Verify(x => x.SetJobStatusAsync(jobId,
+                JobStatus.Enqueued,
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobStatusAsync(jobId,
+                JobStatus.InProgress,
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobStatusAsync(jobId,
+                JobStatus.Completed,
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestMethod]
@@ -154,7 +185,7 @@ namespace Jobba.Tests.Core.Implementations
                 .Returns(Task.CompletedTask);
 
             var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-            publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
+            publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(),It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             publisher.Setup(x => x.PublishWatchJobEventAsync(
@@ -169,13 +200,42 @@ namespace Jobba.Tests.Core.Implementations
 
             //assert
             jobInfo.Should().NotBeNull();
-            publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
-            publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()), Times.Once);
-            job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
-            store.Verify(x => x.LogFailureAsync(It.IsAny<Guid>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()), Times.Once);
+            publisher.Verify(x => x.PublishJobStartedEvent(
+                It.IsAny<JobStartedEvent>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            publisher.Verify(x => x.PublishWatchJobEventAsync(
+                It.IsAny<JobWatchEvent>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            publisher.Verify(x => x.PublishJobFaultedEventAsync(
+                It.IsAny<JobFaultedEvent>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobAttempts<object, object>(
+                jobId,
+                2,
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            job.Verify(x => x.StartAsync(
+                It.IsAny<JobStartContext<object, object>>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobStatusAsync(jobId,
+                JobStatus.Enqueued,
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.SetJobStatusAsync(jobId,
+                JobStatus.InProgress,
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            store.Verify(x => x.LogFailureAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Exception>(),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
