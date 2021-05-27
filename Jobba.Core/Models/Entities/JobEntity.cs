@@ -72,7 +72,7 @@ namespace Jobba.Core.Models.Entities
             Status = JobStatus.Unknown,
             EnqueuedTime = DateTimeOffset.UtcNow,
             FaultedReason = null,
-            JobType = jobRequest.JobType.ToString(),
+            JobType = jobRequest.JobType.AssemblyQualifiedName,
             JobWatchInterval = jobRequest.JobWatchInterval,
             LastProgressDate = DateTimeOffset.UtcNow,
             LastProgressPercentage = 0,

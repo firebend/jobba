@@ -18,12 +18,12 @@ namespace Jobba.Core.Implementations
             var timestampString = timeSpanMs.ToString("x8");
             var guidString = guid.ToString("N");
 
-            var pooledBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
 
-            pooledBuilder.Append(timestampString[..11]);
-            pooledBuilder.Append(guidString[11..]);
+            stringBuilder.Append(timestampString[..11]);
+            stringBuilder.Append(guidString[11..]);
 
-            var newGuidString = pooledBuilder.ToString();
+            var newGuidString = stringBuilder.ToString();
 
             if (string.IsNullOrWhiteSpace(newGuidString))
             {

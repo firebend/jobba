@@ -22,7 +22,7 @@ namespace Jobba.Core.Builders
         {
             Services.TryAddScoped<IJobbaGuidGenerator, DefaultJobbaGuidGenerator>();
             Services.TryAddScoped<IJobCancellationTokenStore, DefaultJobCancellationTokenStore>();
-            Services.TryAddScoped<IJobEventPublisher, DefaultJobEventPublisher>();
+            Services.TryAddTransient<IJobEventPublisher, DefaultJobEventPublisher>();
             Services.TryAddScoped<IJobLockService, DefaultJobLockService>();
             Services.TryAddScoped<IJobReScheduler, DefaultJobReScheduler>();
             Services.TryAddScoped<IJobScheduler, DefaultJobScheduler>();
@@ -39,6 +39,7 @@ namespace Jobba.Core.Builders
         {
             Services.TryAddScoped<IJobWatcher<TJobParams, TJobState>, DefaultJobWatcher<TJobParams, TJobState>>();
             Services.TryAddScoped<IJob<TJobParams, TJobState>, TJob>();
+            Services.TryAddScoped<TJob>();
 
             return this;
         }

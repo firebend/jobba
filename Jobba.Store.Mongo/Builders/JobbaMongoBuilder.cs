@@ -51,7 +51,7 @@ namespace Jobba.Store.Mongo.Builders
         {
             var serviceDescriptor = new ServiceDescriptor(
                 typeof(IJobbaEntityConfigurationProvider<TEntity>),
-                configuration);
+                new JobbaEntityConfigurationProvider<TEntity>(configuration));
 
             Builder.Services.Replace(serviceDescriptor);
         }

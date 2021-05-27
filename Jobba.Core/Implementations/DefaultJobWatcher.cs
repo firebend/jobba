@@ -59,6 +59,11 @@ namespace Jobba.Core.Implementations
                         InitialJobState = job.CurrentState
                     };
 
+                    if (request.JobType == null)
+                    {
+                        return;
+                    }
+
                     await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
                 }
             }

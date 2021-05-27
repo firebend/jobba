@@ -14,6 +14,10 @@ namespace Jobba.Store.Mongo.Implementations
     public class JobbaMongoJobListStore : IJobListStore
     {
         private readonly IJobbaMongoRepository<JobEntity> _repository;
+        private static readonly Expression<Func<JobEntity, bool>> JobsToRetryExpression = x =>
+            x.Status == JobStatus.Faulted
+            //&& x.MaxNumberOfTries > x.CurrentNumberOfTries
+            ;
 
         public JobbaMongoJobListStore(IJobbaMongoRepository<JobEntity> repository)
         {
@@ -39,6 +43,6 @@ namespace Jobba.Store.Mongo.Implementations
             => GetJobInfoBases(x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued, cancellationToken);
 
         public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
-            => GetJobInfoBases(x => x.Status == JobStatus.Faulted && x.MaxNumberOfTries > x.CurrentNumberOfTries, cancellationToken);
+            => GetJobInfoBases(JobsToRetryExpression, cancellationToken);
     }
 }

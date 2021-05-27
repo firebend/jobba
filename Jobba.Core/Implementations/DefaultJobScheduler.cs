@@ -46,7 +46,7 @@ namespace Jobba.Core.Implementations
 
             var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
 
-            var watchEvent = new JobWatchEvent(jobId, typeof(TJobParams).ToString(), typeof(TJobState).ToString());
+            var watchEvent = new JobWatchEvent(jobId, typeof(TJobParams).AssemblyQualifiedName, typeof(TJobState).AssemblyQualifiedName);
             await _publisher.PublishWatchJobEventAsync(watchEvent, request.JobWatchInterval, cancellationToken);
 
             using var scope = _serviceProvider.CreateScope();
