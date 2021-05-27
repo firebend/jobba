@@ -30,7 +30,7 @@ namespace Jobba.Sample
         protected override async Task OnStartAsync(JobStartContext<SampleJobParameters, SampleJobState> jobStartContext, CancellationToken cancellationToken)
         {
             var tries = jobStartContext.JobState.Tries + 1;
-            _logger.LogInformation("Hey I'm trying! Tries: {Tries}", tries);
+            _logger.LogInformation("Hey I'm trying! Tries: {Tries} {JobId} {Now}", tries, jobStartContext.JobId, DateTimeOffset.Now);
             await LogProgressAsync(new SampleJobState {Tries = tries}, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
             await Task.Delay(100 * tries, cancellationToken);
 

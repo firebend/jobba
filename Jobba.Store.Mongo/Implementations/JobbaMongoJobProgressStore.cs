@@ -36,6 +36,8 @@ namespace Jobba.Store.Mongo.Implementations
             //todo: add this in a test
             var statePatch = new JsonPatchDocument<JobEntity>();
             statePatch.Replace(x => x.JobState, jobProgress.JobState);
+            statePatch.Replace(x => x.LastProgressDate, jobProgress.Date);
+            statePatch.Replace(x => x.LastProgressPercentage, jobProgress.Progress);
 
             await _jobRepository.UpdateAsync(jobProgress.JobId, statePatch, cancellationToken);
         }

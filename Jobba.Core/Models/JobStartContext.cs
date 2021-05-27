@@ -4,6 +4,8 @@ namespace Jobba.Core.Models
 {
     public class JobStartContext<TJobParams, TJobState>
     {
+        //todo: add info about restarts, tries, percentage, etc and test
+
         /// <summary>
         /// The parameters to start the job with.
         /// </summary>
