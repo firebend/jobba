@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobba.Sample

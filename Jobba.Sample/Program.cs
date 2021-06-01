@@ -20,7 +20,7 @@ namespace Jobba.Sample
                 configHost.AddEnvironmentVariables();
                 configHost.AddCommandLine(args);
             })
-            .ConfigureAppConfiguration((hostingContext, builder) =>
+            .ConfigureAppConfiguration((_, _) =>
             {
             })
             .ConfigureServices((_, services) =>

@@ -117,7 +117,7 @@ namespace Jobba.Tests.Core.Implementations
             //assert
             jobInfo.Should().NotBeNull();
             publisher.Verify(x => x.PublishJobStartedEvent(
-                It.Is<JobStartedEvent>(x => x.JobId == jobId),
+                It.Is<JobStartedEvent>(@event => @event.JobId == jobId),
                 It.IsAny<CancellationToken>()), Times.Once);
 
             publisher.Verify(x => x.PublishWatchJobEventAsync(
