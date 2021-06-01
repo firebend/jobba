@@ -8,7 +8,6 @@ using Jobba.Core.Models;
 using Jobba.Store.Mongo.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
 namespace Jobba.Tests.Mongo
 {

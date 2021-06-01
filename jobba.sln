@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Store.Mongo", "Jobba.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Sample", "Jobba.Sample\Jobba.Sample.csproj", "{57CEC1F4-51E6-4F8D-BCF2-1C27055D4A16}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.MassTransit", "Jobba.MassTransit\Jobba.MassTransit.csproj", "{07009D30-781D-4270-8072-2ED2D525C97C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{57CEC1F4-51E6-4F8D-BCF2-1C27055D4A16}.Release|x64.Build.0 = Release|Any CPU
 		{57CEC1F4-51E6-4F8D-BCF2-1C27055D4A16}.Release|x86.ActiveCfg = Release|Any CPU
 		{57CEC1F4-51E6-4F8D-BCF2-1C27055D4A16}.Release|x86.Build.0 = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|x64.Build.0 = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Debug|x86.Build.0 = Debug|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|x64.ActiveCfg = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|x64.Build.0 = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|x86.ActiveCfg = Release|Any CPU
+		{07009D30-781D-4270-8072-2ED2D525C97C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
