@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.Core.Builders
 {
-    //todo: test
     public class JobbaBuilder
     {
         public IServiceCollection Services { get; }

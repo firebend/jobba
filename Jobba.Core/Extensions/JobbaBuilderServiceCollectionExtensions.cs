@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.Core.Extensions
 {
-    //todo:test
     public static class JobbaBuilderServiceCollectionExtensions
     {
         public static IServiceCollection AddJobba(this IServiceCollection services, Action<JobbaBuilder> configure)

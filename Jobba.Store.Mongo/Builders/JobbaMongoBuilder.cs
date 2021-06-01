@@ -10,7 +10,6 @@ using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Builders
 {
-    //todo:test
     public class JobbaMongoBuilder
     {
         public JobbaBuilder Builder { get; }
