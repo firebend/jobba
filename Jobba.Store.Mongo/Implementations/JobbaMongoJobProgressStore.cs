@@ -33,7 +33,6 @@ namespace Jobba.Store.Mongo.Implementations
 
             await _jobEventPublisher.PublishJobProgressEventAsync(new JobProgressEvent(added.Id, added.JobId), cancellationToken);
 
-            //todo: add this in a test
             var statePatch = new JsonPatchDocument<JobEntity>();
             statePatch.Replace(x => x.JobState, jobProgress.JobState);
             statePatch.Replace(x => x.LastProgressDate, jobProgress.Date);

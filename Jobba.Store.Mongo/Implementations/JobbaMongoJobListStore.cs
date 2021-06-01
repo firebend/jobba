@@ -16,7 +16,7 @@ namespace Jobba.Store.Mongo.Implementations
         private readonly IJobbaMongoRepository<JobEntity> _repository;
         private static readonly Expression<Func<JobEntity, bool>> JobsToRetryExpression = x =>
             x.Status == JobStatus.Faulted
-            //&& x.MaxNumberOfTries > x.CurrentNumberOfTries
+            && x.MaxNumberOfTries > x.CurrentNumberOfTries
             ;
 
         public JobbaMongoJobListStore(IJobbaMongoRepository<JobEntity> repository)

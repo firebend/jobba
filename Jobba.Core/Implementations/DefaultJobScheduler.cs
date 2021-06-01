@@ -61,7 +61,11 @@ namespace Jobba.Core.Implementations
                 JobId = jobInfo.Id,
                 JobParameters = request.JobParameters,
                 JobState = request.InitialJobState,
-                StartTime = jobInfo.EnqueuedTime
+                StartTime = jobInfo.EnqueuedTime,
+                IsRestart = request.IsRestart,
+                LastProgressDate = jobInfo.LastProgressDate,
+                LastProgressPercentage = jobInfo.LastProgressPercentage,
+                CurrentNumberOfTries = request.NumberOfTries
             };
 
             var _ = Task.Run(async () =>
