@@ -32,6 +32,8 @@ namespace Jobba.Tests.Core.Extensions
 
             protected override Task OnStartAsync(JobStartContext<FooParams, FooState> jobStartContext, CancellationToken cancellationToken)
                 => Task.CompletedTask;
+
+            public override string JobName => "Jerb";
         }
 
         [TestMethod]

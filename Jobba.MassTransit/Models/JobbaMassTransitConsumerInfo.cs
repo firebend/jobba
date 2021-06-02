@@ -6,6 +6,6 @@ namespace Jobba.MassTransit.Models
     {
         public Type ConsumerType { get; set; }
 
-        public string EntityActionDescription { get; set; }
+        public string QueueName { get; set; }
     }
 }

@@ -51,9 +51,7 @@ namespace Jobba.MassTransit.HostedServices
                 return;
             }
 
-            var queues = GetQueues(_configurationContext.QueueMode,
-                _configurationContext.ReceiveEndpointPrefix,
-                listeners);
+            var queues = GetQueues(_configurationContext.QueueMode, _configurationContext.ReceiveEndpointPrefix, listeners);
 
             foreach (var (queueName, consumerInfos) in queues)
             {
@@ -88,18 +86,16 @@ namespace Jobba.MassTransit.HostedServices
                 prefix = $"{prefix}_{receiveEndpointPrefix}";
             }
 
-            switch (queueMode)
+            return queueMode switch
             {
-                case JobbaMassTransitQueueMode.OneQueue:
-                    return new Dictionary<string, List<JobbaMassTransitConsumerInfo>> { { prefix, consumerInfos } };
-
-                case JobbaMassTransitQueueMode.OnePerJob:
-                    return consumerInfos.GroupBy(x => $"{prefix}_{x.EntityActionDescription}")
-                        .ToDictionary(x => x.Key,
-                            x => x.ToList());
-            }
-
-            return new Dictionary<string, List<JobbaMassTransitConsumerInfo>>();
+                JobbaMassTransitQueueMode.OneQueue
+                    => new Dictionary<string, List<JobbaMassTransitConsumerInfo>> {{prefix, consumerInfos}},
+                JobbaMassTransitQueueMode.OnePerJob
+                    => consumerInfos
+                        .GroupBy(x => $"{prefix}_{x.QueueName}")
+                        .ToDictionary(x => x.Key, x => x.ToList()),
+                _ => new Dictionary<string, List<JobbaMassTransitConsumerInfo>>()
+            };
         }
 
         private static void ConfigureConsumer<TConsumer>(

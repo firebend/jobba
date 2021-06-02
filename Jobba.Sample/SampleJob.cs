@@ -40,5 +40,7 @@ namespace Jobba.Sample
             }
             _logger.LogInformation("Now I'm done!");
         }
+
+        public override string JobName => "Sample Job";
     }
 }

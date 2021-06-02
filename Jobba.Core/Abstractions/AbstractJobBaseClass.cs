@@ -41,5 +41,7 @@ namespace Jobba.Core.Abstractions
 
             return _progressStore.LogProgressAsync(progress, cancellationToken);
         }
+
+        public abstract string JobName { get; }
     }
 }

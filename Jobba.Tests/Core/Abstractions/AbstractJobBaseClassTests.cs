@@ -31,6 +31,8 @@ namespace Jobba.Tests.Core.Abstractions
 
             protected override async Task OnStartAsync(JobStartContext<JerbParameters, JerbState> jobStartContext, CancellationToken cancellationToken)
                 => await LogProgressAsync(new JerbState {State = "Fake State"}, 69.420m, "Fake Progress", cancellationToken);
+
+            public override string JobName => "Jerb";
         }
 
         [TestMethod]
