@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using Jobba.Core.Extensions;
+using Jobba.MassTransit.Extensions;
 using Jobba.Store.Mongo.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,12 +27,12 @@ namespace Jobba.Sample
             .ConfigureServices((_, services) =>
             {
                 services.AddJobba(jobba =>
-                {
-                    jobba.UsingMongo("mongodb://localhost:27017/jobba-sample", true);
-                    jobba.AddJob<SampleJob, SampleJobParameters, SampleJobState>();
-                });
-                services.AddHostedService<SampleHostedService>();
-
+                        jobba.UsingMassTransit()
+                            .UsingMongo("mongodb://localhost:27017/jobba-sample", true)
+                            .AddJob<SampleJob, SampleJobParameters, SampleJobState>()
+                    )
+                    .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
+                    .AddHostedService<SampleHostedService>();
             });
     }
 }

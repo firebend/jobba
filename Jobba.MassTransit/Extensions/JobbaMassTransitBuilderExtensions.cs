@@ -1,27 +1,34 @@
 using Jobba.Core.Builders;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Extensions;
 using Jobba.MassTransit.HostedServices;
 using Jobba.MassTransit.Implementations;
 using Jobba.MassTransit.Interfaces;
+using Jobba.MassTransit.Models;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.MassTransit.Extensions
 {
+    //todo: test
     public static class JobbaMassTransitBuilderExtensions
     {
+        private static JobbaMassTransitConfigurationContext _configurationContext = new();
+
         public static JobbaBuilder UsingMassTransit(this JobbaBuilder builder)
         {
             builder.Services.AddHostedService<MassTransitJobbaReceiverHostedService>();
 
             builder.Services.TryAddScoped<IJobbaMassTransitConsumerInfoProvider, JobbaMassTransitConsumerInfoProvider>();
 
-            ReplaceService<IJobEventPublisher, MassTransitJobEventPublisher>(builder);
+            builder.Services.RegisterReplace<IJobEventPublisher, MassTransitJobEventPublisher>();
 
             RegisterConsumer<OnJobCancelConsumer>(builder);
             RegisterConsumer<OnJobRestartConsumer>(builder);
             RegisterConsumer<OnJobWatchConsumer>(builder);
+
+            builder.Services.RegisterReplace(_configurationContext);
 
             return builder;
         }
@@ -31,12 +38,6 @@ namespace Jobba.MassTransit.Extensions
         {
             builder.Services.TryAddScoped<IJobbaMassTransitConsumer, TConsumer>();
             builder.Services.TryAddScoped<TConsumer>();
-        }
-
-        private static void ReplaceService<TServiceType, TImplementationType>(JobbaBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(TServiceType), typeof(TImplementationType), lifetime);
-            builder.Services.Replace(serviceDescriptor);
         }
     }
 }

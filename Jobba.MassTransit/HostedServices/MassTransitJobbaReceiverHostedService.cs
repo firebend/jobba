@@ -8,35 +8,45 @@ using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.MassTransit.HostedServices
 {
+    //todo: test
     public class MassTransitJobbaReceiverHostedService : BackgroundService
     {
         private readonly JobbaMassTransitConfigurationContext _configurationContext;
         private readonly IReceiveEndpointConnector _endpointConnector;
         private readonly IJobbaMassTransitConsumerInfoProvider _consumerInfoProvider;
+        private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
 
         public MassTransitJobbaReceiverHostedService(
             JobbaMassTransitConfigurationContext configurationContext,
             IReceiveEndpointConnector endpointConnector,
-            IJobbaMassTransitConsumerInfoProvider consumerInfoProvider)
+            IJobbaMassTransitConsumerInfoProvider consumerInfoProvider,
+            ILogger<MassTransitJobbaReceiverHostedService> logger)
         {
             _configurationContext = configurationContext;
             _endpointConnector = endpointConnector;
             _consumerInfoProvider = consumerInfoProvider;
+            _logger = logger;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var consumers = _consumerInfoProvider.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
-
-            if (!consumers.Any())
+            try
             {
-                return Task.CompletedTask;
-            }
+                var consumers = _consumerInfoProvider.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
 
-            RegisterJobbaEndpoints(consumers);
+                if (consumers.Any())
+                {
+                    RegisterJobbaEndpoints(consumers);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Error connecting MassTransit receivers");
+            }
 
             return Task.CompletedTask;
         }

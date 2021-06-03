@@ -1,4 +1,5 @@
 using Jobba.Core.Builders;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
@@ -46,24 +47,12 @@ namespace Jobba.Store.Mongo.Builders
 
         private string GetDatabaseName(string database) => database ?? MongoUrl.DatabaseName ?? "Jobba";
 
-        private void RegisterEntityConfiguration<TEntity>(JobbaEntityConfiguration configuration)
-        {
-            var serviceDescriptor = new ServiceDescriptor(
-                typeof(IJobbaEntityConfigurationProvider<TEntity>),
-                new JobbaEntityConfigurationProvider<TEntity>(configuration));
-
-            Builder.Services.Replace(serviceDescriptor);
-        }
+        private void RegisterEntityConfiguration<TEntity>(JobbaEntityConfiguration configuration) =>
+            Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>>(new JobbaEntityConfigurationProvider<TEntity>(configuration));
 
         private void RegisterEntityConfiguration<TEntity, TProvider>()
-            where TProvider : IJobbaEntityConfigurationProvider<TEntity>
-        {
-            var serviceDescriptor = new ServiceDescriptor(
-                typeof(IJobbaEntityConfigurationProvider<TEntity>),
-                typeof(TProvider));
-
-            Builder.Services.Replace(serviceDescriptor);
-        }
+            where TProvider : IJobbaEntityConfigurationProvider<TEntity> =>
+            Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>, TProvider>();
 
         public JobbaMongoBuilder WithJobCollection(string name, string database = null)
         {

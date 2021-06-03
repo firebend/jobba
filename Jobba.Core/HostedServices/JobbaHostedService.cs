@@ -26,7 +26,14 @@ namespace Jobba.Core.HostedServices
 
             if (jobScheduler != null)
             {
-                return jobScheduler.RestartFaultedJobsAsync(stoppingToken);
+                try
+                {
+                    return jobScheduler.RestartFaultedJobsAsync(stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogCritical(ex, "Error trying to restart failed jobs");
+                }
             }
 
             _logger.LogCritical("Could not resolve job scheduler");

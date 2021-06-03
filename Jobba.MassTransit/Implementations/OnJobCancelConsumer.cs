@@ -7,6 +7,7 @@ using Jobba.MassTransit.Abstractions;
 
 namespace Jobba.MassTransit.Implementations
 {
+    //todo: test
     public class OnJobCancelConsumer : AbstractJobbaMassTransitConsumer<CancelJobEvent, IOnJobCancelSubscriber>
     {
         public OnJobCancelConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
