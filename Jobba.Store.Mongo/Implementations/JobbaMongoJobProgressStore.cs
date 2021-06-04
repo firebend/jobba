@@ -15,19 +15,23 @@ namespace Jobba.Store.Mongo.Implementations
         private readonly IJobbaMongoRepository<JobEntity> _jobRepository;
         private readonly IJobbaMongoRepository<JobProgressEntity> _repository;
         private readonly IJobEventPublisher _jobEventPublisher;
+        private readonly IJobbaGuidGenerator _guidGenerator;
 
         public JobbaMongoJobProgressStore(IJobbaMongoRepository<JobProgressEntity> repository,
             IJobEventPublisher jobEventPublisher,
-            IJobbaMongoRepository<JobEntity> jobRepository)
+            IJobbaMongoRepository<JobEntity> jobRepository,
+            IJobbaGuidGenerator guidGenerator)
         {
             _repository = repository;
             _jobEventPublisher = jobEventPublisher;
             _jobRepository = jobRepository;
+            _guidGenerator = guidGenerator;
         }
 
         public async Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
         {
             var entity = JobProgressEntity.FromJobProgress(jobProgress);
+            entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
 
             var added = await _repository.AddAsync(entity, cancellationToken);
 

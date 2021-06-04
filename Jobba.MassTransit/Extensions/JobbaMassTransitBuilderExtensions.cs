@@ -27,6 +27,7 @@ namespace Jobba.MassTransit.Extensions
             RegisterConsumer<OnJobCancelConsumer>(builder);
             RegisterConsumer<OnJobRestartConsumer>(builder);
             RegisterConsumer<OnJobWatchConsumer>(builder);
+            RegisterConsumer<OnJobProgressConsumer>(builder);
 
             builder.Services.RegisterReplace(_configurationContext);
 
@@ -36,7 +37,7 @@ namespace Jobba.MassTransit.Extensions
         private static void RegisterConsumer<TConsumer>(JobbaBuilder builder)
             where TConsumer : class, IJobbaMassTransitConsumer, IConsumer
         {
-            builder.Services.TryAddScoped<IJobbaMassTransitConsumer, TConsumer>();
+            builder.Services.AddScoped<IJobbaMassTransitConsumer, TConsumer>();
             builder.Services.TryAddScoped<TConsumer>();
         }
     }

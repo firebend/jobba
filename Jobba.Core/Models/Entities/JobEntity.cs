@@ -65,6 +65,8 @@ namespace Jobba.Core.Models.Entities
 
         public string JobParamsTypeName { get; set; }
 
+        public bool IsOutOfRetry { get; set; }
+
         public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest) => new()
         {
             Description = jobRequest.Description,
@@ -81,7 +83,8 @@ namespace Jobba.Core.Models.Entities
             JobParameters = jobRequest.JobParameters,
             JobState = jobRequest.InitialJobState,
             JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
-            JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName
+            JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName,
+            IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries
         };
 
         public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>() => new()
@@ -100,7 +103,8 @@ namespace Jobba.Core.Models.Entities
             CurrentNumberOfTries = CurrentNumberOfTries,
             MaxNumberOfTries = MaxNumberOfTries,
             JobParamsTypeName = JobParamsTypeName,
-            JobStateTypeName = JobStateTypeName
+            JobStateTypeName = JobStateTypeName,
+            IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries
         };
 
         public JobInfoBase ToJobInfoBase() => new()
@@ -115,7 +119,10 @@ namespace Jobba.Core.Models.Entities
             LastProgressDate = LastProgressDate,
             LastProgressPercentage = LastProgressPercentage,
             CurrentNumberOfTries = CurrentNumberOfTries,
-            MaxNumberOfTries = MaxNumberOfTries
+            MaxNumberOfTries = MaxNumberOfTries,
+            IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
+            JobParamsTypeName = JobParamsTypeName,
+            JobStateTypeName = JobStateTypeName
         };
     }
 }

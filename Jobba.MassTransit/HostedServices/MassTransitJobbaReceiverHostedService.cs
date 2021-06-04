@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
+using MassTransit.Registration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -109,9 +110,14 @@ namespace Jobba.MassTransit.HostedServices
         }
 
         private static void ConfigureConsumer<TConsumer>(
-            IRegistration context,
+            IConfigurationServiceProvider context,
             IReceiveEndpointConfigurator receiveEndpointConfigurator)
-            where TConsumer : class, IConsumer =>
-            context.ConfigureConsumer<TConsumer>(receiveEndpointConfigurator);
+            where TConsumer : class, IConsumer
+        {
+            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ =>
+            {
+                return context.GetService<TConsumer>();
+            });
+        }
     }
 }

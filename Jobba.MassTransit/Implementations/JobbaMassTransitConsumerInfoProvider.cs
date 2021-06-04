@@ -30,11 +30,9 @@ namespace Jobba.MassTransit.Implementations
                 .GetServices<IJobbaMassTransitConsumer>()
                 .ToList();
 
-            var jobs = Enumerable.Empty<IJob>();
-
             if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
             {
-                jobs = scope
+                var jobs = scope
                     .ServiceProvider
                     .GetServices<IJob>();
 

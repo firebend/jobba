@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -15,10 +14,10 @@ namespace Jobba.Store.Mongo.Implementations
     public class JobbaMongoJobListStore : IJobListStore
     {
         private readonly IJobbaMongoRepository<JobEntity> _repository;
-        private static readonly Expression<Func<JobEntity, bool>> JobsFaultedExpression = x => x.Status == JobStatus.Faulted;
-        //todo: you can't do this in mongo; we'll have to put a field that we query explicitly
-        private static readonly Expression<Func<JobEntity, bool>> JobsTriesExpression = x =>  x.MaxNumberOfTries < x.CurrentNumberOfTries;
-        private static readonly Expression<Func<JobEntity, bool>> JobsToRetryExpression = JobsFaultedExpression.AndAlso(JobsTriesExpression);
+
+        private static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
+            x => x.Status == JobStatus.Faulted && !x.IsOutOfRetry;
+
         private static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
             x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
 
@@ -46,6 +45,6 @@ namespace Jobba.Store.Mongo.Implementations
             => GetJobInfoBases(JobsInProgressExpression, cancellationToken);
 
         public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
-            => GetJobInfoBases(JobsToRetryExpression, cancellationToken);
+            => GetJobInfoBases(JobRetryExpression, cancellationToken);
     }
 }

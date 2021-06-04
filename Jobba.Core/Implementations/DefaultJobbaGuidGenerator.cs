@@ -10,7 +10,7 @@ namespace Jobba.Core.Implementations
     {
         public Task<Guid> GenerateGuidAsync(CancellationToken cancellationToken)
         {
-            var guid = Guid.Empty;
+            var guid = Guid.NewGuid();
             var timestamp = DateTime.UtcNow;
             var dateTime = DateTime.UnixEpoch;
             var timeSpan = timestamp - dateTime;
@@ -19,7 +19,6 @@ namespace Jobba.Core.Implementations
             var guidString = guid.ToString("N");
 
             var stringBuilder = new StringBuilder();
-
             stringBuilder.Append(timestampString[..11]);
             stringBuilder.Append(guidString[11..]);
 

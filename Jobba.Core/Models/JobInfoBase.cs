@@ -57,5 +57,6 @@ namespace Jobba.Core.Models
         public TimeSpan JobWatchInterval { get; set; }
         public string JobStateTypeName { get; set; }
         public string JobParamsTypeName { get; set; }
+        public bool IsOutOfRetry { get; set; }
     }
 }

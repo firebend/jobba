@@ -20,11 +20,6 @@ namespace Jobba.MassTransit.Implementations
             _messageScheduler = messageScheduler;
         }
 
-        private Task PublishMessageAsync<T>(T message, TimeSpan? delay,  CancellationToken cancellationToken)
-            => delay.HasValue
-                ? _messageScheduler.SchedulePublish(DateTime.UtcNow.Add(delay.Value), message, cancellationToken)
-                : _bus.Publish(message, cancellationToken);
-
         public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
             => PublishMessageAsync(cancelJobEvent, null, cancellationToken);
 
@@ -44,9 +39,20 @@ namespace Jobba.MassTransit.Implementations
             => PublishMessageAsync(jobWatchEvent, delay, cancellationToken);
 
         public Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken)
-            => PublishMessageAsync(jobStartedEvent, null,  cancellationToken);
+            => PublishMessageAsync(jobStartedEvent, null, cancellationToken);
 
         public Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
             => PublishMessageAsync(jobRestartEvent, null, cancellationToken);
+
+        private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken)
+        {
+            if (delay.HasValue)
+            {
+                var inTheFuture = DateTime.UtcNow.Add(delay.Value);
+                return _messageScheduler.SchedulePublish(inTheFuture, message, cancellationToken);
+            }
+
+            return _bus.Publish(message, cancellationToken);
+        }
     }
 }
