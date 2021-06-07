@@ -41,6 +41,10 @@ namespace Jobba.Tests.Core.Implementations
             request.IsRestart = false;
             request.JobType = typeof(IJob<object, object>);
 
+            var guidGenerator = fixture.Freeze<Mock<IJobbaGuidGenerator>>();
+            guidGenerator.Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(jobId);
+
             var store = fixture.Freeze<Mock<IJobStore>>();
             store.Setup(x => x.AddJobAsync(request, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new JobInfo<object, object> { Id = jobId });

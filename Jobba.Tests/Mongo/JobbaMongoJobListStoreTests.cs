@@ -61,7 +61,7 @@ namespace Jobba.Tests.Mongo
                 .ReturnsAsync(fixture.CreateMany<JobEntity>(5).ToList);
 
             var listStore = fixture.Create<JobbaMongoJobListStore>();
-            Expression<Func<JobEntity, bool>> expectedExpression = x=> x.Status == JobStatus.Faulted && x.MaxNumberOfTries > x.CurrentNumberOfTries;
+            Expression<Func<JobEntity, bool>> expectedExpression = x=> x.Status == JobStatus.Faulted && !x.IsOutOfRetry;
 
 
             //act
