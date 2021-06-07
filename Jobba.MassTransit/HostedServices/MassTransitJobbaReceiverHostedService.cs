@@ -114,10 +114,7 @@ namespace Jobba.MassTransit.HostedServices
             IReceiveEndpointConfigurator receiveEndpointConfigurator)
             where TConsumer : class, IConsumer
         {
-            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ =>
-            {
-                return context.GetService<TConsumer>();
-            });
+            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
         }
     }
 }

@@ -47,7 +47,7 @@ namespace Jobba.Core.Implementations
                 return null;
             }
 
-            using var jobLock = _lockService.LockJobAsync(jobId, cancellationToken);
+            using var jobLock = await _lockService.LockJobAsync(jobId, cancellationToken);
 
             if (! await CanRunAsync(jobId, cancellationToken))
             {
@@ -118,7 +118,7 @@ namespace Jobba.Core.Implementations
         public Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken)
             => _publisher.PublishJobCancellationRequestAsync(new CancelJobEvent(jobId), cancellationToken);
 
-        private Task RunJobAsync<TJobParams, TJobState>(Guid jobId,
+        private async Task RunJobAsync<TJobParams, TJobState>(Guid jobId,
             Type jobType,
             JobStartContext<TJobParams, TJobState> context,
             CancellationToken cancellationToken)
@@ -128,7 +128,7 @@ namespace Jobba.Core.Implementations
                 throw new Exception($"Could not resolve job from service provider. Job Type {jobType}");
             }
 
-            return Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 try
                 {

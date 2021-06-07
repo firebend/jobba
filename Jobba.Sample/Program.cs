@@ -21,9 +21,6 @@ namespace Jobba.Sample
                 configHost.AddEnvironmentVariables();
                 configHost.AddCommandLine(args);
             })
-            .ConfigureAppConfiguration((_, _) =>
-            {
-            })
             .ConfigureServices((_, services) =>
             {
                 services.AddJobba(jobba =>
