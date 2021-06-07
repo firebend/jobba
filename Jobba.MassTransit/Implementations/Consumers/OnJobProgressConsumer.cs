@@ -5,7 +5,7 @@ using Jobba.Core.Events;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.MassTransit.Abstractions;
 
-namespace Jobba.MassTransit.Implementations
+namespace Jobba.MassTransit.Implementations.Consumers
 {
     public class OnJobProgressConsumer : AbstractJobbaMassTransitConsumer<JobProgressEvent, IOnJobProgressSubscriber>
     {

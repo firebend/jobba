@@ -3,6 +3,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Extensions;
 using Jobba.MassTransit.HostedServices;
 using Jobba.MassTransit.Implementations;
+using Jobba.MassTransit.Implementations.Consumers;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
