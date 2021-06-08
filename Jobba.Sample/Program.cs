@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Jobba.Core.Extensions;
 using Jobba.MassTransit.Extensions;
+using Jobba.Redis;
 using Jobba.Store.Mongo.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ namespace Jobba.Sample
                 services.AddJobba(jobba =>
                         jobba.UsingMassTransit()
                             .UsingMongo("mongodb://localhost:27017/jobba-sample", true)
+                            .UsingLitRedis("localhost:6379,defaultDatabase=0")
                             .AddJob<SampleJob, SampleJobParameters, SampleJobState>()
                     )
                     .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
