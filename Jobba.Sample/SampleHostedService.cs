@@ -21,9 +21,9 @@ namespace Jobba.Sample
             var request = new JobRequest<SampleJobParameters, SampleJobState>
             {
                 Description = "A Sample Job",
-                JobParameters = new SampleJobParameters {Greeting = "Hello"},
+                JobParameters = new SampleJobParameters { Greeting = "Hello" },
                 JobType = typeof(SampleJob),
-                InitialJobState = new SampleJobState {Tries = 0},
+                InitialJobState = new SampleJobState { Tries = 0 },
                 JobWatchInterval = TimeSpan.FromSeconds(10),
                 MaxNumberOfTries = 100
             };

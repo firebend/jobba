@@ -31,7 +31,7 @@ namespace Jobba.Sample
         {
             var tries = jobStartContext.JobState.Tries + 1;
             _logger.LogInformation("Hey I'm trying! Tries: {Tries} {JobId} {Now}", tries, jobStartContext.JobId, DateTimeOffset.Now);
-            await LogProgressAsync(new SampleJobState {Tries = tries}, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
+            await LogProgressAsync(new SampleJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
             await Task.Delay(100 * tries, cancellationToken);
 
             if (tries < 10)
