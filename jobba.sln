@@ -15,6 +15,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.MassTransit", "Jobba.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Redis", "Jobba.Redis\Jobba.Redis.csproj", "{9FE5AFB1-794C-4681-8FB1-401BDC4B9C3E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{988DE29C-02DD-48A4-BA07-65CC5D11D44F}"
+ProjectSection(SolutionItems) = preProject
+	nuget-image.png = nuget-image.png
+	README.md = README.md
+	LICENSE = LICENSE
+	.gitignore = .gitignore
+	.github\workflows\build-and-test.yml = .github\workflows\build-and-test.yml
+	.github\workflows\build-test-and-release.yml = .github\workflows\build-test-and-release.yml
+	.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
+	.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
+	.config\dotnet-tools.json = .config\dotnet-tools.json
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

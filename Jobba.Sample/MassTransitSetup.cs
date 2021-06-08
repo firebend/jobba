@@ -15,8 +15,6 @@ namespace Jobba.Sample
         public static IServiceCollection AddJobbaSampleMassTransit(this IServiceCollection serviceCollection, string connectionString) => serviceCollection
             .AddMassTransit(bus =>
             {
-                var schedulerEndpointAddress = new Uri("queue:jobba-scheduler");
-                //bus.AddMessageScheduler(schedulerEndpointAddress);
                 bus.AddDelayedMessageScheduler();
 
                 bus.UsingRabbitMq((context, configurator) =>
@@ -37,7 +35,6 @@ namespace Jobba.Sample
                     configurator.AutoDelete = true;
                     configurator.PurgeOnStartup = true;
                     configurator.UseDelayedMessageScheduler();
-                    //configurator.UseMessageScheduler(schedulerEndpointAddress);
                     configurator.ConfigureEndpoints(context);
                 });
             })
