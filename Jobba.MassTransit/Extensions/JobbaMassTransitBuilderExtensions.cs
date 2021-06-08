@@ -15,7 +15,7 @@ namespace Jobba.MassTransit.Extensions
     //todo: test
     public static class JobbaMassTransitBuilderExtensions
     {
-        private static JobbaMassTransitConfigurationContext _configurationContext = new();
+        private static readonly JobbaMassTransitConfigurationContext ConfigurationContext = new();
 
         public static JobbaBuilder UsingMassTransit(this JobbaBuilder builder)
         {
@@ -30,7 +30,7 @@ namespace Jobba.MassTransit.Extensions
             RegisterConsumer<OnJobWatchConsumer>(builder);
             RegisterConsumer<OnJobProgressConsumer>(builder);
 
-            builder.Services.RegisterReplace(_configurationContext);
+            builder.Services.RegisterReplace(ConfigurationContext);
 
             return builder;
         }

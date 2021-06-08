@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
+      <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
       <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
     </ItemGroup>
 

@@ -7,7 +7,6 @@ using Jobba.MassTransit.Abstractions;
 
 namespace Jobba.MassTransit.Implementations.Consumers
 {
-    //todo: test
     public class OnJobRestartConsumer : AbstractJobbaMassTransitConsumer<JobRestartEvent, IOnJobRestartSubscriber>
     {
         public OnJobRestartConsumer(IServiceProvider serviceProvider) : base(serviceProvider)

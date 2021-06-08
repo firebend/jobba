@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.MassTransit.Implementations
 {
-    //todo: test
     public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInfoProvider
     {
         private readonly IServiceProvider _provider;
