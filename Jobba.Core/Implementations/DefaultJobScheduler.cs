@@ -57,10 +57,10 @@ namespace Jobba.Core.Implementations
             var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
             await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
             var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
-            await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobWatchInterval, token);
+            await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobWatchInterval, cancellationToken);
             var context = GetJobStartContext(request, jobInfo);
-            var _ = RunJobAsync(jobId, request.JobType, context, token);
-            await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, token);
+            var _ = RunJobAsync(jobId, request.JobType, context, token, cancellationToken);
+            await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, cancellationToken);
 
             return jobInfo;
         }
@@ -118,9 +118,37 @@ namespace Jobba.Core.Implementations
         public Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken)
             => _publisher.PublishJobCancellationRequestAsync(new CancelJobEvent(jobId), cancellationToken);
 
+        /// <summary>
+        /// Runs the requested job as a task, publishes messages, and updates initial state
+        /// </summary>
+        /// <param name="jobId">
+        /// The ID of the job to run
+        /// </param>
+        /// <param name="jobType">
+        /// The job type to resolve from the IoC container
+        /// </param>
+        /// <param name="context">
+        /// The job start context containing job run parameters.
+        /// </param>
+        /// <param name="jobCancellationToken">
+        /// A cancellation token pointing to a source that should only cancel the job. i.e. from a job cancellation event.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A cancellation token that was passed to the job scheduler. i.e. app is shutting down, http cancellation, etc
+        /// </param>
+        /// <typeparam name="TJobParams">
+        /// The parameters of the job
+        /// </typeparam>
+        /// <typeparam name="TJobState">
+        /// The state of the job.
+        /// </typeparam>
+        /// <exception cref="Exception">
+        /// Throws an exception if the job cannot be resolved from the IoC container.
+        /// </exception>
         private async Task RunJobAsync<TJobParams, TJobState>(Guid jobId,
             Type jobType,
             JobStartContext<TJobParams, TJobState> context,
+            CancellationToken jobCancellationToken,
             CancellationToken cancellationToken)
         {
             if (ServiceScope.ServiceProvider.GetService(jobType) is not IJob<TJobParams, TJobState> job)
@@ -130,19 +158,44 @@ namespace Jobba.Core.Implementations
 
             await Task.Run(async () =>
             {
+                await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
+
                 try
                 {
-                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, cancellationToken);
-                    await job.StartAsync(context, cancellationToken);
-                    await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
-                    await _publisher.PublishJobCompletedEventAsync(new JobCompletedEvent(jobId), cancellationToken);
+                    await job.StartAsync(context, jobCancellationToken);
+
+                    if (jobCancellationToken.IsCancellationRequested)
+                    {
+                        await OnJobCancelledAsync(jobId, default);
+                    }
+                    else
+                    {
+                        await OnJobCompletedAsync(jobId, default);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        await OnJobCancelledAsync(jobId, default);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    await _jobStore.LogFailureAsync(jobId, ex, cancellationToken);
-                    await _publisher.PublishJobFaultedEventAsync(new JobFaultedEvent(jobId), cancellationToken);
+                    await _jobStore.LogFailureAsync(jobId, ex, default);
+                    await _publisher.PublishJobFaultedEventAsync(new JobFaultedEvent(jobId), default);
                 }
+
             }, cancellationToken);
+        }
+
+        private Task OnJobCancelledAsync(Guid jobId, CancellationToken cancellationToken)
+            =>  _jobStore.SetJobStatusAsync(jobId, JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
+
+        private async Task OnJobCompletedAsync(Guid jobId, CancellationToken cancellationToken)
+        {
+            await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
+            await _publisher.PublishJobCompletedEventAsync(new JobCompletedEvent(jobId), cancellationToken);
         }
 
         private static JobStartContext<TJobParams, TJobState> GetJobStartContext<TJobParams, TJobState>(

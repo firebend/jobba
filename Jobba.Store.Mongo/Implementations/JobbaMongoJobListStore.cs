@@ -16,7 +16,7 @@ namespace Jobba.Store.Mongo.Implementations
         private readonly IJobbaMongoRepository<JobEntity> _repository;
 
         private static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
-            x => x.Status != JobStatus.Completed && !x.IsOutOfRetry;
+            x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
 
         private static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
             x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;

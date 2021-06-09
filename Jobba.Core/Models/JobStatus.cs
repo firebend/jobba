@@ -6,6 +6,7 @@ namespace Jobba.Core.Models
         Faulted = 1,
         Completed = 2,
         InProgress = 3,
-        Enqueued = 4
+        Enqueued = 4,
+        Cancelled = 5,
     }
 }

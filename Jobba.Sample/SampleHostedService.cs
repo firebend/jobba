@@ -29,6 +29,21 @@ namespace Jobba.Sample
             };
 
             await _jobScheduler.ScheduleJobAsync(request, stoppingToken);
+
+            var cancelJobRequest = new JobRequest<object, object>
+            {
+                Description = "A Sample Job that should get cancelled",
+                JobParameters = new object(),
+                JobType = typeof(SampleJobCancel),
+                InitialJobState = new object(),
+                JobWatchInterval = TimeSpan.FromSeconds(2),
+                MaxNumberOfTries = 100
+            };
+
+            var jobToCancel = await _jobScheduler.ScheduleJobAsync(cancelJobRequest, stoppingToken);
+            var jobToRunUntilClose = await _jobScheduler.ScheduleJobAsync(cancelJobRequest, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await _jobScheduler.CancelJobAsync(jobToCancel.Id, stoppingToken);
         }
     }
 }

@@ -7,6 +7,7 @@ using Jobba.Store.Mongo.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.Sample
 {
@@ -24,11 +25,14 @@ namespace Jobba.Sample
             })
             .ConfigureServices((_, services) =>
             {
-                services.AddJobba(jobba =>
+                services
+                    .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
+                    .AddJobba(jobba =>
                         jobba.UsingMassTransit()
                             .UsingMongo("mongodb://localhost:27017/jobba-sample", true)
                             .UsingLitRedis("localhost:6379,defaultDatabase=0")
                             .AddJob<SampleJob, SampleJobParameters, SampleJobState>()
+                            .AddJob<SampleJobCancel, object, object>()
                     )
                     .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
                     .AddHostedService<SampleHostedService>();
