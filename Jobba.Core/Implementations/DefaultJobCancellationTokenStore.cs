@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using Jobba.Core.Interfaces;
 
@@ -42,6 +43,18 @@ namespace Jobba.Core.Implementations
 
             return true;
 
+        }
+
+        //todo: test
+        public void CancelAllJobs()
+        {
+            var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
+
+            foreach (var jobId in jobIds)
+            {
+                Console.WriteLine($"Cancelling job {jobId}");
+                CancelJob(jobId);
+            }
         }
     }
 }

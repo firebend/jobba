@@ -164,9 +164,10 @@ namespace Jobba.Core.Implementations
                 {
                     await job.StartAsync(context, jobCancellationToken);
 
-                    if (jobCancellationToken.IsCancellationRequested)
+                    //todo: test scenario
+                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     {
-                        await OnJobCancelledAsync(jobId, default);
+                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
                     }
                     else
                     {
@@ -175,9 +176,10 @@ namespace Jobba.Core.Implementations
                 }
                 catch (TaskCanceledException)
                 {
-                    if (!cancellationToken.IsCancellationRequested)
+                    //todo: test scenario
+                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     {
-                        await OnJobCancelledAsync(jobId, default);
+                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
                     }
                 }
                 catch (Exception ex)
@@ -189,8 +191,8 @@ namespace Jobba.Core.Implementations
             }, cancellationToken);
         }
 
-        private Task OnJobCancelledAsync(Guid jobId, CancellationToken cancellationToken)
-            =>  _jobStore.SetJobStatusAsync(jobId, JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
+        private Task OnJobCancelledAsync(Guid jobId, bool wasForced, CancellationToken cancellationToken) =>
+            _jobStore.SetJobStatusAsync(jobId, wasForced ? JobStatus.ForceCancelled : JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
 
         private async Task OnJobCompletedAsync(Guid jobId, CancellationToken cancellationToken)
         {

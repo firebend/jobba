@@ -19,7 +19,7 @@ namespace Jobba.Core.HostedServices
             _logger = logger;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var jobScheduler = scope.ServiceProvider.GetService<IJobReScheduler>();
@@ -28,7 +28,7 @@ namespace Jobba.Core.HostedServices
             {
                 try
                 {
-                    return jobScheduler.RestartFaultedJobsAsync(stoppingToken);
+                    await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -36,8 +36,30 @@ namespace Jobba.Core.HostedServices
                 }
             }
 
-            _logger.LogCritical("Could not resolve job scheduler");
-            return Task.CompletedTask;
+            stoppingToken.Register(CancelAllJobs);
+
+            //todo: test to see if we need this "keep alive thread" probably don't :P
+
+            // while (!stoppingToken.IsCancellationRequested)
+            // {
+            //     try
+            //     {
+            //         await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            //     }
+            //     catch (TaskCanceledException)
+            //     {
+            //
+            //     }
+            // }
+        }
+
+        //todo:test
+        private void CancelAllJobs()
+        {
+            _logger.LogInformation("Cancelling all jobs!");
+            using var scope = _serviceProvider.CreateScope();
+            var cancellationTokenStore = scope.ServiceProvider.GetService<IJobCancellationTokenStore>();
+            cancellationTokenStore?.CancelAllJobs();
         }
     }
 }
