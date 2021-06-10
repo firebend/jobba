@@ -27,6 +27,26 @@ namespace Jobba.Tests.Core.Implementations
         }
 
         [TestMethod]
+        public void Default_Job_Cancellation_Token_Store_Should_Cancel_And_Remove_Token_From_Cache()
+        {
+            //arrange
+            var token = new CancellationToken();
+            var store = new DefaultJobCancellationTokenStore();
+            var jobId = Guid.NewGuid();
+
+            //act
+            var createdToken = store.CreateJobCancellationToken(jobId, token);
+            var cancelled = store.CancelJob(jobId);
+            var cancelledTwo = store.CancelJob(jobId);
+
+            //assert
+            cancelled.Should().BeTrue();
+            createdToken.IsCancellationRequested.Should().BeTrue();
+            cancelledTwo.Should().BeFalse();
+            createdToken.IsCancellationRequested.Should().BeTrue();
+        }
+
+        [TestMethod]
         public void Default_Job_Cancellation_Token_Store_Should_Not_Cancel_When_Job_Id_Does_Not_Exist()
         {
             //arrange
