@@ -56,7 +56,7 @@ namespace Jobba.Store.Mongo.Builders
 
         public JobbaMongoBuilder WithJobCollection(string name, string database = null)
         {
-            var configuration = new JobbaEntityConfiguration {Collection = name, Database = GetDatabaseName(database)};
+            var configuration = new JobbaEntityConfiguration { Collection = name, Database = GetDatabaseName(database) };
             RegisterEntityConfiguration<JobEntity>(configuration);
             return this;
         }
@@ -70,7 +70,7 @@ namespace Jobba.Store.Mongo.Builders
 
         public JobbaMongoBuilder WithJobProgressCollection(string name, string database = null)
         {
-            var configuration = new JobbaEntityConfiguration {Collection = name, Database = GetDatabaseName(database)};
+            var configuration = new JobbaEntityConfiguration { Collection = name, Database = GetDatabaseName(database) };
             RegisterEntityConfiguration<JobProgressEntity>(configuration);
             return this;
         }

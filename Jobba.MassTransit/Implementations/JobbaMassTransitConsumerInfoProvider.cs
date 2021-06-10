@@ -39,7 +39,7 @@ namespace Jobba.MassTransit.Implementations
                 {
                     foreach (var consumer in consumers)
                     {
-                        yield return new JobbaMassTransitConsumerInfo {ConsumerType = consumer.GetType(), QueueName = job.JobName.Replace(" ", "_")};
+                        yield return new JobbaMassTransitConsumerInfo { ConsumerType = consumer.GetType(), QueueName = job.JobName.Replace(" ", "_") };
                     }
                 }
             }
@@ -47,7 +47,7 @@ namespace Jobba.MassTransit.Implementations
             {
                 foreach (var consumer in consumers)
                 {
-                    yield return new JobbaMassTransitConsumerInfo {ConsumerType = consumer.GetType(), QueueName = string.Empty};
+                    yield return new JobbaMassTransitConsumerInfo { ConsumerType = consumer.GetType(), QueueName = string.Empty };
                 }
             }
         }

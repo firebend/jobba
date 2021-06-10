@@ -8,6 +8,6 @@ namespace Jobba.Core.Events
 
         public string JobParamsTypeName { get; set; }
 
-        public string JobStateTypeName {get; set; }
+        public string JobStateTypeName { get; set; }
     }
 }

@@ -36,7 +36,7 @@ namespace Jobba.Store.Mongo.Implementations
                 return Enumerable.Empty<JobInfoBase>();
             }
 
-            var jobInfoBases =  activeJobs.Select(x => x.ToJobInfoBase()).ToArray();
+            var jobInfoBases = activeJobs.Select(x => x.ToJobInfoBase()).ToArray();
 
             return jobInfoBases;
         }

@@ -35,7 +35,7 @@ namespace Jobba.Tests.Core.Implementations
 
 
             fixture.Customize(new AutoMoqCustomization());
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type,object>
+            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
             {
                 {
                     typeof(IJobWatcher<,>).MakeGenericType(typeof(Foo), typeof(Foo)),

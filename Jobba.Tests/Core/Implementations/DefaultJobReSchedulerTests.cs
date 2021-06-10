@@ -25,7 +25,7 @@ namespace Jobba.Tests.Core.Implementations
             fixture.Customize(new AutoMoqCustomization());
 
             var jobIds = fixture.CreateMany<Guid>(5);
-            var jobBases = jobIds.Select(x => new JobInfoBase {Id = x}).ToArray();
+            var jobBases = jobIds.Select(x => new JobInfoBase { Id = x }).ToArray();
 
 
             var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();

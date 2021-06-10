@@ -42,14 +42,14 @@ namespace Jobba.Core.Implementations
         {
             var jobId = await GetJobIdAsync(request, cancellationToken);
 
-            if (! await CanRunAsync(jobId, cancellationToken))
+            if (!await CanRunAsync(jobId, cancellationToken))
             {
                 return null;
             }
 
             using var jobLock = await _lockService.LockJobAsync(jobId, cancellationToken);
 
-            if (! await CanRunAsync(jobId, cancellationToken))
+            if (!await CanRunAsync(jobId, cancellationToken))
             {
                 return null;
             }

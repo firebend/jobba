@@ -31,7 +31,7 @@ namespace Jobba.MassTransit.Implementations.Consumers
             if (_wasCancelled)
             {
                 await context
-                    .RespondAsync(new JobbaMassTransitJobCancelRequestResult {JobId = context.Message.JobId, WasCancelled = true});
+                    .RespondAsync(new JobbaMassTransitJobCancelRequestResult { JobId = context.Message.JobId, WasCancelled = true });
             }
         }
     }

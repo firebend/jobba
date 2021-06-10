@@ -1,7 +1,7 @@
 using Jobba.Core.Builders;
 using Jobba.Core.Events;
-using Jobba.Core.Interfaces;
 using Jobba.Core.Extensions;
+using Jobba.Core.Interfaces;
 using Jobba.MassTransit.HostedServices;
 using Jobba.MassTransit.Implementations;
 using Jobba.MassTransit.Implementations.Consumers;

@@ -12,7 +12,7 @@ namespace Jobba.Tests.Mongo
         public void Jobba_Entity_Configuration_Provider_Should_Provide_Configuration()
         {
             //arrange
-            var expected = new JobbaEntityConfiguration {Collection = "fake collection", Database = "fake db"};
+            var expected = new JobbaEntityConfiguration { Collection = "fake collection", Database = "fake db" };
 
             var provider = new JobbaEntityConfigurationProvider<object>(expected);
 

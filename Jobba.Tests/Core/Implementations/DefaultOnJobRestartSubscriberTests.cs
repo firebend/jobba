@@ -50,8 +50,8 @@ namespace Jobba.Tests.Core.Implementations
                 {
                     CurrentNumberOfTries = 1,
                     MaxNumberOfTries = 5,
-                    JobParameters = new FooParams{ Foo = "fake params"},
-                    CurrentState = new FooState {Foo = "fake state"},
+                    JobParameters = new FooParams { Foo = "fake params" },
+                    CurrentState = new FooState { Foo = "fake state" },
                     JobWatchInterval = TimeSpan.FromMinutes(1),
                     JobType = typeof(object).AssemblyQualifiedName,
                     Status = JobStatus.Faulted,
@@ -116,8 +116,8 @@ namespace Jobba.Tests.Core.Implementations
                 {
                     CurrentNumberOfTries = numberOfTries,
                     MaxNumberOfTries = 5,
-                    JobParameters = new FooParams{ Foo = "fake params"},
-                    CurrentState = new FooState {Foo = "fake state"},
+                    JobParameters = new FooParams { Foo = "fake params" },
+                    CurrentState = new FooState { Foo = "fake state" },
                     JobWatchInterval = TimeSpan.FromMinutes(1),
                     JobType = typeof(object).AssemblyQualifiedName,
                     Status = jobStatus,

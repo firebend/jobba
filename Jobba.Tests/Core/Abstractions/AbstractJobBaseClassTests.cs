@@ -23,14 +23,14 @@ namespace Jobba.Tests.Core.Abstractions
             public string State { get; set; }
         }
 
-        private class Jerb : AbstractJobBaseClass<JerbParameters,JerbState>
+        private class Jerb : AbstractJobBaseClass<JerbParameters, JerbState>
         {
             public Jerb(IJobProgressStore progressStore) : base(progressStore)
             {
             }
 
             protected override async Task OnStartAsync(JobStartContext<JerbParameters, JerbState> jobStartContext, CancellationToken cancellationToken)
-                => await LogProgressAsync(new JerbState {State = "Fake State"}, 69.420m, "Fake Progress", cancellationToken);
+                => await LogProgressAsync(new JerbState { State = "Fake State" }, 69.420m, "Fake Progress", cancellationToken);
 
             public override string JobName => "Jerb";
         }

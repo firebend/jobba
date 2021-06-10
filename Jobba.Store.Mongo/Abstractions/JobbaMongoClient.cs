@@ -17,7 +17,7 @@ namespace Jobba.Store.Mongo.Abstractions
             RetryService = retryService;
         }
 
-        protected IJobbaMongoRetryService RetryService { get;}
+        protected IJobbaMongoRetryService RetryService { get; }
 
         protected IMongoClient Client { get; }
 

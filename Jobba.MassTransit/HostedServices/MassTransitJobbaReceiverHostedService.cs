@@ -100,7 +100,7 @@ namespace Jobba.MassTransit.HostedServices
             return queueMode switch
             {
                 JobbaMassTransitQueueMode.OneQueue
-                    => new Dictionary<string, List<JobbaMassTransitConsumerInfo>> {{prefix, consumerInfos}},
+                    => new Dictionary<string, List<JobbaMassTransitConsumerInfo>> { { prefix, consumerInfos } },
                 JobbaMassTransitQueueMode.OnePerJob
                     => consumerInfos
                         .GroupBy(x => $"{prefix}_{x.QueueName}")

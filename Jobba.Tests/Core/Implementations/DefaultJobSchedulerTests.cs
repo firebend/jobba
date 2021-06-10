@@ -126,7 +126,7 @@ namespace Jobba.Tests.Core.Implementations
 
             publisher.Verify(x => x.PublishWatchJobEventAsync(
                 It.Is<JobWatchEvent>(jobWatchEvent => jobWatchEvent.JobId == jobId),
-                It.Is<TimeSpan>(timeSpan => timeSpan ==  TimeSpan.FromMinutes(1)),
+                It.Is<TimeSpan>(timeSpan => timeSpan == TimeSpan.FromMinutes(1)),
                 It.IsAny<CancellationToken>()), Times.Once);
 
             publisher.Verify(x => x.PublishJobCompletedEventAsync(
@@ -189,7 +189,7 @@ namespace Jobba.Tests.Core.Implementations
                 .Returns(Task.CompletedTask);
 
             var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-            publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(),It.IsAny<CancellationToken>()))
+            publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             publisher.Setup(x => x.PublishWatchJobEventAsync(

@@ -39,7 +39,7 @@ namespace Jobba.Core.Implementations
 
             foreach (var jobId in jobIds)
             {
-                if (!DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryGetValue(jobId, out  var ct))
+                if (!DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryGetValue(jobId, out var ct))
                 {
                     continue;
                 }

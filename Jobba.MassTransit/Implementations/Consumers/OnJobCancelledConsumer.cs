@@ -7,7 +7,7 @@ using Jobba.MassTransit.Abstractions;
 
 namespace Jobba.MassTransit.Implementations.Consumers
 {
-    public class OnJobCancelledConsumer : AbstractJobbaMassTransitConsumer<JobCancelledEvent,IOnJobCancelledSubscriber >
+    public class OnJobCancelledConsumer : AbstractJobbaMassTransitConsumer<JobCancelledEvent, IOnJobCancelledSubscriber>
     {
         public OnJobCancelledConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
         {
