@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using Jobba.Core.Implementations;
@@ -58,6 +59,25 @@ namespace Jobba.Tests.Core.Implementations
 
             //assert
             cancelled.Should().BeFalse();
+        }
+
+        [TestMethod]
+        public void Default_Job_Cancellation_Token_Store_Should_Cancel_All_Jobs()
+        {
+            //arrange
+            var store = new DefaultJobCancellationTokenStore();
+
+            var jobTokens = Enumerable
+                .Range(1, 10)
+                .Select(_ => new { TokenSource = new CancellationTokenSource(), JobId = Guid.NewGuid() })
+                .ToList();
+
+            //act
+            jobTokens.ForEach(x => store.CreateJobCancellationToken(x.JobId, x.TokenSource.Token));
+            store.CancelAllJobs();
+
+            //assert
+            jobTokens.TrueForAll(x => x.TokenSource.IsCancellationRequested);
         }
     }
 }

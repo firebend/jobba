@@ -32,7 +32,6 @@ namespace Jobba.Core.Implementations
             return DefaultJobCancellationTokenStoreStatics.TokenDictionary[jobId].Token;
         }
 
-        //todo: test
         private void RemoveCancelledCompletedTokens()
         {
             var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
@@ -66,7 +65,6 @@ namespace Jobba.Core.Implementations
 
         }
 
-        //todo: test
         public void CancelAllJobs()
         {
             var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
