@@ -21,6 +21,8 @@ namespace Jobba.Core.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogDebug("Jobba Hosted Service is running");
+
             using var scope = _serviceProvider.CreateScope();
             var jobScheduler = scope.ServiceProvider.GetService<IJobReScheduler>();
 
@@ -28,6 +30,8 @@ namespace Jobba.Core.HostedServices
             {
                 try
                 {
+                    _logger.LogDebug("Jobba is restarting faulted jobs");
+
                     await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
                 }
                 catch (Exception ex)
@@ -37,28 +41,16 @@ namespace Jobba.Core.HostedServices
             }
 
             stoppingToken.Register(CancelAllJobs);
-
-            //todo: test to see if we need this "keep alive thread" probably don't :P
-
-            // while (!stoppingToken.IsCancellationRequested)
-            // {
-            //     try
-            //     {
-            //         await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-            //     }
-            //     catch (TaskCanceledException)
-            //     {
-            //
-            //     }
-            // }
         }
 
         //todo:test
         private void CancelAllJobs()
         {
-            _logger.LogInformation("Cancelling all jobs!");
+            _logger.LogInformation("Jobba is cancelling all jobs");
+
             using var scope = _serviceProvider.CreateScope();
             var cancellationTokenStore = scope.ServiceProvider.GetService<IJobCancellationTokenStore>();
+
             cancellationTokenStore?.CancelAllJobs();
         }
     }

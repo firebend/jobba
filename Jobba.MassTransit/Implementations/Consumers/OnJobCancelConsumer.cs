@@ -4,18 +4,35 @@ using System.Threading.Tasks;
 using Jobba.Core.Events;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.MassTransit.Abstractions;
+using Jobba.MassTransit.Models;
+using MassTransit;
 
 namespace Jobba.MassTransit.Implementations.Consumers
 {
-    //todo: might need to look into using mass transit request response pattern so we can ask all the consumers in the cluster to cancel the job
-    // not just the first consumer to get the message.
+    //todo: tests
     public class OnJobCancelConsumer : AbstractJobbaMassTransitConsumer<CancelJobEvent, IOnJobCancelSubscriber>
     {
+        private bool _wasCancelled;
+
         public OnJobCancelConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
         {
         }
 
-        public override Task HandleMessageAsync(IOnJobCancelSubscriber subscriber, CancelJobEvent message, CancellationToken cancellationToken)
-            => subscriber.OnJobCancellationRequestAsync(message, cancellationToken);
+        public override async Task HandleMessageAsync(IOnJobCancelSubscriber subscriber, CancelJobEvent message, CancellationToken cancellationToken)
+        {
+            if (await subscriber.OnJobCancellationRequestAsync(message, cancellationToken))
+            {
+                _wasCancelled = true;
+            }
+        }
+
+        protected override async Task AfterSubscribersAsync(ConsumeContext<CancelJobEvent> context)
+        {
+            if (_wasCancelled)
+            {
+                await context
+                    .RespondAsync(new JobbaMassTransitJobCancelRequestResult {JobId = context.Message.JobId, WasCancelled = true});
+            }
+        }
     }
 }

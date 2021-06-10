@@ -32,6 +32,25 @@ namespace Jobba.Core.Implementations
             return DefaultJobCancellationTokenStoreStatics.TokenDictionary[jobId].Token;
         }
 
+        //todo: test
+        private void RemoveCancelledCompletedTokens()
+        {
+            var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
+
+            foreach (var jobId in jobIds)
+            {
+                if (!DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryGetValue(jobId, out  var ct))
+                {
+                    continue;
+                }
+
+                if (ct.IsCancellationRequested || ct.Token.IsCancellationRequested)
+                {
+                    DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryRemove(jobId, out _);
+                }
+            }
+        }
+
         public bool CancelJob(Guid id)
         {
             if (!DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryGetValue(id, out var tokenSource))
@@ -40,6 +59,8 @@ namespace Jobba.Core.Implementations
             }
 
             tokenSource.Cancel();
+
+            RemoveCancelledCompletedTokens();
 
             return true;
 
@@ -55,6 +76,8 @@ namespace Jobba.Core.Implementations
                 Console.WriteLine($"Cancelling job {jobId}");
                 CancelJob(jobId);
             }
+
+            RemoveCancelledCompletedTokens();
         }
     }
 }

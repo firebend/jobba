@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
+using Jobba.MassTransit.Models;
 using MassTransit;
 
 namespace Jobba.MassTransit.Implementations
@@ -12,16 +13,43 @@ namespace Jobba.MassTransit.Implementations
     {
         private readonly IBus _bus;
         private readonly IMessageScheduler _messageScheduler;
+        private readonly IRequestClient<CancelJobEvent> _requestClient;
+        private readonly JobbaMassTransitConfigurationContext _configurationContext;
 
         public MassTransitJobEventPublisher(IBus bus,
-            IMessageScheduler messageScheduler)
+            IMessageScheduler messageScheduler,
+            IRequestClient<CancelJobEvent> requestClient,
+            JobbaMassTransitConfigurationContext configurationContext)
         {
             _bus = bus;
             _messageScheduler = messageScheduler;
+            _requestClient = requestClient;
+            _configurationContext = configurationContext;
         }
 
-        public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
-            => PublishMessageAsync(cancelJobEvent, null, cancellationToken);
+        public async Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
+        {
+            var tries = 0;
+
+            while (tries < _configurationContext.MaxTimesToRequestJobCancellation)
+            {
+                try
+                {
+                    var response = await _requestClient.GetResponse<JobbaMassTransitJobCancelRequestResult>(cancelJobEvent, cancellationToken);
+
+                    if (response.Message.WasCancelled)
+                    {
+                        return;
+                    }
+                }
+                catch
+                {
+                    await Task.Delay(_configurationContext.CancelJobRequestInterval, cancellationToken);
+                    tries++;
+                }
+            }
+
+        }
 
         public Task PublishJobCancelledEventAsync(JobCancelledEvent jobCancelledEvent, CancellationToken cancellationToken)
             => PublishMessageAsync(jobCancelledEvent, null, cancellationToken);

@@ -1,4 +1,5 @@
 using Jobba.Core.Builders;
+using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Extensions;
 using Jobba.MassTransit.HostedServices;
@@ -7,6 +8,8 @@ using Jobba.MassTransit.Implementations.Consumers;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
+using MassTransit.ExtensionsDependencyInjectionIntegration.Registration;
+using MassTransit.Registration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -31,6 +34,9 @@ namespace Jobba.MassTransit.Extensions
             RegisterConsumer<OnJobProgressConsumer>(builder);
 
             builder.Services.RegisterReplace(ConfigurationContext);
+
+            IContainerRegistrar registrar = new DependencyInjectionContainerRegistrar(builder.Services);
+            registrar.RegisterRequestClient<CancelJobEvent>();
 
             return builder;
         }
