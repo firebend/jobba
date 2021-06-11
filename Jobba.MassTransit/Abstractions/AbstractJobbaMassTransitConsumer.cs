@@ -28,11 +28,6 @@ namespace Jobba.MassTransit.Abstractions
         {
             using var scope = _serviceProvider.CreateScope();
 
-            if (context.Message is CancelJobEvent)
-            {
-                var _ = "";
-            }
-
             var tasks = scope
                 .ServiceProvider
                 .GetServices<TSubscriber>()

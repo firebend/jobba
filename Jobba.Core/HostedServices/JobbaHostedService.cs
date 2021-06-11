@@ -42,7 +42,7 @@ namespace Jobba.Core.HostedServices
 
             stoppingToken.Register(CancelAllJobs);
         }
-        
+
         private void CancelAllJobs()
         {
             _logger.LogInformation("Jobba is cancelling all jobs");

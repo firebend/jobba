@@ -34,6 +34,13 @@ namespace Jobba.Tests.MassTransit
             await PublishEventHelper<JobStartedEvent>(publisher => publisher.PublishJobStartedEvent(message, default));
         }
 
+        [TestMethod]
+        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Cancelled_Messages()
+        {
+            var message = new JobCancelledEvent(Guid.NewGuid());
+            await PublishEventHelper<JobCancelledEvent>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
+        }
+
         private static async Task PublishEventHelper<TMessage>(Func<IJobEventPublisher, Task> pubCallback)
             where TMessage : class
         {

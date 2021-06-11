@@ -13,7 +13,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.MassTransit.HostedServices
 {
-    //todo: test
     public class MassTransitJobbaReceiverHostedService : BackgroundService
     {
         private readonly JobbaMassTransitConfigurationContext _configurationContext;

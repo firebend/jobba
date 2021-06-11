@@ -8,7 +8,6 @@ using MassTransit;
 
 namespace Jobba.MassTransit.Implementations
 {
-    //todo: test
     public class MassTransitJobEventPublisher : IJobEventPublisher
     {
         private readonly IBus _bus;

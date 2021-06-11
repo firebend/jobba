@@ -9,7 +9,6 @@ using MassTransit;
 
 namespace Jobba.MassTransit.Implementations.Consumers
 {
-    //todo: tests
     public class OnJobCancelConsumer : AbstractJobbaMassTransitConsumer<CancelJobEvent, IOnJobCancelSubscriber>
     {
         private bool _wasCancelled;
