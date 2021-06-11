@@ -41,5 +41,43 @@ namespace Jobba.Tests.Core.HostedServices
             //assert
             rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
+
+        [TestMethod]
+        public async Task Jobba_Hosted_Service_Should_Cancel_Jobs_On_Exit()
+        {
+            //arrange
+            var fixture = new Fixture();
+            fixture.Customize(new AutoMoqCustomization());
+
+            var rescheduler = fixture.Freeze<Mock<IJobReScheduler>>();
+            rescheduler.Setup(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            var jobCancellationStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
+
+            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+            {
+                {
+                    typeof(IJobReScheduler), rescheduler.Object
+                },
+                {
+                    typeof(IJobCancellationTokenStore), jobCancellationStore.Object
+                }
+            }));
+
+            var hostedService = fixture.Create<JobbaHostedService>();
+
+            var tokenSource = new CancellationTokenSource();
+
+            //act
+            await hostedService.StartAsync(tokenSource.Token);
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            tokenSource.Cancel();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            //assert
+            rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Once);
+            jobCancellationStore.Verify(x => x.CancelAllJobs(), Times.Once);
+        }
     }
 }

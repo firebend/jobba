@@ -164,7 +164,6 @@ namespace Jobba.Core.Implementations
                 {
                     await job.StartAsync(context, jobCancellationToken);
 
-                    //todo: test scenario
                     if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     {
                         await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
@@ -176,7 +175,6 @@ namespace Jobba.Core.Implementations
                 }
                 catch (TaskCanceledException)
                 {
-                    //todo: test scenario
                     if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     {
                         await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);

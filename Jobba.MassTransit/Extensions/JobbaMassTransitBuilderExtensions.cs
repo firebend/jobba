@@ -15,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.MassTransit.Extensions
 {
-    //todo: test
     public static class JobbaMassTransitBuilderExtensions
     {
         private static readonly JobbaMassTransitConfigurationContext ConfigurationContext = new();
@@ -29,9 +28,13 @@ namespace Jobba.MassTransit.Extensions
             builder.Services.RegisterReplace<IJobEventPublisher, MassTransitJobEventPublisher>();
 
             RegisterConsumer<OnJobCancelConsumer>(builder);
-            RegisterConsumer<OnJobRestartConsumer>(builder);
-            RegisterConsumer<OnJobWatchConsumer>(builder);
+            RegisterConsumer<OnJobCancelledConsumer>(builder);
+            RegisterConsumer<OnJobCompleteConsumer>(builder);
+            RegisterConsumer<OnJobFaultedConsumer>(builder);
             RegisterConsumer<OnJobProgressConsumer>(builder);
+            RegisterConsumer<OnJobRestartConsumer>(builder);
+            RegisterConsumer<OnJobStartedConsumer>(builder);
+            RegisterConsumer<OnJobWatchConsumer>(builder);
 
             builder.Services.RegisterReplace(ConfigurationContext);
 
