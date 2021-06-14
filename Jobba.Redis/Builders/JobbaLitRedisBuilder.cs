@@ -1,4 +1,5 @@
 using System;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Redis.Implementations;
 using LitRedis.Core;
@@ -15,7 +16,8 @@ namespace Jobba.Redis.Builders
         public JobbaLitRedisBuilder(IServiceCollection services, Action<LitRedisServiceCollectionBuilder> litRedisBuilder = null)
         {
             Services = services;
-            services.TryAddScoped<IJobLockService, LitRedisJobLockService>();
+
+            services.RegisterReplace<IJobLockService, LitRedisJobLockService>();
 
             if (litRedisBuilder != null)
             {

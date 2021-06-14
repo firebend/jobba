@@ -5,6 +5,7 @@ using LitRedis.Core.Builders;
 
 namespace Jobba.Redis
 {
+    //todo: test
     public static class LitRedisJobbaExtensions
     {
         public static JobbaBuilder UsingLitRedis(this JobbaBuilder builder, Action<LitRedisServiceCollectionBuilder> litRedisConfigure = null)
@@ -15,7 +16,9 @@ namespace Jobba.Redis
 
         public static JobbaBuilder UsingLitRedis(this JobbaBuilder builder, string connectionString)
         {
-            var _ = new JobbaLitRedisBuilder(builder.Services, litRedis => litRedis.WithConnectionString(connectionString));
+            var _ = new JobbaLitRedisBuilder(builder.Services, litRedis => litRedis
+                .WithLocking()
+                .WithConnectionString(connectionString));
             return builder;
         }
     }
