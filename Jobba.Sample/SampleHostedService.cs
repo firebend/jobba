@@ -41,6 +41,7 @@ namespace Jobba.Sample
             };
 
             var jobToCancel = await _jobScheduler.ScheduleJobAsync(cancelJobRequest, stoppingToken);
+            // ReSharper disable once UnusedVariable
             var jobToRunUntilClose = await _jobScheduler.ScheduleJobAsync(cancelJobRequest, stoppingToken);
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             await _jobScheduler.CancelJobAsync(jobToCancel.Id, stoppingToken);

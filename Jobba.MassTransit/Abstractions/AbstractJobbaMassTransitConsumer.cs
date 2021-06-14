@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
-using Jobba.Core.Implementations;
 using Jobba.MassTransit.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +18,7 @@ namespace Jobba.MassTransit.Abstractions
             _serviceProvider = serviceProvider;
         }
 
-        public abstract Task HandleMessageAsync(TSubscriber subscriber, TMessage message, CancellationToken cancellationToken);
+        protected abstract Task HandleMessageAsync(TSubscriber subscriber, TMessage message, CancellationToken cancellationToken);
 
         protected virtual Task AfterSubscribersAsync(ConsumeContext<TMessage> context) => Task.CompletedTask;
 

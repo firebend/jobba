@@ -23,7 +23,7 @@ namespace Jobba.Tests.MassTransit
             {
             }
 
-            public override Task HandleMessageAsync(IOnJobProgressSubscriber subscriber, JobProgressEvent message, CancellationToken cancellationToken) =>
+            protected override Task HandleMessageAsync(IOnJobProgressSubscriber subscriber, JobProgressEvent message, CancellationToken cancellationToken) =>
                 subscriber.OnJobProgressAsync(message, cancellationToken);
         }
 

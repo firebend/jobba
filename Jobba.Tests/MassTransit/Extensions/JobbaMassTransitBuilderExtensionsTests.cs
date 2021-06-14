@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Builders;
@@ -22,7 +21,7 @@ namespace Jobba.Tests.MassTransit.Extensions
         public async Task Jobba_MassTransit_Builder_Extensions_Should_Register_Services()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddMassTransitInMemoryTestHarness(cfg => cfg.AddMessageScheduler(new Uri("https://www.root.com")));
+            serviceCollection.AddMassTransitInMemoryTestHarness(cfg => cfg.AddDelayedMessageScheduler());
             var builder = new JobbaBuilder(serviceCollection);
             builder.UsingMassTransit();
             var serviceProvider = serviceCollection.BuildServiceProvider();

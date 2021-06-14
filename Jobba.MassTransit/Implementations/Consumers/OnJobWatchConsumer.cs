@@ -13,7 +13,7 @@ namespace Jobba.MassTransit.Implementations.Consumers
         {
         }
 
-        public override Task HandleMessageAsync(IOnJobWatchSubscriber subscriber, JobWatchEvent message, CancellationToken cancellationToken)
+        protected override Task HandleMessageAsync(IOnJobWatchSubscriber subscriber, JobWatchEvent message, CancellationToken cancellationToken)
             => subscriber.WatchJobAsync(message, cancellationToken);
     }
 }

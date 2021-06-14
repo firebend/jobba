@@ -17,7 +17,7 @@ namespace Jobba.MassTransit.Implementations.Consumers
         {
         }
 
-        public override async Task HandleMessageAsync(IOnJobCancelSubscriber subscriber, CancelJobEvent message, CancellationToken cancellationToken)
+        protected override async Task HandleMessageAsync(IOnJobCancelSubscriber subscriber, CancelJobEvent message, CancellationToken cancellationToken)
         {
             if (await subscriber.OnJobCancellationRequestAsync(message, cancellationToken))
             {
