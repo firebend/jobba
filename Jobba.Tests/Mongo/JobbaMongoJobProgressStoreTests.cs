@@ -98,7 +98,7 @@ namespace Jobba.Tests.Mongo
             progress.Should().NotBeNull();
 
             mockRepo.Verify(x => x.GetFirstOrDefaultAsync(
-                It.Is<Expression<Func<JobProgressEntity,bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
+                It.Is<Expression<Func<JobProgressEntity, bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
     }
