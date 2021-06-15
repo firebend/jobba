@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyTitle>Firebend Jabba Store Mongo</AssemblyTitle>
-    <Description>Firebend Jabba Store Mongo</Description>
-    <PackageTags>firebend;jabba;job;scheduling;durable;background;jobs;mongo;data;store</PackageTags>
+    <AssemblyTitle>Firebend Jobba Store Mongo</AssemblyTitle>
+    <Description>Firebend Jobba Store Mongo</Description>
+    <PackageTags>firebend;Jobba;job;scheduling;durable;background;jobs;mongo;data;store</PackageTags>
     <Authors>Firebend</Authors>
-    <RepositoryUrl>https://github.com/firebend/jabba</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/firebend/jabba/blob/main/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/firebend/jabba</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/firebend/jabba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
+    <RepositoryUrl>https://github.com/firebend/Jobba</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/firebend/Jobba/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/firebend/Jobba</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
   </PropertyGroup>
 
     <ItemGroup>
