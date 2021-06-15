@@ -67,6 +67,7 @@ namespace Jobba.Tests.Core.Implementations
             var jobInfo = await scheduler.ScheduleJobAsync(request, default);
 
             //assert
+
             //adding a delay because this test keeps failing on the CI server but always passes locally. :shrug:
             await Task.Delay(TimeSpan.FromSeconds(5));
             jobInfo.Should().NotBeNull();
@@ -121,6 +122,9 @@ namespace Jobba.Tests.Core.Implementations
             var jobInfo = await scheduler.ScheduleJobAsync(request, default);
 
             //assert
+
+            //adding a delay because this test keeps failing on the CI server but always passes locally. :shrug:
+            await Task.Delay(TimeSpan.FromSeconds(5));
             jobInfo.Should().NotBeNull();
             publisher.Verify(x => x.PublishJobStartedEvent(
                 It.Is<JobStartedEvent>(@event => @event.JobId == jobId),
