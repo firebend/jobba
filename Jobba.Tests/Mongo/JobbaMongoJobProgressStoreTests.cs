@@ -1,9 +1,11 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using FluentAssertions;
 using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
@@ -13,6 +15,7 @@ using Jobba.Store.Mongo.Interfaces;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Neleus.LambdaCompare;
 
 namespace Jobba.Tests.Mongo
 {
@@ -68,6 +71,35 @@ namespace Jobba.Tests.Mongo
                     patch.Operations.Any(o => o.path == "/LastProgressDate") &&
                     patch.Operations.Any(o => o.path == "/LastProgressPercentage")),
                 It.IsAny<CancellationToken>()));
+        }
+
+        [TestMethod]
+        public async Task Jobba_Mongo_Job_Progress_Store_Should_Get_By_Id()
+        {
+            //arrange
+            var fixture = new Fixture();
+            fixture.Customize(new AutoMoqCustomization());
+
+            var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
+            mockRepo.Setup(x => x.GetFirstOrDefaultAsync(
+                    It.IsAny<Expression<Func<JobProgressEntity, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new JobProgressEntity());
+
+            var service = fixture.Create<JobbaMongoJobProgressStore>();
+
+            var id = Guid.NewGuid();
+
+            Expression<Func<JobProgressEntity, bool>> expectedExpression = x => x.Id == id;
+
+            //act
+            var progress = await service.GetProgressById(id, default);
+
+            //assert
+            progress.Should().NotBeNull();
+
+            mockRepo.Verify(x => x.GetFirstOrDefaultAsync(
+                It.Is<Expression<Func<JobProgressEntity,bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

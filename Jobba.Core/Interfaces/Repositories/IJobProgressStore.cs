@@ -10,7 +10,6 @@ namespace Jobba.Core.Interfaces.Repositories
     {
         Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken);
 
-        //todo: impl and test
-        //Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken);
+        Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken);
     }
 }

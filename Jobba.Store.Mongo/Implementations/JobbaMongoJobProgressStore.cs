@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
@@ -12,10 +13,10 @@ namespace Jobba.Store.Mongo.Implementations
 {
     public class JobbaMongoJobProgressStore : IJobProgressStore
     {
+        private readonly IJobbaGuidGenerator _guidGenerator;
+        private readonly IJobEventPublisher _jobEventPublisher;
         private readonly IJobbaMongoRepository<JobEntity> _jobRepository;
         private readonly IJobbaMongoRepository<JobProgressEntity> _repository;
-        private readonly IJobEventPublisher _jobEventPublisher;
-        private readonly IJobbaGuidGenerator _guidGenerator;
 
         public JobbaMongoJobProgressStore(IJobbaMongoRepository<JobProgressEntity> repository,
             IJobEventPublisher jobEventPublisher,
@@ -44,5 +45,8 @@ namespace Jobba.Store.Mongo.Implementations
 
             await _jobRepository.UpdateAsync(jobProgress.JobId, statePatch, cancellationToken);
         }
+
+        public Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken)
+            => _repository.GetFirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 }
