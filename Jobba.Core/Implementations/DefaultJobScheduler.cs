@@ -6,6 +6,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations
 {
@@ -17,6 +18,7 @@ namespace Jobba.Core.Implementations
         private readonly IServiceProvider _serviceProvider;
         private readonly IJobbaGuidGenerator _guidGenerator;
         private readonly IJobLockService _lockService;
+        private readonly ILogger<DefaultJobScheduler> _logger;
 
         private IServiceScope _serviceScope;
         private IServiceScope ServiceScope => _serviceScope ??= _serviceProvider.CreateScope();
@@ -26,7 +28,8 @@ namespace Jobba.Core.Implementations
             IServiceProvider serviceProvider,
             IJobCancellationTokenStore jobCancellationTokenStore,
             IJobbaGuidGenerator guidGenerator,
-            IJobLockService lockService)
+            IJobLockService lockService,
+            ILogger<DefaultJobScheduler> logger)
         {
             _publisher = publisher;
             _jobStore = jobStore;
@@ -34,6 +37,7 @@ namespace Jobba.Core.Implementations
             _jobCancellationTokenStore = jobCancellationTokenStore;
             _guidGenerator = guidGenerator;
             _lockService = lockService;
+            _logger = logger;
         }
 
         public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
@@ -105,11 +109,13 @@ namespace Jobba.Core.Implementations
 
             if (request.IsRestart && request.JobId != Guid.Empty)
             {
+                _logger.LogDebug("Updating number of tries for job. JobId: {JobId}. Tries : {Tries}", request.JobId, request.NumberOfTries);
                 jobInfo = await _jobStore.SetJobAttempts<TJobParams, TJobState>(request.JobId, request.NumberOfTries, cancellationToken);
             }
             else
             {
                 jobInfo = await _jobStore.AddJobAsync(request, cancellationToken);
+                _logger.LogDebug("Created job. JobId: {JobId}", jobInfo.Id);
             }
 
             return jobInfo;
@@ -182,18 +188,31 @@ namespace Jobba.Core.Implementations
                 }
                 catch (Exception ex)
                 {
-                    await _jobStore.LogFailureAsync(jobId, ex, default);
-                    await _publisher.PublishJobFaultedEventAsync(new JobFaultedEvent(jobId), default);
+                    await OnJobFaulted<TJobParams, TJobState>(jobId, ex);
                 }
 
             }, cancellationToken);
         }
 
-        private Task OnJobCancelledAsync(Guid jobId, bool wasForced, CancellationToken cancellationToken) =>
-            _jobStore.SetJobStatusAsync(jobId, wasForced ? JobStatus.ForceCancelled : JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
+        private async Task OnJobFaulted<TJobParams, TJobState>(Guid jobId, Exception ex)
+        {
+            _logger.LogDebug("Job Faulted. JobId: {JobId}. Message: {ExceptionMessage}", jobId, ex.Message);
+
+            await _jobStore.LogFailureAsync(jobId, ex, default);
+            await _publisher.PublishJobFaultedEventAsync(new JobFaultedEvent(jobId), default);
+        }
+
+        private Task OnJobCancelledAsync(Guid jobId, bool wasForced, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("Job Cancelled. JobId: {JobId} WasForced: {WasForced}", jobId, wasForced);
+
+            return _jobStore.SetJobStatusAsync(jobId, wasForced ? JobStatus.ForceCancelled : JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
+        }
 
         private async Task OnJobCompletedAsync(Guid jobId, CancellationToken cancellationToken)
         {
+            _logger.LogDebug("Job Completed. Id: {JobId}", jobId);
+
             await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
             await _publisher.PublishJobCompletedEventAsync(new JobCompletedEvent(jobId), cancellationToken);
         }
