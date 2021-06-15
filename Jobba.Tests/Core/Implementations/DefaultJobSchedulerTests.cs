@@ -67,6 +67,8 @@ namespace Jobba.Tests.Core.Implementations
             var jobInfo = await scheduler.ScheduleJobAsync(request, default);
 
             //assert
+            //adding a delay because this test keeps failing on the CI server but always passes locally. :shrug:
+            await Task.Delay(TimeSpan.FromSeconds(2));
             jobInfo.Should().NotBeNull();
             publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
             publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
