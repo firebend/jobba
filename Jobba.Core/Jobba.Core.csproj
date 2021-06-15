@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyTitle>Firebend Jabba Core</AssemblyTitle>
-    <Description>Firebend Jabba</Description>
-    <PackageTags>firebend;jabba;job;scheduling;durable;background;jobs</PackageTags>
+    <AssemblyTitle>Firebend Jobba Core</AssemblyTitle>
+    <Description>Firebend Jobba</Description>
+    <PackageTags>firebend;Jobba;job;scheduling;durable;background;jobs</PackageTags>
     <Authors>Firebend</Authors>
-    <RepositoryUrl>https://github.com/firebend/jabba</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/firebend/jabba/blob/main/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/firebend/jabba</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/firebend/jabba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
+    <RepositoryUrl>https://github.com/firebend/Jobba</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/firebend/Jobba/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/firebend/Jobba</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
