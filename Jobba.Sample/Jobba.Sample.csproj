@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MassTransit.AspNetCore" Version="7.2.0" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="7.2.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
+      <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
+      <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+      <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
+    </ItemGroup>
+
+</Project>
