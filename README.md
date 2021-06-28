@@ -1,4 +1,11 @@
+- [jobba](#jobba)
+- [Setup](#setup)
+- [Usage](#usage)
+  - [ScheduleJobAsync](#schedulejobasync)
+  - [CancelJobAsync](#canceljobasync)
+
 # jobba
+
 A durable job scheduling platform for dotnet
 
 # Setup
