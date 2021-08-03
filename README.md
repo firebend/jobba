@@ -15,18 +15,18 @@ Check out the [Sample project](https://github.com/firebend/jobba/tree/main/Jobba
 1. Install the library
 ```xml
 <ItemGroup>
-   <PackageReference Include="Firebend.Jobba.Core" />
-   <PackageReference Include="Firebend.Jobba.MassTransit" />
-   <PackageReference Include="Firebend.Jobba.Redis" />
-   <PackageReference Include="Firebend.Jobba.Store.Mongo" />
+   <PackageReference Include="Jobba.Core" />
+   <PackageReference Include="Jobba.MassTransit" />
+   <PackageReference Include="Jobba.Redis" />
+   <PackageReference Include="Jobba.Store.Mongo" />
 </ItemGroup>
 ```
 or 
 ```bash
-dotnet add package Firebend.Jobba.Core
-dotnet add package Firebend.Jobba.MassTransit
-dotnet add package Firebend.Jobba.Redis
-dotnet add package Firebend.Jobba.Store.Mongo
+dotnet add package Jobba.Core
+dotnet add package Jobba.MassTransit
+dotnet add package Jobba.Redis
+dotnet add package Jobba.Store.Mongo
 ```
 
 2. Create a new `SampleJob` class that extends `AbstractJobBaseClass`. You can also create classes for `JobState` and `JobParameters`, or use `object` as a placeholder
