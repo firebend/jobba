@@ -27,7 +27,8 @@ namespace Jobba.Store.Mongo.Builders
 
             jobbaBuilder.Services.AddSingleton(provider =>
             {
-                var factory = provider.GetService<IJobbaMongoClientFactory>();
+                using var scope = provider.CreateScope();
+                var factory = scope.ServiceProvider.GetService<IJobbaMongoClientFactory>();
                 var client = factory?.CreateClient(connectionString, enableCommandLogging);
                 return client;
             });

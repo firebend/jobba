@@ -8,6 +8,7 @@ using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
 using MassTransit.Registration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -17,18 +18,18 @@ namespace Jobba.MassTransit.HostedServices
     {
         private readonly JobbaMassTransitConfigurationContext _configurationContext;
         private readonly IReceiveEndpointConnector _endpointConnector;
-        private readonly IJobbaMassTransitConsumerInfoProvider _consumerInfoProvider;
         private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
         public MassTransitJobbaReceiverHostedService(
             JobbaMassTransitConfigurationContext configurationContext,
             IReceiveEndpointConnector endpointConnector,
-            IJobbaMassTransitConsumerInfoProvider consumerInfoProvider,
-            ILogger<MassTransitJobbaReceiverHostedService> logger)
+            ILogger<MassTransitJobbaReceiverHostedService> logger,
+            IServiceProvider serviceProvider)
         {
+            _serviceProvider = serviceProvider;
             _configurationContext = configurationContext;
             _endpointConnector = endpointConnector;
-            _consumerInfoProvider = consumerInfoProvider;
             _logger = logger;
         }
 
@@ -36,7 +37,9 @@ namespace Jobba.MassTransit.HostedServices
         {
             try
             {
-                var consumers = _consumerInfoProvider.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
+                using var scope = _serviceProvider.CreateScope();
+                var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
+                var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
 
                 if (consumers.Any())
                 {
@@ -70,11 +73,7 @@ namespace Jobba.MassTransit.HostedServices
                     foreach (var consumerInfo in consumerInfos)
                     {
                         configureConsumer.MakeGenericMethod(consumerInfo.ConsumerType)
-                            .Invoke(null, new object[]
-                            {
-                                context,
-                                configurator
-                            });
+                            .Invoke(null, new object[] { context, configurator });
                     }
                 });
             }
@@ -111,9 +110,6 @@ namespace Jobba.MassTransit.HostedServices
         private static void ConfigureConsumer<TConsumer>(
             IConfigurationServiceProvider context,
             IReceiveEndpointConfigurator receiveEndpointConfigurator)
-            where TConsumer : class, IConsumer
-        {
-            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
-        }
+            where TConsumer : class, IConsumer => receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
     }
 }
