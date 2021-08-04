@@ -86,7 +86,7 @@ namespace Jobba.MassTransit.HostedServices
             }
             using var scope = _serviceProvider.CreateScope();
             var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
-            
+
             var prefix = configurationContext.QueuePrefix;
 
             if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
