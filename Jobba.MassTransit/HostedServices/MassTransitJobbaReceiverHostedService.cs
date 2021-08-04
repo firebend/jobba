@@ -16,20 +16,14 @@ namespace Jobba.MassTransit.HostedServices
 {
     public class MassTransitJobbaReceiverHostedService : BackgroundService
     {
-        private readonly JobbaMassTransitConfigurationContext _configurationContext;
-        private readonly IReceiveEndpointConnector _endpointConnector;
         private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
         private readonly IServiceProvider _serviceProvider;
 
         public MassTransitJobbaReceiverHostedService(
-            JobbaMassTransitConfigurationContext configurationContext,
-            IReceiveEndpointConnector endpointConnector,
             ILogger<MassTransitJobbaReceiverHostedService> logger,
             IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _configurationContext = configurationContext;
-            _endpointConnector = endpointConnector;
             _logger = logger;
         }
 
@@ -56,6 +50,9 @@ namespace Jobba.MassTransit.HostedServices
 
         private void RegisterJobbaEndpoints(List<JobbaMassTransitConsumerInfo> listeners)
         {
+            using var scope = _serviceProvider.CreateScope();
+            var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
+            var endpointConnector = scope.ServiceProvider.GetService<IReceiveEndpointConnector>();
             var configureConsumer = typeof(MassTransitJobbaReceiverHostedService).GetMethod(nameof(ConfigureConsumer),
                 BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Static);
 
@@ -64,11 +61,11 @@ namespace Jobba.MassTransit.HostedServices
                 return;
             }
 
-            var queues = GetQueues(_configurationContext.QueueMode, _configurationContext.ReceiveEndpointPrefix, listeners);
+            var queues = GetQueues(configurationContext.QueueMode, configurationContext.ReceiveEndpointPrefix, listeners);
 
             foreach (var (queueName, consumerInfos) in queues)
             {
-                _endpointConnector.ConnectReceiveEndpoint(queueName, (context, configurator) =>
+                endpointConnector.ConnectReceiveEndpoint(queueName, (context, configurator) =>
                 {
                     foreach (var consumerInfo in consumerInfos)
                     {
@@ -87,8 +84,10 @@ namespace Jobba.MassTransit.HostedServices
             {
                 throw new ArgumentException("Queue mode is unknown", nameof(queueMode));
             }
-
-            var prefix = _configurationContext.QueuePrefix;
+            using var scope = _serviceProvider.CreateScope();
+            var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
+            
+            var prefix = configurationContext.QueuePrefix;
 
             if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
             {
