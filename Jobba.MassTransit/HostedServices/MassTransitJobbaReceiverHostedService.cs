@@ -8,6 +8,7 @@ using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
 using MassTransit.Registration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -15,20 +16,14 @@ namespace Jobba.MassTransit.HostedServices
 {
     public class MassTransitJobbaReceiverHostedService : BackgroundService
     {
-        private readonly JobbaMassTransitConfigurationContext _configurationContext;
-        private readonly IReceiveEndpointConnector _endpointConnector;
-        private readonly IJobbaMassTransitConsumerInfoProvider _consumerInfoProvider;
         private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
         public MassTransitJobbaReceiverHostedService(
-            JobbaMassTransitConfigurationContext configurationContext,
-            IReceiveEndpointConnector endpointConnector,
-            IJobbaMassTransitConsumerInfoProvider consumerInfoProvider,
-            ILogger<MassTransitJobbaReceiverHostedService> logger)
+            ILogger<MassTransitJobbaReceiverHostedService> logger,
+            IServiceProvider serviceProvider)
         {
-            _configurationContext = configurationContext;
-            _endpointConnector = endpointConnector;
-            _consumerInfoProvider = consumerInfoProvider;
+            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 
@@ -36,7 +31,9 @@ namespace Jobba.MassTransit.HostedServices
         {
             try
             {
-                var consumers = _consumerInfoProvider.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
+                using var scope = _serviceProvider.CreateScope();
+                var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
+                var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
 
                 if (consumers.Any())
                 {
@@ -53,6 +50,9 @@ namespace Jobba.MassTransit.HostedServices
 
         private void RegisterJobbaEndpoints(List<JobbaMassTransitConsumerInfo> listeners)
         {
+            using var scope = _serviceProvider.CreateScope();
+            var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
+            var endpointConnector = scope.ServiceProvider.GetService<IReceiveEndpointConnector>();
             var configureConsumer = typeof(MassTransitJobbaReceiverHostedService).GetMethod(nameof(ConfigureConsumer),
                 BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Static);
 
@@ -61,20 +61,16 @@ namespace Jobba.MassTransit.HostedServices
                 return;
             }
 
-            var queues = GetQueues(_configurationContext.QueueMode, _configurationContext.ReceiveEndpointPrefix, listeners);
+            var queues = GetQueues(configurationContext.QueueMode, configurationContext.ReceiveEndpointPrefix, listeners);
 
             foreach (var (queueName, consumerInfos) in queues)
             {
-                _endpointConnector.ConnectReceiveEndpoint(queueName, (context, configurator) =>
+                endpointConnector.ConnectReceiveEndpoint(queueName, (context, configurator) =>
                 {
                     foreach (var consumerInfo in consumerInfos)
                     {
                         configureConsumer.MakeGenericMethod(consumerInfo.ConsumerType)
-                            .Invoke(null, new object[]
-                            {
-                                context,
-                                configurator
-                            });
+                            .Invoke(null, new object[] { context, configurator });
                     }
                 });
             }
@@ -88,8 +84,10 @@ namespace Jobba.MassTransit.HostedServices
             {
                 throw new ArgumentException("Queue mode is unknown", nameof(queueMode));
             }
+            using var scope = _serviceProvider.CreateScope();
+            var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
 
-            var prefix = _configurationContext.QueuePrefix;
+            var prefix = configurationContext.QueuePrefix;
 
             if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
             {
@@ -111,9 +109,6 @@ namespace Jobba.MassTransit.HostedServices
         private static void ConfigureConsumer<TConsumer>(
             IConfigurationServiceProvider context,
             IReceiveEndpointConfigurator receiveEndpointConfigurator)
-            where TConsumer : class, IConsumer
-        {
-            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
-        }
+            where TConsumer : class, IConsumer => receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
     }
 }
