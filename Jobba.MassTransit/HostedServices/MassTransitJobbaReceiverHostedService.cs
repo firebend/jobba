@@ -37,7 +37,7 @@ namespace Jobba.MassTransit.HostedServices
 
                 if (consumers.Any())
                 {
-                    RegisterJobbaEndpoints(consumers);
+                    RegisterJobbaEndpoints(scope, consumers);
                 }
             }
             catch (Exception ex)
@@ -48,35 +48,36 @@ namespace Jobba.MassTransit.HostedServices
             return Task.CompletedTask;
         }
 
-        private void RegisterJobbaEndpoints(List<JobbaMassTransitConsumerInfo> listeners)
+        private void RegisterJobbaEndpoints(IServiceScope scope, List<JobbaMassTransitConsumerInfo> listeners)
         {
-            using var scope = _serviceProvider.CreateScope();
+
             var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
             var endpointConnector = scope.ServiceProvider.GetService<IReceiveEndpointConnector>();
-            var configureConsumer = typeof(MassTransitJobbaReceiverHostedService).GetMethod(nameof(ConfigureConsumer),
-                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Static);
+            var configureConsumer = typeof(MassTransitJobbaReceiverHostedService).GetMethod(nameof(ConfigureConsumer), BindingFlags.Static | BindingFlags.NonPublic);
 
-            if (configureConsumer == null)
+            if (configureConsumer == null || configurationContext == null || endpointConnector == null)
             {
                 return;
             }
 
-            var queues = GetQueues(configurationContext.QueueMode, configurationContext.ReceiveEndpointPrefix, listeners);
+            var queues = GetQueues(scope, configurationContext.QueueMode, configurationContext.ReceiveEndpointPrefix, listeners);
 
             foreach (var (queueName, consumerInfos) in queues)
             {
-                endpointConnector.ConnectReceiveEndpoint(queueName, (context, configurator) =>
+                endpointConnector.ConnectReceiveEndpoint(queueName, (_, configurator) =>
                 {
                     foreach (var consumerInfo in consumerInfos)
                     {
                         configureConsumer.MakeGenericMethod(consumerInfo.ConsumerType)
-                            .Invoke(null, new object[] { context, configurator });
+                            .Invoke(null, new object[] { configurator, _serviceProvider });
                     }
                 });
             }
         }
 
-        private Dictionary<string, List<JobbaMassTransitConsumerInfo>> GetQueues(JobbaMassTransitQueueMode queueMode,
+        private static Dictionary<string, List<JobbaMassTransitConsumerInfo>> GetQueues(
+            IServiceScope scope,
+            JobbaMassTransitQueueMode queueMode,
             string receiveEndpointPrefix,
             List<JobbaMassTransitConsumerInfo> consumerInfos)
         {
@@ -84,10 +85,10 @@ namespace Jobba.MassTransit.HostedServices
             {
                 throw new ArgumentException("Queue mode is unknown", nameof(queueMode));
             }
-            using var scope = _serviceProvider.CreateScope();
+
             var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
 
-            var prefix = configurationContext.QueuePrefix;
+            var prefix = configurationContext?.QueuePrefix ?? string.Empty;
 
             if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
             {
@@ -106,9 +107,17 @@ namespace Jobba.MassTransit.HostedServices
             };
         }
 
-        private static void ConfigureConsumer<TConsumer>(
-            IConfigurationServiceProvider context,
-            IReceiveEndpointConfigurator receiveEndpointConfigurator)
-            where TConsumer : class, IConsumer => receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ => context.GetService<TConsumer>());
+        private static  void ConfigureConsumer<TConsumer>(
+            IReceiveEndpointConfigurator receiveEndpointConfigurator,
+            IServiceProvider serviceProvider)
+            where TConsumer : class, IConsumer
+        {
+            receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ =>
+            {
+                var scope = serviceProvider.CreateScope();
+                var consumer = scope.ServiceProvider.GetService<TConsumer>();
+                return consumer;
+            });
+        }
     }
 }

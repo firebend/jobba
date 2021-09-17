@@ -21,8 +21,6 @@ namespace Jobba.MassTransit.Extensions
 
         public static JobbaBuilder UsingMassTransit(this JobbaBuilder builder)
         {
-            builder.Services.AddHostedService<MassTransitJobbaReceiverHostedService>();
-
             builder.Services.TryAddScoped<IJobbaMassTransitConsumerInfoProvider, JobbaMassTransitConsumerInfoProvider>();
 
             builder.Services.RegisterReplace<IJobEventPublisher, MassTransitJobEventPublisher>();
@@ -40,6 +38,8 @@ namespace Jobba.MassTransit.Extensions
 
             IContainerRegistrar registrar = new DependencyInjectionContainerRegistrar(builder.Services);
             registrar.RegisterRequestClient<CancelJobEvent>();
+
+            builder.Services.AddHostedService<MassTransitJobbaReceiverHostedService>();
 
             return builder;
         }

@@ -8,30 +8,28 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.MassTransit.Implementations
 {
-    public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInfoProvider
+    public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInfoProvider, IDisposable
     {
-        private readonly IServiceProvider _provider;
+        private readonly IServiceScope _serviceScope;
         private readonly JobbaMassTransitConfigurationContext _configurationContext;
 
-        public JobbaMassTransitConsumerInfoProvider(IServiceProvider provider,
+        public JobbaMassTransitConsumerInfoProvider(IServiceProvider serviceProvider,
             JobbaMassTransitConfigurationContext configurationContext)
         {
-            _provider = provider;
+            _serviceScope = serviceProvider.CreateScope();
             _configurationContext = configurationContext;
         }
 
         public IEnumerable<JobbaMassTransitConsumerInfo> GetConsumerInfos()
         {
-            using var scope = _provider.CreateScope();
-
-            var consumers = scope
+            var consumers = _serviceScope
                 .ServiceProvider
                 .GetServices<IJobbaMassTransitConsumer>()
                 .ToList();
 
             if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
             {
-                var jobs = scope
+                var jobs = _serviceScope
                     .ServiceProvider
                     .GetServices<IJob>();
 
@@ -51,5 +49,7 @@ namespace Jobba.MassTransit.Implementations
                 }
             }
         }
+
+        public void Dispose() => _serviceScope?.Dispose();
     }
 }

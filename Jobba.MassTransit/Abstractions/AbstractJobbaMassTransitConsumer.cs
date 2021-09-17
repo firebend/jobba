@@ -8,14 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.MassTransit.Abstractions
 {
-    public abstract class AbstractJobbaMassTransitConsumer<TMessage, TSubscriber> : IConsumer<TMessage>, IJobbaMassTransitConsumer
+    public abstract class AbstractJobbaMassTransitConsumer<TMessage, TSubscriber> : IConsumer<TMessage>, IJobbaMassTransitConsumer, IDisposable
         where TMessage : class
     {
-        private readonly IServiceProvider _serviceProvider;
+        private IServiceScope _serviceScope;
 
         protected AbstractJobbaMassTransitConsumer(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
+            _serviceScope = serviceProvider.CreateScope();
         }
 
         protected abstract Task HandleMessageAsync(TSubscriber subscriber, TMessage message, CancellationToken cancellationToken);
@@ -24,9 +24,7 @@ namespace Jobba.MassTransit.Abstractions
 
         public async Task Consume(ConsumeContext<TMessage> context)
         {
-            using var scope = _serviceProvider.CreateScope();
-
-            var tasks = scope
+            var tasks = _serviceScope
                 .ServiceProvider
                 .GetServices<TSubscriber>()
                 .Select(x => HandleMessageAsync(x, context.Message, context.CancellationToken));
@@ -35,5 +33,7 @@ namespace Jobba.MassTransit.Abstractions
 
             await AfterSubscribersAsync(context);
         }
+
+        public void Dispose() => _serviceScope?.Dispose();
     }
 }
