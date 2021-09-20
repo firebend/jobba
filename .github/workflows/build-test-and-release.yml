@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: dotnet build jobba.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal
+      run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName!~IntegrationTests
 
     - name: Publish Core
       uses: rohith/publish-nuget@v2
