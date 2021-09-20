@@ -5,7 +5,6 @@ using Jobba.Redis.Implementations;
 using LitRedis.Core;
 using LitRedis.Core.Builders;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.Redis.Builders
 {

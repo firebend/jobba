@@ -11,7 +11,7 @@ namespace Jobba.MassTransit.Abstractions
     public abstract class AbstractJobbaMassTransitConsumer<TMessage, TSubscriber> : IConsumer<TMessage>, IJobbaMassTransitConsumer, IDisposable
         where TMessage : class
     {
-        private IServiceScope _serviceScope;
+        private readonly IServiceScope _serviceScope;
 
         protected AbstractJobbaMassTransitConsumer(IServiceProvider serviceProvider)
         {
