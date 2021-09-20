@@ -1,10 +1,10 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
+using static System.Threading.Tasks.Task;
 
 namespace Jobba.Web.Sample
 {
@@ -29,16 +29,20 @@ namespace Jobba.Web.Sample
 
         protected override async Task OnStartAsync(JobStartContext<SampleWebJobParameters, SampleWebJobState> jobStartContext, CancellationToken cancellationToken)
         {
-            var tries = jobStartContext.JobState.Tries + 1;
-            _logger.LogInformation("Hey I'm trying! Tries: {Tries} {JobId} {Now}", tries, jobStartContext.JobId, DateTimeOffset.Now);
-            await LogProgressAsync(new SampleWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
-            await Task.Delay(100 * tries, cancellationToken);
-
-            if (tries < 10)
+            if (jobStartContext.IsRestart)
             {
-                throw new Exception($"Haven't tried enough {tries}");
+                _logger.LogInformation("I was restarted");
+                return;
             }
-            _logger.LogInformation("Now I'm done!");
+
+            var tries = jobStartContext.JobState.Tries + 1;
+            await LogProgressAsync(new SampleWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
+
+            while (true)
+            {
+                _logger.LogInformation("Waiting for someone to cancel me. {JobId}", jobStartContext.JobId);
+                await Delay(1_000, cancellationToken);
+            }
         }
 
         public override string JobName => "Sample Job";

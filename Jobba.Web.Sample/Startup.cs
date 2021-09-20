@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Jobba.Core.Extensions;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
@@ -24,7 +25,12 @@ namespace Jobba.Web.Sample
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(o =>
+                {
+                    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    o.JsonSerializerOptions.Converters.Add(new TimeSpanStringConverter());
+                });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Jobba.Web.Sample", Version = "v1" });
