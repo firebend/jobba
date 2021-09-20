@@ -42,7 +42,7 @@ namespace Jobba.Web.Sample
                         .UsingMongo("mongodb://localhost:27017/jobba-web-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")
                         .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>()
-                        .AddJob<SampleWebJobCancel, object, object>()
+                        .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>()
                 )
                 .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");
         }

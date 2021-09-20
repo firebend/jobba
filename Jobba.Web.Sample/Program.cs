@@ -10,8 +10,12 @@ namespace Jobba.Web.Sample
         public static void Main(string[] args)
         {
             JobbaMongoDbConfigurator.Configure();
+
             BsonClassMap.RegisterClassMap<SampleWebJobParameters>();
             BsonClassMap.RegisterClassMap<SampleWebJobState>();
+            BsonClassMap.RegisterClassMap<SampleFaultWebJobParameters>();
+            BsonClassMap.RegisterClassMap<SampleFaultWebJobState>();
+
             CreateHostBuilder(args).Build().Run();
         }
 
