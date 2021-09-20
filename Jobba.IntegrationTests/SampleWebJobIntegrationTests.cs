@@ -59,7 +59,7 @@ namespace Jobba.IntegrationTests
             var inProgressJobInfo = await WaitUntil(
                 () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
                 x => x.Status == JobStatus.InProgress,
-                because:"Job is not in progress"
+                because: "Job is not in progress"
             );
             inProgressJobInfo.Should().NotBeNull();
             inProgressJobInfo.Status.Should().Be(JobStatus.InProgress);
@@ -70,7 +70,7 @@ namespace Jobba.IntegrationTests
             var cancelledJobInfo = await WaitUntil(
                 () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
                 x => x.Status == JobStatus.Cancelled,
-                because:"Job is not cancelled"
+                because: "Job is not cancelled"
             );
 
             cancelledJobInfo.Should().NotBeNull();

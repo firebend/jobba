@@ -106,7 +106,7 @@ namespace Jobba.MassTransit.HostedServices
             };
         }
 
-        private static  void ConfigureConsumer<TConsumer>(
+        private static void ConfigureConsumer<TConsumer>(
             IReceiveEndpointConfigurator receiveEndpointConfigurator,
             IServiceProvider serviceProvider)
             where TConsumer : class, IConsumer
