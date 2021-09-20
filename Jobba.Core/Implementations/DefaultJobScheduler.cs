@@ -20,9 +20,6 @@ namespace Jobba.Core.Implementations
         private readonly IJobLockService _lockService;
         private readonly ILogger<DefaultJobScheduler> _logger;
 
-        private IServiceScope _serviceScope;
-        private IServiceScope ServiceScope => _serviceScope ??= _serviceProvider.CreateScope();
-
         public DefaultJobScheduler(IJobEventPublisher publisher,
             IJobStore jobStore,
             IServiceProvider serviceProvider,
@@ -63,7 +60,8 @@ namespace Jobba.Core.Implementations
             var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
             await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobWatchInterval, cancellationToken);
             var context = GetJobStartContext(request, jobInfo);
-            var _ = RunJobAsync(jobId, request.JobType, context, token, cancellationToken);
+            var scope = _serviceProvider.CreateScope();
+            var _ = RunJobAsync(jobId, request.JobType, context, scope, token, cancellationToken);
             await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, cancellationToken);
 
             return jobInfo;
@@ -154,10 +152,11 @@ namespace Jobba.Core.Implementations
         private async Task RunJobAsync<TJobParams, TJobState>(Guid jobId,
             Type jobType,
             JobStartContext<TJobParams, TJobState> context,
+            IServiceScope scope,
             CancellationToken jobCancellationToken,
             CancellationToken cancellationToken)
         {
-            if (ServiceScope.ServiceProvider.GetService(jobType) is not IJob<TJobParams, TJobState> job)
+            if (scope.ServiceProvider.GetService(jobType) is not IJob<TJobParams, TJobState> job)
             {
                 throw new Exception($"Could not resolve job from service provider. Job Type {jobType}");
             }
@@ -189,6 +188,10 @@ namespace Jobba.Core.Implementations
                 catch (Exception ex)
                 {
                     await OnJobFaulted<TJobParams, TJobState>(jobId, ex);
+                }
+                finally
+                {
+                    scope.Dispose();
                 }
 
             }, cancellationToken);
@@ -231,6 +234,9 @@ namespace Jobba.Core.Implementations
             CurrentNumberOfTries = request.NumberOfTries
         };
 
-        public void Dispose() => _serviceScope?.Dispose();
+        public void Dispose()
+        {
+
+        }
     }
 }

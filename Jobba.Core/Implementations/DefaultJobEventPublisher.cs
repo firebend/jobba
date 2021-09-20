@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations
 {
-    public class DefaultJobEventPublisher : IJobEventPublisher
+    public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
     {
         private readonly ILogger<DefaultJobEventPublisher> _logger;
         private readonly IServiceScope _scope;
@@ -145,5 +145,7 @@ namespace Jobba.Core.Implementations
 
             return Task.CompletedTask;
         }
+
+        public void Dispose() => _scope?.Dispose();
     }
 }
