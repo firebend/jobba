@@ -7,7 +7,7 @@ namespace Jobba.Store.Mongo.Implementations
 {
     public class JobbaMongoIdGenerator : IIdGenerator
     {
-        private IJobbaGuidGenerator _guidGenerator;
+        private readonly IJobbaGuidGenerator _guidGenerator;
 
         public JobbaMongoIdGenerator(IJobbaGuidGenerator guidGenerator)
         {

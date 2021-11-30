@@ -45,10 +45,7 @@ namespace Jobba.Tests.Core.Extensions
             serviceCollection.AddSingleton(mockProgressStore.Object);
 
             //act
-            serviceCollection.AddJobba(builder =>
-            {
-                builder.AddJob<FooJob, FooParams, FooState>();
-            });
+            serviceCollection.AddJobba(builder => builder.AddJob<FooJob, FooParams, FooState>());
 
             var provider = serviceCollection.BuildServiceProvider();
 

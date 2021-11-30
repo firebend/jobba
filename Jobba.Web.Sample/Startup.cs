@@ -31,10 +31,7 @@ namespace Jobba.Web.Sample
                     o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     o.JsonSerializerOptions.Converters.Add(new TimeSpanStringConverter());
                 });
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Jobba.Web.Sample", Version = "v1" });
-            });
+            services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "Jobba.Web.Sample", Version = "v1" }));
             services
                 .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
                 .AddJobba(jobba =>
@@ -63,10 +60,7 @@ namespace Jobba.Web.Sample
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }
