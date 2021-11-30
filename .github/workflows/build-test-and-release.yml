@@ -11,12 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.102
+        dotnet-version: 6.0.100
+
     - name: Install dependencies
       run: dotnet restore jobba.sln
+
     - name: Build
       run: dotnet build jobba.sln --configuration Release --no-restore
     - name: Test
