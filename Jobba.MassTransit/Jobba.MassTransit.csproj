@@ -23,8 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="7.2.4" />
-      <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.2.4" />
+      <PackageReference Include="MassTransit" Version="8.0.8" />
     </ItemGroup>
 
 </Project>

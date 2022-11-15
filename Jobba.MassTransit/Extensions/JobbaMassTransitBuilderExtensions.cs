@@ -8,8 +8,7 @@ using Jobba.MassTransit.Implementations.Consumers;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
-using MassTransit.ExtensionsDependencyInjectionIntegration.Registration;
-using MassTransit.Registration;
+using MassTransit.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
