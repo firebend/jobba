@@ -27,16 +27,16 @@ jobs:
       run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName\!~IntegrationTests
 
     - name: Pack
-      run : dotnet pack **/*/Jobba.Core.csproj --configuration Release --output out/pack --no-build
+      run : dotnet pack **/Jobba.Core.csproj --configuration Release --output out/pack --no-build
 
     - name: Pack
-      run : dotnet pack **/*/Jobba.MassTransit.csproj --configuration Release --output out/pack --no-build
+      run : dotnet pack **/Jobba.MassTransit.csproj --configuration Release --output out/pack --no-build
 
     - name: Pack
-      run : dotnet pack **/*/Jobba.Redis.csproj --configuration Release --output out/pack --no-build
+      run : dotnet pack **/Jobba.Redis.csproj --configuration Release --output out/pack --no-build
 
     - name: Pack
-      run : dotnet pack **/*/Jobba.Store.Mongo.csproj --configuration Release --output out/pack --no-build
+      run : dotnet pack **/Jobba.Store.Mongo.csproj --configuration Release --output out/pack --no-build
 
     - name: Publish
       run: dotnet nuget push ./out/pack/*.nupkg --api-key  ${{secrets.FIREBEND_NUGET_KEY}} --skip-duplicate --source https://api.nuget.org/v3/index.json
