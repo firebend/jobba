@@ -15,40 +15,28 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.100
+        dotnet-version: 7.0.100
 
     - name: Install dependencies
       run: dotnet restore jobba.sln
 
     - name: Build
       run: dotnet build jobba.sln --configuration Release --no-restore
+
     - name: Test
       run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName\!~IntegrationTests
 
-    - name: Publish Core
-      uses: rohith/publish-nuget@v2
-      with:
-         PROJECT_FILE_PATH: Jobba.Core/Jobba.Core.csproj
-         NUGET_KEY: ${{secrets.FIREBEND_NUGET_KEY}}
-         TAG_COMMIT: false
+    - name: Pack
+      run : dotnet pack **/*/Jobba.Core.csproj --configuration Release --output out/pack --no-build
 
-    - name: Publish MassTransit
-      uses: rohith/publish-nuget@v2
-      with:
-        PROJECT_FILE_PATH: Jobba.MassTransit/Jobba.MassTransit.csproj
-        NUGET_KEY: ${{secrets.FIREBEND_NUGET_KEY}}
-        TAG_COMMIT: false
+    - name: Pack
+      run : dotnet pack **/*/Jobba.MassTransit.csproj --configuration Release --output out/pack --no-build
 
-    - name: Publish Redis
-      uses: rohith/publish-nuget@v2
-      with:
-        PROJECT_FILE_PATH: Jobba.Redis/Jobba.Redis.csproj
-        NUGET_KEY: ${{secrets.FIREBEND_NUGET_KEY}}
-        TAG_COMMIT: false
+    - name: Pack
+      run : dotnet pack **/*/Jobba.Redis.csproj --configuration Release --output out/pack --no-build
 
-    - name: Publish Mongo Store
-      uses: rohith/publish-nuget@v2
-      with:
-        PROJECT_FILE_PATH: Jobba.Store.Mongo/Jobba.Store.Mongo.csproj
-        NUGET_KEY: ${{secrets.FIREBEND_NUGET_KEY}}
-        TAG_COMMIT: false
+    - name: Pack
+      run : dotnet pack **/*/Jobba.Store.Mongo.csproj --configuration Release --output out/pack --no-build
+
+    - name: Publish
+      run: dotnet nuget push ./out/pack/*.nupkg --api-key  ${{secrets.FIREBEND_NUGET_KEY}} --skip-duplicate --source https://api.nuget.org/v3/index.json

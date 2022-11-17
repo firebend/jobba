@@ -111,8 +111,6 @@ namespace Jobba.Tests.MassTransit
             }
             finally
             {
-                await harness.Stop();
-
                 await serviceProvider.DisposeAsync();
             }
         }

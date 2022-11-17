@@ -37,7 +37,6 @@ namespace Jobba.Sample
                     configurator.UseDelayedMessageScheduler();
                     configurator.ConfigureEndpoints(context);
                 });
-            })
-            .AddMassTransitHostedService();
+            });
     }
 }
