@@ -6,6 +6,6 @@ namespace Jobba.Core.Interfaces
 {
     public interface IJobLockService
     {
-        Task<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken);
+        ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken);
     }
 }

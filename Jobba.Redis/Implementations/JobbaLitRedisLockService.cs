@@ -16,7 +16,7 @@ namespace Jobba.Redis.Implementations
             _lockService = lockService;
         }
 
-        public async Task<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken)
+        public async ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken)
         {
             var lockModel = RequestLockModel
                 .WithKey($"Jobba_{jobId}")

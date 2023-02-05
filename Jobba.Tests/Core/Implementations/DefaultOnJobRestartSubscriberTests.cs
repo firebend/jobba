@@ -41,7 +41,7 @@ namespace Jobba.Tests.Core.Implementations
             };
 
             var lockMock = fixture.Freeze<Mock<IJobLockService>>();
-            lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()).AsTask())
                 .ReturnsAsync(new Mock<IDisposable>().Object);
 
             var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
@@ -107,7 +107,7 @@ namespace Jobba.Tests.Core.Implementations
             };
 
             var lockMock = fixture.Freeze<Mock<IJobLockService>>();
-            lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()).AsTask())
                 .ReturnsAsync(new Mock<IDisposable>().Object);
 
             var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
