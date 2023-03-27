@@ -6,11 +6,6 @@ using MongoDB.Bson.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 JobbaMongoDbConfigurator.Configure();
 
-BsonClassMap.RegisterClassMap<SampleWebJobParameters>();
-BsonClassMap.RegisterClassMap<SampleWebJobState>();
-BsonClassMap.RegisterClassMap<SampleFaultWebJobParameters>();
-BsonClassMap.RegisterClassMap<SampleFaultWebJobState>();
-
 var startup = new Startup(builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
