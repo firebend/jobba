@@ -1,3 +1,4 @@
+using System;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
@@ -7,9 +8,18 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.Core.Builders
 {
+    public record JobAddedEventArgs
+    {
+        public Type JobType { get; set; }
+        public Type JobParamsType { get; set; }
+        public Type JobStateType { get; set; }
+    }
+
     public class JobbaBuilder
     {
         public IServiceCollection Services { get; }
+
+        public Action<JobAddedEventArgs> OnJobAdded { get; set; }
 
         public JobbaBuilder(IServiceCollection services)
         {
@@ -39,6 +49,13 @@ namespace Jobba.Core.Builders
             Services.TryAddScoped<IJobWatcher<TJobParams, TJobState>, DefaultJobWatcher<TJobParams, TJobState>>();
             Services.TryAddScoped<IJob<TJobParams, TJobState>, TJob>();
             Services.TryAddScoped<TJob>();
+
+            OnJobAdded?.Invoke(new()
+            {
+                JobType = typeof(TJob),
+                JobStateType = typeof(TJobState),
+                JobParamsType = typeof(TJobParams)
+            });
 
             return this;
         }
