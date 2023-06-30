@@ -25,7 +25,7 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.8" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
-      <PackageReference Include="MongoDB.Driver" Version="2.19.2" />
+      <PackageReference Include="MongoDB.Driver" Version="2.20.0" />
     </ItemGroup>
 
 </Project>
