@@ -1,22 +1,20 @@
 using System;
 
-namespace Jobba.Core.Events
+namespace Jobba.Core.Events;
+
+public class JobFaultedEvent
 {
-    public class JobFaultedEvent
+    public JobFaultedEvent()
     {
-        /// <summary>
-        /// The id of the job that has faulted.
-        /// </summary>
-        public Guid JobId { get; set; }
-
-        public JobFaultedEvent()
-        {
-
-        }
-
-        public JobFaultedEvent(Guid jobId)
-        {
-            JobId = jobId;
-        }
     }
+
+    public JobFaultedEvent(Guid jobId)
+    {
+        JobId = jobId;
+    }
+
+    /// <summary>
+    ///     The id of the job that has faulted.
+    /// </summary>
+    public Guid JobId { get; set; }
 }

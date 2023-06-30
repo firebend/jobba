@@ -12,39 +12,38 @@ using MassTransit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Jobba.Tests.MassTransit.Consumers
+namespace Jobba.Tests.MassTransit.Consumers;
+
+[TestClass]
+public class OnJobProgressConsumerTests
 {
-    [TestClass]
-    public class OnJobProgressConsumerTests
+    [TestMethod]
+    public async Task On_Job_Progress_Consumer_Should_Consume()
     {
-        [TestMethod]
-        public async Task On_Job_Progress_Consumer_Should_Consume()
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var subscriberMock = fixture.Freeze<Mock<IOnJobProgressSubscriber>>();
+        subscriberMock.Setup(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
-            //arrange
-            var fixture = new Fixture();
-            fixture.Customize(new AutoMoqCustomization());
-
-            var subscriberMock = fixture.Freeze<Mock<IOnJobProgressSubscriber>>();
-            subscriberMock.Setup(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
             {
+                typeof(IEnumerable<IOnJobProgressSubscriber>), new[]
                 {
-                    typeof(IEnumerable<IOnJobProgressSubscriber>), new[]
-                    {
-                        subscriberMock.Object
-                    }
+                    subscriberMock.Object
                 }
-            }));
+            }
+        }));
 
-            var consumer = fixture.Create<OnJobProgressConsumer>();
+        var consumer = fixture.Create<OnJobProgressConsumer>();
 
-            //act
-            await consumer.Consume(new Mock<ConsumeContext<JobProgressEvent>>().Object);
+        //act
+        await consumer.Consume(new Mock<ConsumeContext<JobProgressEvent>>().Object);
 
-            //assert
-            subscriberMock.Verify(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()), Times.Once);
-        }
+        //assert
+        subscriberMock.Verify(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

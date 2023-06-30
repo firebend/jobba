@@ -1,9 +1,8 @@
-namespace Jobba.MassTransit.Models
+namespace Jobba.MassTransit.Models;
+
+public enum JobbaMassTransitQueueMode
 {
-    public enum JobbaMassTransitQueueMode
-    {
-        Unknown = 0,
-        OneQueue = 1,
-        OnePerJob = 2,
-    }
+    Unknown = 0,
+    OneQueue = 1,
+    OnePerJob = 2
 }

@@ -2,39 +2,38 @@ using System;
 using System.Threading.Tasks;
 using Jobba.Store.Mongo.Interfaces;
 
-namespace Jobba.Store.Mongo.Implementations
+namespace Jobba.Store.Mongo.Implementations;
+
+public class JobbaMongoRetryService : IJobbaMongoRetryService
 {
-    public class JobbaMongoRetryService : IJobbaMongoRetryService
+    public async Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries)
     {
-        public async Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries)
+        var tries = 0;
+        double delay = 100;
+        TimeSpan delayTimeSpan;
+
+        while (true)
         {
-            var tries = 0;
-            double delay = 100;
-            TimeSpan delayTimeSpan;
-
-            while (true)
+            try
             {
-                try
+                return await method();
+            }
+            catch
+            {
+                tries++;
+
+                if (tries >= maxTries)
                 {
-                    return await method();
+                    throw;
                 }
-                catch
+
+                if (tries != 1)
                 {
-                    tries++;
-
-                    if (tries >= maxTries)
-                    {
-                        throw;
-                    }
-
-                    if (tries != 1)
-                    {
-                        delay = Math.Ceiling(Math.Pow(delay, 1.1));
-                    }
-
-                    delayTimeSpan = TimeSpan.FromMilliseconds(delay);
-                    await Task.Delay(delayTimeSpan);
+                    delay = Math.Ceiling(Math.Pow(delay, 1.1));
                 }
+
+                delayTimeSpan = TimeSpan.FromMilliseconds(delay);
+                await Task.Delay(delayTimeSpan);
             }
         }
     }

@@ -3,24 +3,27 @@ using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobba.Tests.Mongo
+namespace Jobba.Tests.Mongo;
+
+[TestClass]
+public class JobbaEntityConfigurationProviderTests
 {
-    [TestClass]
-    public class JobbaEntityConfigurationProviderTests
+    [TestMethod]
+    public void Jobba_Entity_Configuration_Provider_Should_Provide_Configuration()
     {
-        [TestMethod]
-        public void Jobba_Entity_Configuration_Provider_Should_Provide_Configuration()
+        //arrange
+        var expected = new JobbaEntityConfiguration
         {
-            //arrange
-            var expected = new JobbaEntityConfiguration { Collection = "fake collection", Database = "fake db" };
+            Collection = "fake collection",
+            Database = "fake db"
+        };
 
-            var provider = new JobbaEntityConfigurationProvider<object>(expected);
+        var provider = new JobbaEntityConfigurationProvider<object>(expected);
 
-            //act
-            var config = provider.GetConfiguration();
+        //act
+        var config = provider.GetConfiguration();
 
-            //assert
-            config.Should().BeEquivalentTo(expected);
-        }
+        //assert
+        config.Should().BeEquivalentTo(expected);
     }
 }

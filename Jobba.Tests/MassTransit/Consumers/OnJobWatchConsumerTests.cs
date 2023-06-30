@@ -12,39 +12,38 @@ using MassTransit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Jobba.Tests.MassTransit.Consumers
+namespace Jobba.Tests.MassTransit.Consumers;
+
+[TestClass]
+public class OnJobWatchConsumerTests
 {
-    [TestClass]
-    public class OnJobWatchConsumerTests
+    [TestMethod]
+    public async Task On_Job_Watch_Consumer_Should_Consume()
     {
-        [TestMethod]
-        public async Task On_Job_Watch_Consumer_Should_Consume()
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var subscriberMock = fixture.Freeze<Mock<IOnJobWatchSubscriber>>();
+        subscriberMock.Setup(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
-            //arrange
-            var fixture = new Fixture();
-            fixture.Customize(new AutoMoqCustomization());
-
-            var subscriberMock = fixture.Freeze<Mock<IOnJobWatchSubscriber>>();
-            subscriberMock.Setup(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-
-            fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
             {
+                typeof(IEnumerable<IOnJobWatchSubscriber>), new[]
                 {
-                    typeof(IEnumerable<IOnJobWatchSubscriber>), new[]
-                    {
-                        subscriberMock.Object
-                    }
+                    subscriberMock.Object
                 }
-            }));
+            }
+        }));
 
-            var consumer = fixture.Create<OnJobWatchConsumer>();
+        var consumer = fixture.Create<OnJobWatchConsumer>();
 
-            //act
-            await consumer.Consume(new Mock<ConsumeContext<JobWatchEvent>>().Object);
+        //act
+        await consumer.Consume(new Mock<ConsumeContext<JobWatchEvent>>().Object);
 
-            //assert
-            subscriberMock.Verify(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()), Times.Once);
-        }
+        //assert
+        subscriberMock.Verify(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

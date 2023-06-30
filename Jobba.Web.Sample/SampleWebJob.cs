@@ -6,45 +6,44 @@ using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
 using static System.Threading.Tasks.Task;
 
-namespace Jobba.Web.Sample
+namespace Jobba.Web.Sample;
+
+public class SampleWebJobState
 {
-    public class SampleWebJobState
+    public int Tries { get; set; }
+}
+
+public class SampleWebJobParameters
+{
+    public string Greeting { get; set; }
+}
+
+public class SampleWebJob : AbstractJobBaseClass<SampleWebJobParameters, SampleWebJobState>
+{
+    private readonly ILogger<SampleWebJob> _logger;
+
+    public SampleWebJob(IJobProgressStore progressStore, ILogger<SampleWebJob> logger) : base(progressStore)
     {
-        public int Tries { get; set; }
+        _logger = logger;
     }
 
-    public class SampleWebJobParameters
-    {
-        public string Greeting { get; set; }
-    }
+    public override string JobName => "Sample Job";
 
-    public class SampleWebJob : AbstractJobBaseClass<SampleWebJobParameters, SampleWebJobState>
+    protected override async Task OnStartAsync(JobStartContext<SampleWebJobParameters, SampleWebJobState> jobStartContext, CancellationToken cancellationToken)
     {
-        private readonly ILogger<SampleWebJob> _logger;
-
-        public SampleWebJob(IJobProgressStore progressStore, ILogger<SampleWebJob> logger) : base(progressStore)
+        if (jobStartContext.IsRestart)
         {
-            _logger = logger;
+            _logger.LogInformation("I was restarted");
+            return;
         }
 
-        protected override async Task OnStartAsync(JobStartContext<SampleWebJobParameters, SampleWebJobState> jobStartContext, CancellationToken cancellationToken)
+        var tries = jobStartContext.JobState.Tries + 1;
+        await LogProgressAsync(new SampleWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
+
+        while (true)
         {
-            if (jobStartContext.IsRestart)
-            {
-                _logger.LogInformation("I was restarted");
-                return;
-            }
-
-            var tries = jobStartContext.JobState.Tries + 1;
-            await LogProgressAsync(new SampleWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
-
-            while (true)
-            {
-                _logger.LogInformation("Waiting for someone to cancel me. {JobId}", jobStartContext.JobId);
-                await Delay(1_000, cancellationToken);
-            }
+            _logger.LogInformation("Waiting for someone to cancel me. {JobId}", jobStartContext.JobId);
+            await Delay(1_000, cancellationToken);
         }
-
-        public override string JobName => "Sample Job";
     }
 }

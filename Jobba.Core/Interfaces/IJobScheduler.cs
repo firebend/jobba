@@ -3,12 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
 
-namespace Jobba.Core.Interfaces
-{
-    public interface IJobScheduler
-    {
-        Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> request, CancellationToken cancellationToken);
+namespace Jobba.Core.Interfaces;
 
-        Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken);
-    }
+public interface IJobScheduler
+{
+    Task<JobInfo<TJobParams, TJobState>>
+        ScheduleJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> request, CancellationToken cancellationToken);
+
+    Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken);
 }

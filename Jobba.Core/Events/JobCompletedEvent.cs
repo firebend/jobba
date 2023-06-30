@@ -1,22 +1,20 @@
 using System;
 
-namespace Jobba.Core.Events
+namespace Jobba.Core.Events;
+
+public class JobCompletedEvent
 {
-    public class JobCompletedEvent
+    public JobCompletedEvent()
     {
-        /// <summary>
-        /// The id of the job that was completed.
-        /// </summary>
-        public Guid JobId { get; set; }
-
-        public JobCompletedEvent()
-        {
-
-        }
-
-        public JobCompletedEvent(Guid jobId)
-        {
-            JobId = jobId;
-        }
     }
+
+    public JobCompletedEvent(Guid jobId)
+    {
+        JobId = jobId;
+    }
+
+    /// <summary>
+    ///     The id of the job that was completed.
+    /// </summary>
+    public Guid JobId { get; set; }
 }

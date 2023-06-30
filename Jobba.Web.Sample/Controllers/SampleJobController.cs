@@ -6,51 +6,50 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jobba.Web.Sample.Controllers
+namespace Jobba.Web.Sample.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class SampleJobController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class SampleJobController : ControllerBase
+    private readonly IJobScheduler _jobScheduler;
+    private readonly IJobStore _jobStore;
+
+    public SampleJobController(IJobScheduler jobScheduler, IJobStore jobStore)
     {
-        private readonly IJobScheduler _jobScheduler;
-        private readonly IJobStore _jobStore;
+        _jobScheduler = jobScheduler;
+        _jobStore = jobStore;
+    }
 
-        public SampleJobController(IJobScheduler jobScheduler, IJobStore jobStore)
+    [HttpPost]
+    public async Task<IActionResult> CreateJobAsync(CancellationToken cancellationToken)
+    {
+        var request = new JobRequest<SampleWebJobParameters, SampleWebJobState>
         {
-            _jobScheduler = jobScheduler;
-            _jobStore = jobStore;
-        }
+            Description = "A Sample Job that should get cancelled",
+            JobParameters = new SampleWebJobParameters { Greeting = "Hello" },
+            JobType = typeof(SampleWebJob),
+            InitialJobState = new SampleWebJobState { Tries = 1 },
+            JobWatchInterval = TimeSpan.FromSeconds(10),
+            MaxNumberOfTries = 100
+        };
 
-        [HttpPost]
-        public async Task<IActionResult> CreateJobAsync(CancellationToken cancellationToken)
-        {
-            var request = new JobRequest<SampleWebJobParameters, SampleWebJobState>
-            {
-                Description = "A Sample Job that should get cancelled",
-                JobParameters = new SampleWebJobParameters { Greeting = "Hello" },
-                JobType = typeof(SampleWebJob),
-                InitialJobState = new SampleWebJobState { Tries = 1 },
-                JobWatchInterval = TimeSpan.FromSeconds(10),
-                MaxNumberOfTries = 100
-            };
+        var job = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
 
-            var job = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+        return Ok(job);
+    }
 
-            return Ok(job);
-        }
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<IActionResult> CancelJobAsync([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        await _jobScheduler.CancelJobAsync(id, cancellationToken);
+        return Ok();
+    }
 
-        [HttpPost("{id:guid}/cancel")]
-        public async Task<IActionResult> CancelJobAsync([FromRoute] Guid id, CancellationToken cancellationToken)
-        {
-            await _jobScheduler.CancelJobAsync(id, cancellationToken);
-            return Ok();
-        }
-
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetJobByIdAsync([FromRoute] Guid id, CancellationToken cancellationToken)
-        {
-            var job = await _jobStore.GetJobByIdAsync<SampleWebJobParameters, SampleWebJobState>(id, cancellationToken);
-            return Ok(job);
-        }
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetJobByIdAsync([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var job = await _jobStore.GetJobByIdAsync<SampleWebJobParameters, SampleWebJobState>(id, cancellationToken);
+        return Ok(job);
     }
 }

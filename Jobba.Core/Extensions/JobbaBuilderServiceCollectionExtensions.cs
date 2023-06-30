@@ -2,15 +2,14 @@ using System;
 using Jobba.Core.Builders;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jobba.Core.Extensions
+namespace Jobba.Core.Extensions;
+
+public static class JobbaBuilderServiceCollectionExtensions
 {
-    public static class JobbaBuilderServiceCollectionExtensions
+    public static IServiceCollection AddJobba(this IServiceCollection services, Action<JobbaBuilder> configure)
     {
-        public static IServiceCollection AddJobba(this IServiceCollection services, Action<JobbaBuilder> configure)
-        {
-            var jobbaBuilder = new JobbaBuilder(services);
-            configure(jobbaBuilder);
-            return services;
-        }
+        var jobbaBuilder = new JobbaBuilder(services);
+        configure(jobbaBuilder);
+        return services;
     }
 }

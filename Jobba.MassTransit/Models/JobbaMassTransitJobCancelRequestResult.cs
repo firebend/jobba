@@ -1,10 +1,9 @@
 using System;
 
-namespace Jobba.MassTransit.Models
+namespace Jobba.MassTransit.Models;
+
+public class JobbaMassTransitJobCancelRequestResult
 {
-    public class JobbaMassTransitJobCancelRequestResult
-    {
-        public bool WasCancelled { get; set; }
-        public Guid JobId { get; set; }
-    }
+    public bool WasCancelled { get; set; }
+    public Guid JobId { get; set; }
 }

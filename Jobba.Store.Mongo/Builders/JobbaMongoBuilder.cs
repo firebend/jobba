@@ -9,78 +9,85 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using MongoDB.Driver;
 
-namespace Jobba.Store.Mongo.Builders
+namespace Jobba.Store.Mongo.Builders;
+
+public class JobbaMongoBuilder
 {
-    public class JobbaMongoBuilder
+    public JobbaMongoBuilder(JobbaBuilder jobbaBuilder,
+        string connectionString,
+        bool enableCommandLogging)
     {
-        public JobbaBuilder Builder { get; }
+        Builder = jobbaBuilder;
 
-        public MongoUrl MongoUrl { get; }
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoClientFactory, JobbaMongoClientFactory>();
 
-        public JobbaMongoBuilder(JobbaBuilder jobbaBuilder,
-            string connectionString,
-            bool enableCommandLogging)
+        jobbaBuilder.Services.AddSingleton(provider =>
         {
-            Builder = jobbaBuilder;
+            using var scope = provider.CreateScope();
+            var factory = scope.ServiceProvider.GetService<IJobbaMongoClientFactory>();
+            var client = factory?.CreateClient(connectionString, enableCommandLogging);
+            return client;
+        });
 
-            jobbaBuilder.Services.TryAddScoped<IJobbaMongoClientFactory, JobbaMongoClientFactory>();
+        MongoUrl = new MongoUrl(connectionString);
 
-            jobbaBuilder.Services.AddSingleton(provider =>
-            {
-                using var scope = provider.CreateScope();
-                var factory = scope.ServiceProvider.GetService<IJobbaMongoClientFactory>();
-                var client = factory?.CreateClient(connectionString, enableCommandLogging);
-                return client;
-            });
+        jobbaBuilder.Services.TryAddScoped<IJobListStore, JobbaMongoJobListStore>();
+        jobbaBuilder.Services.TryAddScoped<IJobProgressStore, JobbaMongoJobProgressStore>();
+        jobbaBuilder.Services.TryAddScoped<IJobStore, JobbaMongoJobStore>();
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobEntity>, JobbaMongoRepository<JobEntity>>();
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobProgressEntity>, JobbaMongoRepository<JobProgressEntity>>();
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRetryService, JobbaMongoRetryService>();
 
-            MongoUrl = new MongoUrl(connectionString);
+        WithJobCollection("Jobs");
+        WithJobProgressCollection("JobProgress");
+    }
 
-            jobbaBuilder.Services.TryAddScoped<IJobListStore, JobbaMongoJobListStore>();
-            jobbaBuilder.Services.TryAddScoped<IJobProgressStore, JobbaMongoJobProgressStore>();
-            jobbaBuilder.Services.TryAddScoped<IJobStore, JobbaMongoJobStore>();
-            jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobEntity>, JobbaMongoRepository<JobEntity>>();
-            jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobProgressEntity>, JobbaMongoRepository<JobProgressEntity>>();
-            jobbaBuilder.Services.TryAddScoped<IJobbaMongoRetryService, JobbaMongoRetryService>();
+    public JobbaBuilder Builder { get; }
 
-            WithJobCollection("Jobs");
-            WithJobProgressCollection("JobProgress");
-        }
+    public MongoUrl MongoUrl { get; }
 
-        private string GetDatabaseName(string database) => database ?? MongoUrl.DatabaseName ?? "Jobba";
+    private string GetDatabaseName(string database) => database ?? MongoUrl.DatabaseName ?? "Jobba";
 
-        private void RegisterEntityConfiguration<TEntity>(JobbaEntityConfiguration configuration) =>
-            Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>>(new JobbaEntityConfigurationProvider<TEntity>(configuration));
+    private void RegisterEntityConfiguration<TEntity>(JobbaEntityConfiguration configuration) =>
+        Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>>(new JobbaEntityConfigurationProvider<TEntity>(configuration));
 
-        private void RegisterEntityConfiguration<TEntity, TProvider>()
-            where TProvider : IJobbaEntityConfigurationProvider<TEntity> =>
-            Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>, TProvider>();
+    private void RegisterEntityConfiguration<TEntity, TProvider>()
+        where TProvider : IJobbaEntityConfigurationProvider<TEntity> =>
+        Builder.Services.RegisterReplace<IJobbaEntityConfigurationProvider<TEntity>, TProvider>();
 
-        public JobbaMongoBuilder WithJobCollection(string name, string database = null)
+    public JobbaMongoBuilder WithJobCollection(string name, string database = null)
+    {
+        var configuration = new JobbaEntityConfiguration
         {
-            var configuration = new JobbaEntityConfiguration { Collection = name, Database = GetDatabaseName(database) };
-            RegisterEntityConfiguration<JobEntity>(configuration);
-            return this;
-        }
+            Collection = name,
+            Database = GetDatabaseName(database)
+        };
+        RegisterEntityConfiguration<JobEntity>(configuration);
+        return this;
+    }
 
-        public JobbaMongoBuilder WithJobCollection<TProvider>()
-            where TProvider : IJobbaEntityConfigurationProvider<JobEntity>
-        {
-            RegisterEntityConfiguration<JobEntity, TProvider>();
-            return this;
-        }
+    public JobbaMongoBuilder WithJobCollection<TProvider>()
+        where TProvider : IJobbaEntityConfigurationProvider<JobEntity>
+    {
+        RegisterEntityConfiguration<JobEntity, TProvider>();
+        return this;
+    }
 
-        public JobbaMongoBuilder WithJobProgressCollection(string name, string database = null)
+    public JobbaMongoBuilder WithJobProgressCollection(string name, string database = null)
+    {
+        var configuration = new JobbaEntityConfiguration
         {
-            var configuration = new JobbaEntityConfiguration { Collection = name, Database = GetDatabaseName(database) };
-            RegisterEntityConfiguration<JobProgressEntity>(configuration);
-            return this;
-        }
+            Collection = name,
+            Database = GetDatabaseName(database)
+        };
+        RegisterEntityConfiguration<JobProgressEntity>(configuration);
+        return this;
+    }
 
-        public JobbaMongoBuilder WithJobProgressCollection<TProvider>()
-            where TProvider : IJobbaEntityConfigurationProvider<JobProgressEntity>
-        {
-            RegisterEntityConfiguration<JobProgressEntity, TProvider>();
-            return this;
-        }
+    public JobbaMongoBuilder WithJobProgressCollection<TProvider>()
+        where TProvider : IJobbaEntityConfigurationProvider<JobProgressEntity>
+    {
+        RegisterEntityConfiguration<JobProgressEntity, TProvider>();
+        return this;
     }
 }

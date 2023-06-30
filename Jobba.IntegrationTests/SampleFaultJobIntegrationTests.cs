@@ -6,89 +6,88 @@ using Jobba.Core.Models;
 using Jobba.IntegrationTests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobba.IntegrationTests
+namespace Jobba.IntegrationTests;
+
+[TestClass]
+public class SampleFaultJobIntegrationTests
 {
-    [TestClass]
-    public class SampleFaultJobIntegrationTests
+    private const string Url = "http://localhost:5000/samplefaultjob";
+
+    private static async Task<T> WaitUntil<T>(Func<Task<T>> func,
+        Func<T, bool> condition,
+        int maxTimes = 20,
+        TimeSpan? delay = null,
+        string because = null)
     {
-        private const string Url = "http://localhost:5000/samplefaultjob";
+        var tries = 0;
+        delay ??= TimeSpan.FromSeconds(1);
 
-        private static async Task<T> WaitUntil<T>(Func<Task<T>> func,
-            Func<T, bool> condition,
-            int maxTimes = 20,
-            TimeSpan? delay = null,
-            string because = null)
+        while (tries < maxTimes)
         {
-            var tries = 0;
-            delay ??= TimeSpan.FromSeconds(1);
-
-            while (tries < maxTimes)
+            try
             {
-                try
-                {
-                    var result = await func();
+                var result = await func();
 
-                    if (condition(result))
-                    {
-                        return result;
-                    }
-                }
-                finally
+                if (condition(result))
                 {
-                    tries++;
-
-                    if (tries < maxTimes)
-                    {
-                        await Task.Delay(delay.Value);
-                    }
+                    return result;
                 }
             }
+            finally
+            {
+                tries++;
 
-            throw new Exception($"Couldn't get it. {because}");
+                if (tries < maxTimes)
+                {
+                    await Task.Delay(delay.Value);
+                }
+            }
         }
 
-        [TestMethod]
-        public async Task Should_Schedule_Sample_Fault_Job()
-        {
-            var job = await Url.PostAsync().ReceiveJson<JobInfo<SampleWebJobParameters, SampleWebJobState>>();
-            job.Should().NotBeNull();
-            job.FaultedReason.Should().BeNullOrWhiteSpace();
-            job.CurrentNumberOfTries.Should().Be(1);
-            job.IsOutOfRetry.Should().BeFalse();
+        throw new Exception($"Couldn't get it. {because}");
+    }
 
-            var inProgressJobInfo = await WaitUntil(
-                () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
-                x => x.Status == JobStatus.InProgress,
-                because: "Job is not in progress"
-            );
-            inProgressJobInfo.Should().NotBeNull();
-            inProgressJobInfo.Status.Should().Be(JobStatus.InProgress);
+    [TestMethod]
+    public async Task Should_Schedule_Sample_Fault_Job()
+    {
+        var job = await Url.PostAsync().ReceiveJson<JobInfo<SampleWebJobParameters, SampleWebJobState>>();
+        job.Should().NotBeNull();
+        job.FaultedReason.Should().BeNullOrWhiteSpace();
+        job.CurrentNumberOfTries.Should().Be(1);
+        job.IsOutOfRetry.Should().BeFalse();
 
-            var faultJobResponse = await $"{Url}/{job.Id}/fault".PostAsync();
-            faultJobResponse.StatusCode.Should().Be(200);
+        var inProgressJobInfo = await WaitUntil(
+            () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
+            x => x.Status == JobStatus.InProgress,
+            because: "Job is not in progress"
+        );
+        inProgressJobInfo.Should().NotBeNull();
+        inProgressJobInfo.Status.Should().Be(JobStatus.InProgress);
 
-            var faultJobInfo = await WaitUntil(
-                () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
-                x => x.Status == JobStatus.Faulted,
-                because: "Job is not faulted"
-            );
+        var faultJobResponse = await $"{Url}/{job.Id}/fault".PostAsync();
+        faultJobResponse.StatusCode.Should().Be(200);
 
-            faultJobInfo.Should().NotBeNull();
-            faultJobInfo.Status.Should().Be(JobStatus.Faulted);
+        var faultJobInfo = await WaitUntil(
+            () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
+            x => x.Status == JobStatus.Faulted,
+            because: "Job is not faulted"
+        );
 
-            var runResponse = await $"{Url}/{job.Id}/run".PostAsync();
-            runResponse.StatusCode.Should().Be(200);
+        faultJobInfo.Should().NotBeNull();
+        faultJobInfo.Status.Should().Be(JobStatus.Faulted);
 
-            var runJobInfo = await WaitUntil(
-                () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
-                x => x.Status == JobStatus.Completed,
-                because: "Job is not faulted"
-            );
+        var runResponse = await $"{Url}/{job.Id}/run".PostAsync();
+        runResponse.StatusCode.Should().Be(200);
 
-            runJobInfo.Should().NotBeNull();
-            runJobInfo.Status.Should().Be(JobStatus.Completed);
-            runJobInfo.CurrentNumberOfTries.Should().BeGreaterThan(1);
-            runJobInfo.CurrentState.Tries.Should().BeGreaterThan(1);
-        }
+        var runJobInfo = await WaitUntil(
+            () => $"{Url}/{job.Id}".GetJsonAsync<JobInfo<SampleWebJobParameters, SampleWebJobState>>(),
+            x => x.Status == JobStatus.Completed,
+            because: "Job is not faulted"
+        );
+
+        runJobInfo.Should().NotBeNull();
+        runJobInfo.Status.Should().Be(JobStatus.Completed);
+        runJobInfo.CurrentNumberOfTries.Should().BeGreaterThan(1);
+        runJobInfo.CurrentState.Tries.Should().BeGreaterThan(1);
     }
 }

@@ -18,14 +18,14 @@
     <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
   </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.8" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
-      <PackageReference Include="MongoDB.Driver" Version="2.20.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.8"/>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1"/>
+    <PackageReference Include="MongoDB.Driver" Version="2.20.0"/>
+  </ItemGroup>
 
 </Project>

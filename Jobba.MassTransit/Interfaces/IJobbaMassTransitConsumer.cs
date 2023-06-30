@@ -1,6 +1,5 @@
-namespace Jobba.MassTransit.Interfaces
+namespace Jobba.MassTransit.Interfaces;
+
+public interface IJobbaMassTransitConsumer
 {
-    public interface IJobbaMassTransitConsumer
-    {
-    }
 }

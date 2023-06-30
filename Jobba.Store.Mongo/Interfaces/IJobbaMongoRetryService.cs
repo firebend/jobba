@@ -1,10 +1,9 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Jobba.Store.Mongo.Interfaces
+namespace Jobba.Store.Mongo.Interfaces;
+
+public interface IJobbaMongoRetryService
 {
-    public interface IJobbaMongoRetryService
-    {
-        Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries);
-    }
+    Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries);
 }

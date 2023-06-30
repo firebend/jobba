@@ -7,73 +7,73 @@ using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
 using static System.Threading.Tasks.Task;
 
-namespace Jobba.Web.Sample
+namespace Jobba.Web.Sample;
+
+public static class SampleFaultWebJobFaultContext
 {
-    public static class SampleFaultWebJobFaultContext
+    private static bool _shouldFault;
+
+    private static readonly object Locker = new();
+
+    public static bool ShouldFault()
     {
-        private static bool _shouldFault;
-
-        private static readonly object Locker = new();
-
-        public static bool ShouldFault()
+        lock (Locker)
         {
-            lock (Locker)
-            {
-                return _shouldFault;
-            }
-        }
-
-        public static void ShouldFault(bool b)
-        {
-            lock (Locker)
-            {
-                _shouldFault = b;
-            }
+            return _shouldFault;
         }
     }
 
-    public class SampleFaultWebJobState
+    public static void ShouldFault(bool b)
     {
-        public int Tries { get; set; }
+        lock (Locker)
+        {
+            _shouldFault = b;
+        }
+    }
+}
+
+public class SampleFaultWebJobState
+{
+    public int Tries { get; set; }
+}
+
+public class SampleFaultWebJobParameters
+{
+    public string Greeting { get; set; }
+}
+
+public class SampleFaultWebJob : AbstractJobBaseClass<SampleFaultWebJobParameters, SampleFaultWebJobState>
+{
+    private readonly ILogger<SampleFaultWebJob> _logger;
+
+    public SampleFaultWebJob(IJobProgressStore progressStore, ILogger<SampleFaultWebJob> logger) : base(progressStore)
+    {
+        _logger = logger;
     }
 
-    public class SampleFaultWebJobParameters
-    {
-        public string Greeting { get; set; }
-    }
+    public override string JobName => "Sample Job";
 
-    public class SampleFaultWebJob : AbstractJobBaseClass<SampleFaultWebJobParameters, SampleFaultWebJobState>
+    protected override async Task OnStartAsync(JobStartContext<SampleFaultWebJobParameters, SampleFaultWebJobState> jobStartContext,
+        CancellationToken cancellationToken)
     {
-        private readonly ILogger<SampleFaultWebJob> _logger;
-
-        public SampleFaultWebJob(IJobProgressStore progressStore, ILogger<SampleFaultWebJob> logger) : base(progressStore)
+        if (jobStartContext.IsRestart)
         {
-            _logger = logger;
+            _logger.LogInformation("I was restarted");
+            return;
         }
 
-        protected override async Task OnStartAsync(JobStartContext<SampleFaultWebJobParameters, SampleFaultWebJobState> jobStartContext, CancellationToken cancellationToken)
+        var tries = jobStartContext.JobState.Tries + 1;
+        await LogProgressAsync(new SampleFaultWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
+
+        while (true)
         {
-            if (jobStartContext.IsRestart)
+            if (SampleFaultWebJobFaultContext.ShouldFault())
             {
-                _logger.LogInformation("I was restarted");
-                return;
+                throw new Exception("I faulted!");
             }
 
-            var tries = jobStartContext.JobState.Tries + 1;
-            await LogProgressAsync(new SampleFaultWebJobState { Tries = tries }, 50, jobStartContext.JobParameters.Greeting, cancellationToken);
-
-            while (true)
-            {
-                if (SampleFaultWebJobFaultContext.ShouldFault())
-                {
-                    throw new Exception("I faulted!");
-                }
-
-                _logger.LogInformation("Waiting for someone to fault me. {JobId}", jobStartContext.JobId);
-                await Delay(1_000, cancellationToken);
-            }
+            _logger.LogInformation("Waiting for someone to fault me. {JobId}", jobStartContext.JobId);
+            await Delay(1_000, cancellationToken);
         }
-
-        public override string JobName => "Sample Job";
     }
 }
