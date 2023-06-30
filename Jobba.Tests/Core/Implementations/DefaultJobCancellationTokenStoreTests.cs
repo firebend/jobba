@@ -81,6 +81,6 @@ public class DefaultJobCancellationTokenStoreTests
         store.CancelAllJobs();
 
         //assert
-        jobTokens.TrueForAll(x => x.TokenSource.IsCancellationRequested);
+        jobTokens.TrueForAll(x => x.TokenSource.IsCancellationRequested).Should().BeTrue();
     }
 }

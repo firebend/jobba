@@ -83,6 +83,6 @@ public class JobbaMassTransitConsumerInfoProviderTests
         infos.Select(x => x.ConsumerType).Should().NotContainNulls();
         var queues = infos.Select(x => x.QueueName).ToList();
         queues.Should().NotContainNulls();
-        queues.TrueForAll(x => x.StartsWith("Fake_Job_"));
+        queues.TrueForAll(x => x.StartsWith("Fake_Job_")).Should().BeTrue();
     }
 }

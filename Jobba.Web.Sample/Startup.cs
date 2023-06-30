@@ -1,5 +1,8 @@
+using System;
 using System.Text.Json.Serialization;
+using Cronos;
 using Jobba.Core.Extensions;
+using Jobba.Cron.Extensions;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
 using Jobba.Store.Mongo.Extensions;
@@ -44,6 +47,11 @@ public class Startup
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
                     .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>()
                     .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>()
+                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("0 * * * * *", "Sample Cron Job", "A Cron Job", null, p =>
+                    {
+                        p.JobParams = new() { StartDate = DateTimeOffset.UtcNow };
+                        p.JobState = new CronState() { Phrase = $"Hi {Guid.NewGuid()}" };
+                    })
             )
             .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");
     }
