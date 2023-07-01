@@ -2,10 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
-using Jobba.Cron.Implementations;
 using Jobba.Cron.Interfaces;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using MongoDB.Bson.IO;
 
 namespace Jobba.Web.Sample;
 
@@ -30,8 +30,7 @@ public class SampleCronJobWithParametersAndState : ICronJob<CronParameters, Cron
 
     public Task StartAsync(JobStartContext<CronParameters, CronState> jobStartContext, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("I'm a little cron job \n {Json}" ,jobStartContext.ToJson());
-        CronSchedulerMap.PrintSchedule(_logger);
+        _logger.LogInformation("I'm a little cron job \n {Json}" ,jobStartContext.ToJson(new JsonWriterSettings{ Indent = true}));
         return Task.CompletedTask;
     }
 

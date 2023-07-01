@@ -59,6 +59,10 @@ public class DefaultJobCancellationTokenStore : IJobCancellationTokenStore
         RemoveCancelledCompletedTokens();
     }
 
+    public bool RemoveCompletedJob(Guid id)
+        => DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryRemove(id, out _);
+
+
     private void RemoveCancelledCompletedTokens()
     {
         var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();

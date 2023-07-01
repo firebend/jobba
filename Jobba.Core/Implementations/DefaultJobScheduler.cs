@@ -180,6 +180,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
                 else
                 {
                     await OnJobCompletedAsync(jobId, default);
+                    _jobCancellationTokenStore.RemoveCompletedJob(jobId);
                 }
             }
             catch (TaskCanceledException)

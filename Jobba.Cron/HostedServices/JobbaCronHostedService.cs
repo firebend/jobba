@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Cron.Extensions;
 using Jobba.Cron.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Cron.HostedServices;
 
+/// <summary>
+/// Responsible for queuing cron jobs.
+/// </summary>
 public class JobbaCronHostedService : BackgroundService
 {
     private readonly ILogger<JobbaCronHostedService> _logger;
@@ -23,22 +27,23 @@ public class JobbaCronHostedService : BackgroundService
     {
         var timerDuration = TimeSpan.FromSeconds(1);
 
+        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", timerDuration);
+
         using var timer = new PeriodicTimer(timerDuration);
 
-        await DoWorkAsync(timerDuration, stoppingToken);
+        await DoWorkAsync(stoppingToken);
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            await DoWorkAsync(timerDuration, stoppingToken);
+            await DoWorkAsync(stoppingToken);
         }
+
+        _logger.LogInformation("Jobba Cron Hosted service is stopping");
     }
 
-    private async Task DoWorkAsync(TimeSpan timerDuration, CancellationToken stoppingToken)
+    private async Task DoWorkAsync(CancellationToken stoppingToken)
     {
-        var start = DateTimeOffset.UtcNow;
-        var end = start.Add(timerDuration);
-
-        _logger.LogDebug("Looking for jobs to run {Start} {End}", start, end);
+        var now = DateTimeOffset.UtcNow.TrimMilliseconds();
 
         using var scope = _scopeFactory.CreateScope();
         var scheduler = scope.ServiceProvider.GetService<ICronScheduler>();
@@ -49,6 +54,6 @@ public class JobbaCronHostedService : BackgroundService
             return;
         }
 
-        await scheduler.EnqueueJobsAsync(scope, start, end, stoppingToken);
+        await scheduler.EnqueueJobsAsync(scope, now, stoppingToken);
     }
 }

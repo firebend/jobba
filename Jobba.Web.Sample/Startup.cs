@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json.Serialization;
-using Cronos;
 using Jobba.Core.Extensions;
 using Jobba.Cron.Extensions;
 using Jobba.MassTransit.Extensions;
@@ -47,7 +46,12 @@ public class Startup
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
                     .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>()
                     .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>()
-                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("0 * * * * *", "Sample Cron Job", "A Cron Job", null, p =>
+                    ///schedule a sample job running every 30 seconds with default job parameters and state
+                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("*/30 * * * * *",
+                        "Sample Cron Job",
+                        "A Cron Job",
+                        null,
+                        p =>
                     {
                         p.JobParams = new() { StartDate = DateTimeOffset.UtcNow };
                         p.JobState = new CronState() { Phrase = $"Hi {Guid.NewGuid()}" };

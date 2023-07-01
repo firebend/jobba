@@ -10,4 +10,6 @@ public interface IJobCancellationTokenStore
     bool CancelJob(Guid id);
 
     void CancelAllJobs();
+
+    bool RemoveCompletedJob(Guid id);
 }

@@ -12,18 +12,16 @@ public class CronService : ICronService
         => CronExpression.Parse(expression, CronFormat.IncludeSeconds);
 
     public DateTimeOffset? GetNextExecutionDate(string expression)
-        => GetCronExpression(expression).GetNextOccurrence(DateTimeOffset.UtcNow, TimeZoneInfo.Utc, true);
+        => GetNextExecutionDate(expression, DateTimeOffset.UtcNow);
+
+    public DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start)
+        => GetCronExpression(expression).GetNextOccurrence(start.ToUniversalTime(), TimeZoneInfo.Utc, true);
 
     public bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end)
     {
         var next = GetNextExecutionDate(expression);
 
-        if (next is null)
-        {
-            return false;
-        }
-
-        return next.Value.IsBetween(start, end);
+        return next is not null && next.Value.IsBetween(start, end);
     }
 
     public DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end)
