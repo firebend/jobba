@@ -34,37 +34,17 @@ public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
                 throw new ArgumentException("No job state type name provided.", nameof(jobWatchEvent));
             }
 
-            var jobParametersType = Type.GetType(jobWatchEvent.ParamsTypeName);
+            var jobParametersType = Type.GetType(jobWatchEvent.ParamsTypeName) ?? throw new Exception($"Could not find type for parameters: {jobWatchEvent.ParamsTypeName}");
 
-            if (jobParametersType == null)
-            {
-                throw new Exception($"Could not find type for parameters: {jobWatchEvent.ParamsTypeName}");
-            }
-
-            var jobStateType = Type.GetType(jobWatchEvent.StateTypeName);
-
-            if (jobStateType == null)
-            {
-                throw new Exception($"Could not find type for state : {jobWatchEvent.StateTypeName}");
-            }
+            var jobStateType = Type.GetType(jobWatchEvent.StateTypeName) ?? throw new Exception($"Could not find type for state : {jobWatchEvent.StateTypeName}");
 
             var jobWatcherType = typeof(IJobWatcher<,>).MakeGenericType(jobParametersType, jobStateType);
 
             using var scope = _serviceProvider.CreateScope();
             {
-                var watcher = scope.ServiceProvider.GetService(jobWatcherType);
+                var watcher = scope.ServiceProvider.GetService(jobWatcherType) ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
 
-                if (watcher == null)
-                {
-                    throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
-                }
-
-                var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync));
-
-                if (methodInfo == null)
-                {
-                    throw new Exception("Could not find job watcher watch job method.");
-                }
+                var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync)) ?? throw new Exception("Could not find job watcher watch job method.");
 
                 var invokeReturn = methodInfo.Invoke(watcher, new object[]
                 {

@@ -30,7 +30,7 @@ public class SampleCronJobWithParametersAndState : ICronJob<CronParameters, Cron
 
     public Task StartAsync(JobStartContext<CronParameters, CronState> jobStartContext, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("I'm a little cron job \n {Json}" ,jobStartContext.ToJson(new JsonWriterSettings{ Indent = true}));
+        _logger.LogInformation("I'm a little cron job \n {Json}", jobStartContext.ToJson(new JsonWriterSettings { Indent = true }));
         return Task.CompletedTask;
     }
 

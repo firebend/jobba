@@ -227,14 +227,14 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     private static JobStartContext<TJobParams, TJobState> GetJobStartContext<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
         JobInfoBase jobInfo) => new()
-    {
-        JobId = jobInfo.Id,
-        JobParameters = request.JobParameters,
-        JobState = request.InitialJobState,
-        StartTime = jobInfo.EnqueuedTime,
-        IsRestart = request.IsRestart,
-        LastProgressDate = jobInfo.LastProgressDate,
-        LastProgressPercentage = jobInfo.LastProgressPercentage,
-        CurrentNumberOfTries = request.NumberOfTries
-    };
+        {
+            JobId = jobInfo.Id,
+            JobParameters = request.JobParameters,
+            JobState = request.InitialJobState,
+            StartTime = jobInfo.EnqueuedTime,
+            IsRestart = request.IsRestart,
+            LastProgressDate = jobInfo.LastProgressDate,
+            LastProgressPercentage = jobInfo.LastProgressPercentage,
+            CurrentNumberOfTries = request.NumberOfTries
+        };
 }
