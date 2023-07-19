@@ -41,7 +41,7 @@ public class DefaultJobCancellationTokenStore : IJobCancellationTokenStore
 
         tokenSource.Cancel();
 
-        RemoveCancelledCompletedTokens();
+        RemoveCancelledTokens();
 
         return true;
     }
@@ -56,14 +56,13 @@ public class DefaultJobCancellationTokenStore : IJobCancellationTokenStore
             CancelJob(jobId);
         }
 
-        RemoveCancelledCompletedTokens();
+        RemoveCancelledTokens();
     }
 
     public bool RemoveCompletedJob(Guid id)
         => DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryRemove(id, out _);
 
-
-    private void RemoveCancelledCompletedTokens()
+    private void RemoveCancelledTokens()
     {
         var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
 

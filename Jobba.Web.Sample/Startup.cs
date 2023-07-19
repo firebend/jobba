@@ -46,8 +46,8 @@ public class Startup
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
                     .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>()
                     .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>()
-                    ///schedule a sample job running every 30 seconds with default job parameters and state
-                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("*/30 * * * * *",
+                    ///schedule a sample job running every 1 minute with default job parameters and state
+                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("* * * * *",
                         "Sample Cron Job",
                         "A Cron Job",
                         null,

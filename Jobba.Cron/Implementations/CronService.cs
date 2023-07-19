@@ -9,7 +9,7 @@ namespace Jobba.Cron.Implementations;
 public class CronService : ICronService
 {
     private static CronExpression GetCronExpression(string expression)
-        => CronExpression.Parse(expression, CronFormat.IncludeSeconds);
+        => CronExpression.Parse(expression, CronFormat.Standard);
 
     public DateTimeOffset? GetNextExecutionDate(string expression)
         => GetNextExecutionDate(expression, DateTimeOffset.UtcNow);

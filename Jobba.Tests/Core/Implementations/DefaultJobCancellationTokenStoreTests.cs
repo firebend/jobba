@@ -71,16 +71,19 @@ public class DefaultJobCancellationTokenStoreTests
             .Range(1, 10)
             .Select(_ => new
             {
-                TokenSource = new CancellationTokenSource(),
+                CancellationToken = new CancellationToken(),
                 JobId = Guid.NewGuid()
             })
             .ToList();
 
         //act
-        jobTokens.ForEach(x => store.CreateJobCancellationToken(x.JobId, x.TokenSource.Token));
+        var tokens = jobTokens
+            .Select(x => store.CreateJobCancellationToken(x.JobId, x.CancellationToken))
+            .ToList();
+
         store.CancelAllJobs();
 
         //assert
-        jobTokens.TrueForAll(x => x.TokenSource.IsCancellationRequested).Should().BeTrue();
+        tokens.TrueForAll(x => x.IsCancellationRequested).Should().BeTrue();
     }
 }

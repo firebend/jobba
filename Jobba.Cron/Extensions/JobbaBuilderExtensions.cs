@@ -53,7 +53,13 @@ public static class JobbaBuilderExtensions
         where TJobState : class, new()
         where TJobParams : class, new()
     {
-        CronExpression.Parse(cron, CronFormat.IncludeSeconds);
+        //********************************************
+        // Author: JMA
+        // Date: 2023-07-19 10:13:54
+        // Comment: Attempt to parse the cron expression.
+        // invalid crons will throw an exception
+        //*******************************************
+        CronExpression.Parse(cron, CronFormat.Standard);
 
         var registry = new CronJobServiceRegistry
         {

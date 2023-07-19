@@ -17,6 +17,9 @@ public class JobbaCronHostedService : BackgroundService
     private readonly ILogger<JobbaCronHostedService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
+    // ReSharper disable once MemberCanBePrivate.Global
+    public static readonly TimeSpan TimerDuration = TimeSpan.FromSeconds(15);
+
     public JobbaCronHostedService(ILogger<JobbaCronHostedService> logger, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
@@ -25,11 +28,9 @@ public class JobbaCronHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var timerDuration = TimeSpan.FromSeconds(1);
+        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", TimerDuration);
 
-        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", timerDuration);
-
-        using var timer = new PeriodicTimer(timerDuration);
+        using var timer = new PeriodicTimer(TimerDuration);
 
         await DoWorkAsync(stoppingToken);
 
