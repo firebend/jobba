@@ -11,9 +11,11 @@ public class JobbaCleanUpHostedService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     // ReSharper disable once InconsistentNaming
-#pragma warning disable CA2211
     // ReSharper disable once MemberCanBePrivate.Global
+#pragma warning disable CA2211
+#pragma warning disable IDE1006
     public static TimeSpan CleanUpDuration = TimeSpan.FromDays(30);
+#pragma warning restore IDE1006
 #pragma warning restore CA2211
 
     public JobbaCleanUpHostedService(IServiceScopeFactory scopeFactory)
