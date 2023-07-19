@@ -18,7 +18,10 @@ public class JobbaCronHostedService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
 
     // ReSharper disable once MemberCanBePrivate.Global
-    public static readonly TimeSpan TimerDuration = TimeSpan.FromSeconds(15);
+    // ReSharper disable once InconsistentNaming
+#pragma warning disable CA2211
+    public static TimeSpan TimerDuration = TimeSpan.FromSeconds(15);
+#pragma warning restore CA2211
 
     public JobbaCronHostedService(ILogger<JobbaCronHostedService> logger, IServiceScopeFactory scopeFactory)
     {
