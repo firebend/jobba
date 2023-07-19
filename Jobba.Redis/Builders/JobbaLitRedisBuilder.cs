@@ -6,22 +6,21 @@ using LitRedis.Core;
 using LitRedis.Core.Builders;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jobba.Redis.Builders
+namespace Jobba.Redis.Builders;
+
+public class JobbaLitRedisBuilder
 {
-    public class JobbaLitRedisBuilder
+    public JobbaLitRedisBuilder(IServiceCollection services, Action<LitRedisServiceCollectionBuilder> litRedisBuilder = null)
     {
-        public IServiceCollection Services { get; }
+        Services = services;
 
-        public JobbaLitRedisBuilder(IServiceCollection services, Action<LitRedisServiceCollectionBuilder> litRedisBuilder = null)
+        services.RegisterReplace<IJobLockService, LitRedisJobLockService>();
+
+        if (litRedisBuilder != null)
         {
-            Services = services;
-
-            services.RegisterReplace<IJobLockService, LitRedisJobLockService>();
-
-            if (litRedisBuilder != null)
-            {
-                services.AddLitRedis(litRedisBuilder);
-            }
+            services.AddLitRedis(litRedisBuilder);
         }
     }
+
+    public IServiceCollection Services { get; }
 }

@@ -6,39 +6,36 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Jobba.Sample
+namespace Jobba.Sample;
+
+public class SampleJobCancel : AbstractJobBaseClass<object, object>
 {
-    public class SampleJobCancel : AbstractJobBaseClass<object, object>
+    private readonly ILogger<SampleJobCancel> _logger;
+
+    public SampleJobCancel(IJobProgressStore progressStore, ILogger<SampleJobCancel> logger) : base(progressStore)
     {
-        private Guid MyId { get; } = Guid.NewGuid();
+        _logger = logger;
+    }
 
-        private readonly ILogger<SampleJobCancel> _logger;
+    private Guid MyId { get; } = Guid.NewGuid();
 
-        public SampleJobCancel(IJobProgressStore progressStore, ILogger<SampleJobCancel> logger) : base(progressStore)
+    public override string JobName => "Sample Job Cancel";
+
+    protected override async Task OnStartAsync(JobStartContext<object, object> jobStartContext, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("I'm running and running {@MyId}", MyId);
+
+        while (!cancellationToken.IsCancellationRequested)
         {
-            _logger = logger;
-        }
-
-        protected override async Task OnStartAsync(JobStartContext<object, object> jobStartContext, CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("I'm running and running {@MyId}", MyId);
-
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
-
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-                }
-                catch (TaskCanceledException)
-                {
-
-                }
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
-
-            _logger.LogInformation("Now i'm done running and running {@MyId}", MyId);
+            catch (TaskCanceledException)
+            {
+            }
         }
 
-        public override string JobName => "Sample Job Cancel";
+        _logger.LogInformation("Now i'm done running and running {@MyId}", MyId);
     }
 }

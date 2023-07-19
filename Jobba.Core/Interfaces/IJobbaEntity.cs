@@ -1,9 +1,8 @@
 using System;
 
-namespace Jobba.Core.Interfaces
+namespace Jobba.Core.Interfaces;
+
+public interface IJobbaEntity
 {
-    public interface IJobbaEntity
-    {
-        public Guid Id { get; set; }
-    }
+    public Guid Id { get; set; }
 }

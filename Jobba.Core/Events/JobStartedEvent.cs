@@ -1,19 +1,17 @@
 using System;
 
-namespace Jobba.Core.Events
+namespace Jobba.Core.Events;
+
+public class JobStartedEvent
 {
-    public class JobStartedEvent
+    public JobStartedEvent()
     {
-        public Guid JobId { get; set; }
-
-        public JobStartedEvent()
-        {
-
-        }
-
-        public JobStartedEvent(Guid jobId)
-        {
-            JobId = jobId;
-        }
     }
+
+    public JobStartedEvent(Guid jobId)
+    {
+        JobId = jobId;
+    }
+
+    public Guid JobId { get; set; }
 }

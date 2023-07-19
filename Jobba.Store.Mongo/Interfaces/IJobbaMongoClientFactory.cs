@@ -1,9 +1,8 @@
 using MongoDB.Driver;
 
-namespace Jobba.Store.Mongo.Interfaces
+namespace Jobba.Store.Mongo.Interfaces;
+
+public interface IJobbaMongoClientFactory
 {
-    public interface IJobbaMongoClientFactory
-    {
-        IMongoClient CreateClient(string connectionString, bool enableLogging);
-    }
+    IMongoClient CreateClient(string connectionString, bool enableLogging);
 }

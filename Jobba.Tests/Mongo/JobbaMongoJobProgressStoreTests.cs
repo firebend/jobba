@@ -17,89 +17,88 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Neleus.LambdaCompare;
 
-namespace Jobba.Tests.Mongo
+namespace Jobba.Tests.Mongo;
+
+[TestClass]
+public class JobbaMongoJobProgressStoreTests
 {
-    [TestClass]
-    public class JobbaMongoJobProgressStoreTests
+    [TestMethod]
+    public async Task Jobba_Mongo_Job_Progress_Store_Should_Add_Progress()
     {
-        [TestMethod]
-        public async Task Jobba_Mongo_Job_Progress_Store_Should_Add_Progress()
-        {
-            //arrange
-            var fixture = new Fixture();
-            fixture.Customize(new AutoMoqCustomization());
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
 
-            var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
-            mockRepo.Setup(x => x.AddAsync(
-                    It.IsAny<JobProgressEntity>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobProgressEntity());
+        var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
+        mockRepo.Setup(x => x.AddAsync(
+                It.IsAny<JobProgressEntity>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobProgressEntity());
 
-            var mockJobRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
-            mockJobRepo.Setup(x => x.UpdateAsync(
+        var mockJobRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
+        mockJobRepo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<JsonPatchDocument<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobEntity());
+            .ReturnsAsync(new JobEntity());
 
-            var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-            mockPublisher.Setup(x => x.PublishJobProgressEventAsync(
-                    It.IsAny<JobProgressEvent>(),
-                    It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
+        mockPublisher.Setup(x => x.PublishJobProgressEventAsync(
+                It.IsAny<JobProgressEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
-            var service = fixture.Create<JobbaMongoJobProgressStore>();
+        var service = fixture.Create<JobbaMongoJobProgressStore>();
 
-            //act
-            await service.LogProgressAsync(new JobProgress<object>(), default);
+        //act
+        await service.LogProgressAsync(new JobProgress<object>(), default);
 
-            //assert
-            mockRepo.Verify(x => x.AddAsync(
+        //assert
+        mockRepo.Verify(x => x.AddAsync(
                 It.IsAny<JobProgressEntity>(),
                 It.IsAny<CancellationToken>()),
-                Times.Once);
+            Times.Once);
 
-            mockPublisher.Verify(x => x.PublishJobProgressEventAsync(
+        mockPublisher.Verify(x => x.PublishJobProgressEventAsync(
                 It.IsAny<JobProgressEvent>(),
                 It.IsAny<CancellationToken>()),
-                Times.Once);
+            Times.Once);
 
-            mockJobRepo.Verify(x => x.UpdateAsync(
-                It.IsAny<Guid>(),
-                It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                    patch.Operations.Any(o => o.path == "/JobState") &&
-                    patch.Operations.Any(o => o.path == "/LastProgressDate") &&
-                    patch.Operations.Any(o => o.path == "/LastProgressPercentage")),
-                It.IsAny<CancellationToken>()));
-        }
+        mockJobRepo.Verify(x => x.UpdateAsync(
+            It.IsAny<Guid>(),
+            It.Is<JsonPatchDocument<JobEntity>>(patch =>
+                patch.Operations.Any(o => o.path == "/JobState") &&
+                patch.Operations.Any(o => o.path == "/LastProgressDate") &&
+                patch.Operations.Any(o => o.path == "/LastProgressPercentage")),
+            It.IsAny<CancellationToken>()));
+    }
 
-        [TestMethod]
-        public async Task Jobba_Mongo_Job_Progress_Store_Should_Get_By_Id()
-        {
-            //arrange
-            var fixture = new Fixture();
-            fixture.Customize(new AutoMoqCustomization());
+    [TestMethod]
+    public async Task Jobba_Mongo_Job_Progress_Store_Should_Get_By_Id()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
 
-            var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
-            mockRepo.Setup(x => x.GetFirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<JobProgressEntity, bool>>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new JobProgressEntity());
+        var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
+        mockRepo.Setup(x => x.GetFirstOrDefaultAsync(
+                It.IsAny<Expression<Func<JobProgressEntity, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobProgressEntity());
 
-            var service = fixture.Create<JobbaMongoJobProgressStore>();
+        var service = fixture.Create<JobbaMongoJobProgressStore>();
 
-            var id = Guid.NewGuid();
+        var id = Guid.NewGuid();
 
-            Expression<Func<JobProgressEntity, bool>> expectedExpression = x => x.Id == id;
+        Expression<Func<JobProgressEntity, bool>> expectedExpression = x => x.Id == id;
 
-            //act
-            var progress = await service.GetProgressById(id, default);
+        //act
+        var progress = await service.GetProgressById(id, default);
 
-            //assert
-            progress.Should().NotBeNull();
+        //assert
+        progress.Should().NotBeNull();
 
-            mockRepo.Verify(x => x.GetFirstOrDefaultAsync(
-                It.Is<Expression<Func<JobProgressEntity, bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
-                It.IsAny<CancellationToken>()), Times.Once);
-        }
+        mockRepo.Verify(x => x.GetFirstOrDefaultAsync(
+            It.Is<Expression<Func<JobProgressEntity, bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

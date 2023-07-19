@@ -12,25 +12,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name : Checkout Repo
-      uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 7.0.100
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.100
 
-    - name: Restore dotnet tools
-      run: dotnet tool restore
+      - name: Restore dotnet tools
+        run: dotnet tool restore
 
-    - name: Run dotnet format
-      run: dotnet format jobba.sln --verify-no-changes
+      - name: Run dotnet format
+        run: dotnet format jobba.sln --verify-no-changes
 
-    - name: Install dependencies
-      run: dotnet restore jobba.sln
+      - name: Install dependencies
+        run: dotnet restore jobba.sln
 
-    - name: Build
-      run: dotnet build jobba.sln --configuration Release --no-restore
+      - name: Build
+        run: dotnet build jobba.sln --configuration Release --no-restore
 
-    - name: Test
-      run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName\!~IntegrationTests
+      - name: Test
+        run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName\!~IntegrationTests

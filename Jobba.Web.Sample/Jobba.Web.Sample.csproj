@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.16" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.16" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
-      <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
-      <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
-      <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Jobba.Core\Jobba.Core.csproj" />
+    <ProjectReference Include="..\Jobba.Cron\Jobba.Cron.csproj" />
+    <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
+    <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+    <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
+  </ItemGroup>
 
 </Project>

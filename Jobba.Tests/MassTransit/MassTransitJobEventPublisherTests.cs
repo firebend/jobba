@@ -15,104 +15,103 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobba.Tests.MassTransit
+namespace Jobba.Tests.MassTransit;
+
+[TestClass]
+public class MassTransitJobEventPublisherTests
 {
-    [TestClass]
-    public class MassTransitJobEventPublisherTests
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Progress_Messages()
     {
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Progress_Messages()
+        var message = new JobProgressEvent(Guid.NewGuid(), Guid.NewGuid());
+        await PublishEventHelper<JobProgressEvent>(publisher => publisher.PublishJobProgressEventAsync(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Started_Messages()
+    {
+        var message = new JobStartedEvent(Guid.NewGuid());
+        await PublishEventHelper<JobStartedEvent>(publisher => publisher.PublishJobStartedEvent(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Cancelled_Messages()
+    {
+        var message = new JobCancelledEvent(Guid.NewGuid());
+        await PublishEventHelper<JobCancelledEvent>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Completed_Messages()
+    {
+        var message = new JobCompletedEvent(Guid.NewGuid());
+        await PublishEventHelper<JobCompletedEvent>(publisher => publisher.PublishJobCompletedEventAsync(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Faulted_Messages()
+    {
+        var message = new JobFaultedEvent(Guid.NewGuid());
+        await PublishEventHelper<JobFaultedEvent>(publisher => publisher.PublishJobFaultedEventAsync(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Restarted_Messages()
+    {
+        var message = new JobRestartEvent();
+        await PublishEventHelper<JobRestartEvent>(publisher => publisher.PublishJobRestartEvent(message, default));
+    }
+
+    [TestMethod]
+    public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Watched_Messages()
+    {
+        var message = new JobWatchEvent();
+        var delay = TimeSpan.FromSeconds(1);
+        await PublishEventHelper<JobWatchEvent>(publisher => publisher.PublishWatchJobEventAsync(message, delay, default), delay);
+    }
+
+    private static async Task PublishEventHelper<TMessage>(Func<IJobEventPublisher, Task> pubCallback, TimeSpan? delay = null)
+        where TMessage : class
+    {
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddLogging();
+        serviceCollection.AddMassTransitInMemoryTestHarness(cfg => cfg.AddDelayedMessageScheduler());
+        var builder = new JobbaBuilder(serviceCollection);
+        builder.UsingMassTransit();
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+
+        var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
+        await harness.Start();
+
+        try
         {
-            var message = new JobProgressEvent(Guid.NewGuid(), Guid.NewGuid());
-            await PublishEventHelper<JobProgressEvent>(publisher => publisher.PublishJobProgressEventAsync(message, default));
-        }
+            var hostedService = (serviceProvider
+                    .GetService<IEnumerable<IHostedService>>() ?? Array.Empty<IHostedService>())
+                .FirstOrDefault(x => x is MassTransitJobbaReceiverHostedService);
 
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Started_Messages()
-        {
-            var message = new JobStartedEvent(Guid.NewGuid());
-            await PublishEventHelper<JobStartedEvent>(publisher => publisher.PublishJobStartedEvent(message, default));
-        }
+            hostedService.Should().NotBeNull();
+            // ReSharper disable once PossibleNullReferenceException
+            await hostedService.StartAsync(default);
+            var publisher = serviceProvider.GetService<IJobEventPublisher>();
+            publisher.Should().NotBeNull().And.BeOfType<MassTransitJobEventPublisher>();
 
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Cancelled_Messages()
-        {
-            var message = new JobCancelledEvent(Guid.NewGuid());
-            await PublishEventHelper<JobCancelledEvent>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
-        }
+            await pubCallback(publisher);
 
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Completed_Messages()
-        {
-            var message = new JobCompletedEvent(Guid.NewGuid());
-            await PublishEventHelper<JobCompletedEvent>(publisher => publisher.PublishJobCompletedEventAsync(message, default));
-        }
-
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Faulted_Messages()
-        {
-            var message = new JobFaultedEvent(Guid.NewGuid());
-            await PublishEventHelper<JobFaultedEvent>(publisher => publisher.PublishJobFaultedEventAsync(message, default));
-        }
-
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Restarted_Messages()
-        {
-            var message = new JobRestartEvent();
-            await PublishEventHelper<JobRestartEvent>(publisher => publisher.PublishJobRestartEvent(message, default));
-        }
-
-        [TestMethod]
-        public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Watched_Messages()
-        {
-            var message = new JobWatchEvent();
-            var delay = TimeSpan.FromSeconds(1);
-            await PublishEventHelper<JobWatchEvent>(publisher => publisher.PublishWatchJobEventAsync(message, delay, default), delay);
-        }
-
-        private static async Task PublishEventHelper<TMessage>(Func<IJobEventPublisher, Task> pubCallback, TimeSpan? delay = null)
-            where TMessage : class
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddLogging();
-            serviceCollection.AddMassTransitInMemoryTestHarness(cfg => cfg.AddDelayedMessageScheduler());
-            var builder = new JobbaBuilder(serviceCollection);
-            builder.UsingMassTransit();
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
-            await harness.Start();
-
-            try
+            if (delay.HasValue)
             {
-                var hostedService = (serviceProvider
-                        .GetService<IEnumerable<IHostedService>>() ?? Array.Empty<IHostedService>())
-                    .FirstOrDefault(x => x is MassTransitJobbaReceiverHostedService);
-
-                hostedService.Should().NotBeNull();
-                // ReSharper disable once PossibleNullReferenceException
-                await hostedService.StartAsync(default);
-                var publisher = serviceProvider.GetService<IJobEventPublisher>();
-                publisher.Should().NotBeNull().And.BeOfType<MassTransitJobEventPublisher>();
-
-                await pubCallback(publisher);
-
-                if (delay.HasValue)
-                {
-                    await Task.Delay(delay.Value);
-                }
-                else
-                {
-                    // the harness doesn't count scheduled messages as published.
-                    (await harness.Published.Any<TMessage>()).Should().BeTrue();
-                }
-
-                (await harness.Consumed.Any<TMessage>()).Should().BeTrue();
+                await Task.Delay(delay.Value);
             }
-            finally
+            else
             {
-                await serviceProvider.DisposeAsync();
+                // the harness doesn't count scheduled messages as published.
+                (await harness.Published.Any<TMessage>()).Should().BeTrue();
             }
+
+            (await harness.Consumed.Any<TMessage>()).Should().BeTrue();
+        }
+        finally
+        {
+            await serviceProvider.DisposeAsync();
         }
     }
 }

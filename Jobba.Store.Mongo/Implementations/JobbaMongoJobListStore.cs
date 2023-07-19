@@ -9,42 +9,41 @@ using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Interfaces;
 
-namespace Jobba.Store.Mongo.Implementations
+namespace Jobba.Store.Mongo.Implementations;
+
+public class JobbaMongoJobListStore : IJobListStore
 {
-    public class JobbaMongoJobListStore : IJobListStore
+    private static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
+        x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
+
+    private static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
+        x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
+
+    private readonly IJobbaMongoRepository<JobEntity> _repository;
+
+    public JobbaMongoJobListStore(IJobbaMongoRepository<JobEntity> repository)
     {
-        private readonly IJobbaMongoRepository<JobEntity> _repository;
+        _repository = repository;
+    }
 
-        private static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
-            x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
+    public Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken)
+        => GetJobInfoBases(JobsInProgressExpression, cancellationToken);
 
-        private static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
-            x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
+    public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
+        => GetJobInfoBases(JobRetryExpression, cancellationToken);
 
-        public JobbaMongoJobListStore(IJobbaMongoRepository<JobEntity> repository)
+    private async Task<IEnumerable<JobInfoBase>> GetJobInfoBases(Expression<Func<JobEntity, bool>> filter, CancellationToken cancellationToken)
+    {
+        var activeJobs = await _repository
+            .GetAllAsync(filter, cancellationToken);
+
+        if (activeJobs == null)
         {
-            _repository = repository;
+            return Enumerable.Empty<JobInfoBase>();
         }
 
-        private async Task<IEnumerable<JobInfoBase>> GetJobInfoBases(Expression<Func<JobEntity, bool>> filter, CancellationToken cancellationToken)
-        {
-            var activeJobs = await _repository
-                .GetAllAsync(filter, cancellationToken);
+        var jobInfoBases = activeJobs.Select(x => x.ToJobInfoBase()).ToArray();
 
-            if (activeJobs == null)
-            {
-                return Enumerable.Empty<JobInfoBase>();
-            }
-
-            var jobInfoBases = activeJobs.Select(x => x.ToJobInfoBase()).ToArray();
-
-            return jobInfoBases;
-        }
-
-        public Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken)
-            => GetJobInfoBases(JobsInProgressExpression, cancellationToken);
-
-        public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
-            => GetJobInfoBases(JobRetryExpression, cancellationToken);
+        return jobInfoBases;
     }
 }

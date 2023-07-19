@@ -7,68 +7,67 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.Core.Models;
 
-namespace Jobba.Core.Implementations
+namespace Jobba.Core.Implementations;
+
+public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
 {
-    public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
+    private readonly IJobLockService _jobLockService;
+    private readonly IJobScheduler _jobScheduler;
+    private readonly IJobStore _jobStore;
+
+    public DefaultOnJobRestartSubscriber(IJobLockService jobLockService, IJobStore jobStore, IJobScheduler jobScheduler)
     {
-        private readonly IJobLockService _jobLockService;
-        private readonly IJobStore _jobStore;
-        private readonly IJobScheduler _jobScheduler;
+        _jobLockService = jobLockService;
+        _jobStore = jobStore;
+        _jobScheduler = jobScheduler;
+    }
 
-        public DefaultOnJobRestartSubscriber(IJobLockService jobLockService, IJobStore jobStore, IJobScheduler jobScheduler)
+    public async Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
+    {
+        using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, cancellationToken);
+
+        var method = GetType().GetMethod(nameof(RestartJob));
+
+        if (method == null)
         {
-            _jobLockService = jobLockService;
-            _jobStore = jobStore;
-            _jobScheduler = jobScheduler;
+            return;
         }
 
-        public async Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
+        var genericMethod = method.MakeGenericMethod(Type.GetType(jobRestartEvent.JobParamsTypeName), Type.GetType(jobRestartEvent.JobStateTypeName));
+
+        var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
         {
-            using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, cancellationToken);
+            jobRestartEvent.JobId,
+            cancellationToken
+        });
 
-            var method = this.GetType().GetMethod(nameof(RestartJob));
+        if (restartJobTaskAsObject is Task restartJobTask)
+        {
+            await restartJobTask;
+        }
+    }
 
-            if (method == null)
-            {
-                return;
-            }
+    public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
+    {
+        var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
 
-            var genericMethod = method.MakeGenericMethod(Type.GetType(jobRestartEvent.JobParamsTypeName), Type.GetType(jobRestartEvent.JobStateTypeName));
-
-            var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
-            {
-                jobRestartEvent.JobId,
-                cancellationToken
-            });
-
-            if (restartJobTaskAsObject is Task restartJobTask)
-            {
-                await restartJobTask;
-            }
+        if (job == null)
+        {
+            return;
         }
 
-        public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
+        if (job.Status != JobStatus.Faulted)
         {
-            var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
-
-            if (job == null)
-            {
-                return;
-            }
-
-            if (job.Status != JobStatus.Faulted)
-            {
-                return;
-            }
-
-            if (job.CurrentNumberOfTries >= job.MaxNumberOfTries)
-            {
-                return;
-            }
-
-            var request = JobRequest<TParams, TState>.FromJobInfo(job);
-
-            await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+            return;
         }
+
+        if (job.CurrentNumberOfTries >= job.MaxNumberOfTries)
+        {
+            return;
+        }
+
+        var request = JobRequest<TParams, TState>.FromJobInfo(job);
+
+        await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
     }
 }

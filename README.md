@@ -1,8 +1,8 @@
 - [jobba](#jobba)
 - [Setup](#setup)
 - [Usage](#usage)
-  - [ScheduleJobAsync](#schedulejobasync)
-  - [CancelJobAsync](#canceljobasync)
+    - [ScheduleJobAsync](#schedulejobasync)
+    - [CancelJobAsync](#canceljobasync)
 
 # jobba
 
@@ -13,6 +13,7 @@ A durable job scheduling platform for dotnet
 Check out the [Sample project](https://github.com/firebend/jobba/tree/main/Jobba.Sample) for a working example.
 
 1. Install the library
+
 ```xml
 <ItemGroup>
    <PackageReference Include="Jobba.Core" />
@@ -21,7 +22,9 @@ Check out the [Sample project](https://github.com/firebend/jobba/tree/main/Jobba
    <PackageReference Include="Jobba.Store.Mongo" />
 </ItemGroup>
 ```
-or 
+
+or
+
 ```bash
 dotnet add package Jobba.Core
 dotnet add package Jobba.MassTransit
@@ -29,7 +32,9 @@ dotnet add package Jobba.Redis
 dotnet add package Jobba.Store.Mongo
 ```
 
-2. Create a new `SampleJob` class that extends `AbstractJobBaseClass`. You can also create classes for `JobState` and `JobParameters`, or use `object` as a placeholder
+2. Create a new `SampleJob` class that extends `AbstractJobBaseClass`. You can also create classes for `JobState`
+   and `JobParameters`, or use `object` as a placeholder
+
 ```csharp
 using System;
 using System.Threading;
@@ -81,6 +86,7 @@ namespace Jobba.Sample
 ```
 
 3. In `Program.cs`, add the jobba configuration to the `ConfigureServices` callback in `CreateHostBuilder`
+
 ```csharp
    services
       .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
@@ -93,12 +99,15 @@ namespace Jobba.Sample
       .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
       .AddHostedService<SampleHostedService>();
 ```
+
 This example uses
+
 * [MassTransit](https://github.com/MassTransit/MassTransit) as an event bus
 * Mongo as a data store
 * [LitRedis](https://github.com/firebend/lit-redis) for distributed locking
 
 4. Make a service `SampleHostedService` that extends `BackgroundService` and injects an `IJobScheduler`
+
 ```csharp
 using System;
 using System.Threading;
@@ -163,6 +172,7 @@ Create a new `JobRequest` and schedule it with `_jobScheduler` in `SampleHostedS
 ```
 
 ## CancelJobAsync
+
 Use the job's ID and the provided cancellation token to cancel a scheduled or running job
 
 ```csharp

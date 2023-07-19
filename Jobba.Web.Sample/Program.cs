@@ -1,7 +1,6 @@
 using Jobba.Store.Mongo;
 using Jobba.Web.Sample;
 using Microsoft.AspNetCore.Builder;
-using MongoDB.Bson.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 JobbaMongoDbConfigurator.Configure();

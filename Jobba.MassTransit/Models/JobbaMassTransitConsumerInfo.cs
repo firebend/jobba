@@ -1,11 +1,10 @@
 using System;
 
-namespace Jobba.MassTransit.Models
-{
-    public class JobbaMassTransitConsumerInfo
-    {
-        public Type ConsumerType { get; set; }
+namespace Jobba.MassTransit.Models;
 
-        public string QueueName { get; set; }
-    }
+public class JobbaMassTransitConsumerInfo
+{
+    public Type ConsumerType { get; set; }
+
+    public string QueueName { get; set; }
 }

@@ -5,15 +5,14 @@ using Jobba.Core.Events;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.MassTransit.Abstractions;
 
-namespace Jobba.MassTransit.Implementations.Consumers
-{
-    public class OnJobStartedConsumer : AbstractJobbaMassTransitConsumer<JobStartedEvent, IOnJobStartedSubscriber>
-    {
-        public OnJobStartedConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
-        {
-        }
+namespace Jobba.MassTransit.Implementations.Consumers;
 
-        protected override Task HandleMessageAsync(IOnJobStartedSubscriber subscriber, JobStartedEvent message, CancellationToken cancellationToken)
-            => subscriber.OnJobStartedAsync(message, cancellationToken);
+public class OnJobStartedConsumer : AbstractJobbaMassTransitConsumer<JobStartedEvent, IOnJobStartedSubscriber>
+{
+    public OnJobStartedConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
     }
+
+    protected override Task HandleMessageAsync(IOnJobStartedSubscriber subscriber, JobStartedEvent message, CancellationToken cancellationToken)
+        => subscriber.OnJobStartedAsync(message, cancellationToken);
 }

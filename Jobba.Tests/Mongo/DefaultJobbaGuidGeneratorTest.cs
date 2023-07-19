@@ -3,22 +3,21 @@ using FluentAssertions;
 using Jobba.Core.Implementations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Jobba.Tests.Mongo
+namespace Jobba.Tests.Mongo;
+
+[TestClass]
+public class DefaultJobbaGuidGeneratorTest
 {
-    [TestClass]
-    public class DefaultJobbaGuidGeneratorTest
+    [TestMethod]
+    public async Task Default_Jobba_Guid_Generator_Should_Generate_Guid()
     {
-        [TestMethod]
-        public async Task Default_Jobba_Guid_Generator_Should_Generate_Guid()
-        {
-            //arrange
-            var generator = new DefaultJobbaGuidGenerator();
+        //arrange
+        var generator = new DefaultJobbaGuidGenerator();
 
-            //act
-            var guid = await generator.GenerateGuidAsync(default);
+        //act
+        var guid = await generator.GenerateGuidAsync(default);
 
-            //assert
-            guid.Should().NotBeEmpty();
-        }
+        //assert
+        guid.Should().NotBeEmpty();
     }
 }

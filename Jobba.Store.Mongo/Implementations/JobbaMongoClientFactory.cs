@@ -5,36 +5,35 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
 using MongoDB.Driver.Core.Events;
 
-namespace Jobba.Store.Mongo.Implementations
+namespace Jobba.Store.Mongo.Implementations;
+
+public class JobbaMongoClientFactory : IJobbaMongoClientFactory
 {
-    public class JobbaMongoClientFactory : IJobbaMongoClientFactory
+    private readonly ILogger _logger;
+
+    public JobbaMongoClientFactory(ILogger<JobbaMongoClientFactory> logger)
     {
-        private readonly ILogger _logger;
+        _logger = logger;
+    }
 
-        public JobbaMongoClientFactory(ILogger<JobbaMongoClientFactory> logger)
+    public IMongoClient CreateClient(string connectionString, bool enableLogging)
+    {
+        var mongoClientSettings = MongoClientSettings.FromConnectionString(connectionString);
+
+        if (enableLogging)
         {
-            _logger = logger;
+            mongoClientSettings.ClusterConfigurator = Configurator;
         }
 
-        public IMongoClient CreateClient(string connectionString, bool enableLogging)
-        {
-            var mongoClientSettings = MongoClientSettings.FromConnectionString(connectionString);
+        return new MongoClient(mongoClientSettings);
+    }
 
-            if (enableLogging)
-            {
-                mongoClientSettings.ClusterConfigurator = Configurator;
-            }
+    private void Configurator(ClusterBuilder cb)
+    {
+        cb.Subscribe<CommandStartedEvent>(e => _logger.LogDebug("MONGO: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()));
 
-            return new MongoClient(mongoClientSettings);
-        }
+        cb.Subscribe<CommandSucceededEvent>(e => _logger.LogDebug("SUCCESS: {CommandName}({Duration}) - {Reply}", e.CommandName, e.Duration, e.Reply.ToJson()));
 
-        private void Configurator(ClusterBuilder cb)
-        {
-            cb.Subscribe<CommandStartedEvent>(e => _logger.LogDebug("MONGO: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()));
-
-            cb.Subscribe<CommandSucceededEvent>(e => _logger.LogDebug("SUCCESS: {CommandName}({Duration}) - {Reply}", e.CommandName, e.Duration, e.Reply.ToJson()));
-
-            cb.Subscribe<CommandFailedEvent>(e => _logger.LogError(e.Failure, "ERROR: {CommandName}({Duration})", e.CommandName, e.Duration));
-        }
+        cb.Subscribe<CommandFailedEvent>(e => _logger.LogError(e.Failure, "ERROR: {CommandName}({Duration})", e.CommandName, e.Duration));
     }
 }

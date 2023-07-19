@@ -6,51 +6,50 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jobba.Core.HostedServices
+namespace Jobba.Core.HostedServices;
+
+public class JobbaHostedService : BackgroundService
 {
-    public class JobbaHostedService : BackgroundService
+    private readonly ILogger<JobbaHostedService> _logger;
+    private readonly IServiceProvider _serviceProvider;
+
+    public JobbaHostedService(IServiceProvider serviceProvider, ILogger<JobbaHostedService> logger)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<JobbaHostedService> _logger;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+    }
 
-        public JobbaHostedService(IServiceProvider serviceProvider, ILogger<JobbaHostedService> logger)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogDebug("Jobba Hosted Service is running");
+
+        using var scope = _serviceProvider.CreateScope();
+        var jobScheduler = scope.ServiceProvider.GetService<IJobReScheduler>();
+
+        if (jobScheduler != null)
         {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogDebug("Jobba Hosted Service is running");
-
-            using var scope = _serviceProvider.CreateScope();
-            var jobScheduler = scope.ServiceProvider.GetService<IJobReScheduler>();
-
-            if (jobScheduler != null)
+            try
             {
-                try
-                {
-                    _logger.LogDebug("Jobba is restarting faulted jobs");
+                _logger.LogDebug("Jobba is restarting faulted jobs");
 
-                    await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogCritical(ex, "Error trying to restart failed jobs");
-                }
+                await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
             }
-
-            stoppingToken.Register(CancelAllJobs);
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Error trying to restart failed jobs");
+            }
         }
 
-        private void CancelAllJobs()
-        {
-            _logger.LogInformation("Jobba is cancelling all jobs");
+        stoppingToken.Register(CancelAllJobs);
+    }
 
-            using var scope = _serviceProvider.CreateScope();
-            var cancellationTokenStore = scope.ServiceProvider.GetService<IJobCancellationTokenStore>();
+    private void CancelAllJobs()
+    {
+        _logger.LogInformation("Jobba is cancelling all jobs");
 
-            cancellationTokenStore?.CancelAllJobs();
-        }
+        using var scope = _serviceProvider.CreateScope();
+        var cancellationTokenStore = scope.ServiceProvider.GetService<IJobCancellationTokenStore>();
+
+        cancellationTokenStore?.CancelAllJobs();
     }
 }
