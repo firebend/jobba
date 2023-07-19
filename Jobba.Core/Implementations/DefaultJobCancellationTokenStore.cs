@@ -52,7 +52,6 @@ public class DefaultJobCancellationTokenStore : IJobCancellationTokenStore
 
         foreach (var jobId in jobIds)
         {
-            Console.WriteLine($"Cancelling job {jobId}");
             CancelJob(jobId);
         }
 
@@ -62,7 +61,7 @@ public class DefaultJobCancellationTokenStore : IJobCancellationTokenStore
     public bool RemoveCompletedJob(Guid id)
         => DefaultJobCancellationTokenStoreStatics.TokenDictionary.TryRemove(id, out _);
 
-    private void RemoveCancelledTokens()
+    private static void RemoveCancelledTokens()
     {
         var jobIds = DefaultJobCancellationTokenStoreStatics.TokenDictionary.Keys.ToList();
 
