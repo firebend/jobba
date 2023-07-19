@@ -42,11 +42,11 @@ public class JobbaMongoCleanUpStoreTests
 
         //assert
         mockJobRepo.Verify(x => x.DeleteManyAsync(
-            It.IsAny<Expression<Func<JobEntity,bool>>>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         mockJobProgressRepo.Verify(x => x.DeleteManyAsync(
-            It.IsAny<Expression<Func<JobProgressEntity,bool>>>(),
+            It.IsAny<Expression<Func<JobProgressEntity, bool>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }
