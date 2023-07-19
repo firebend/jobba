@@ -74,6 +74,18 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         return entity;
     }
 
+    public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+    {
+        var found = await GetAllAsync(filter, cancellationToken);
+
+        foreach (var entity in found)
+        {
+            await RetryErrorAsync(() => GetCollection().DeleteOneAsync(x => x.Id == entity.Id, cancellationToken));
+        }
+
+        return found;
+    }
+
     protected Task<IAsyncCursor<TEntity>> FilterCollection(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken) =>
         RetryErrorAsync(() => GetCollection().FindAsync(Builders<TEntity>.Filter.Where(filter), new FindOptions<TEntity>(), cancellationToken));
 }

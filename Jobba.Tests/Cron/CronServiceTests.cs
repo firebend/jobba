@@ -16,7 +16,7 @@ public class CronServiceTests
         var next = service.GetNextExecutionDate("30 16 1 JAN *");
 
         next.Should().NotBeNull();
-        next.Value.Hour.Should().Be(16);
+        next!.Value.Hour.Should().Be(16);
         next.Value.Minute.Should().Be(30);
         next.Value.Month.Should().Be(1);
         next.Value.Day.Should().Be(1);

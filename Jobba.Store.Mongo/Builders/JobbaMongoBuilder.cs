@@ -37,6 +37,7 @@ public class JobbaMongoBuilder
         jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobEntity>, JobbaMongoRepository<JobEntity>>();
         jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobProgressEntity>, JobbaMongoRepository<JobProgressEntity>>();
         jobbaBuilder.Services.TryAddScoped<IJobbaMongoRetryService, JobbaMongoRetryService>();
+        jobbaBuilder.Services.TryAddScoped<IJobCleanUpStore, JobbaMongoCleanUpStore>();
 
         WithJobCollection("Jobs");
         WithJobProgressCollection("JobProgress");

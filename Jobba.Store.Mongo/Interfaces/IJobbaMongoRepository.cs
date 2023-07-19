@@ -18,4 +18,6 @@ public interface IJobbaMongoRepository<TEntity>
     Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken);
 
     Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken);
+
+    Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
 }

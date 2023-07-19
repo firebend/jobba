@@ -41,6 +41,7 @@ public class JobbaBuilder
         Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
 
         Services.AddHostedService<JobbaHostedService>();
+        Services.AddHostedService<JobbaCleanUpHostedService>();
     }
 
     public JobbaBuilder AddJob<TJob, TJobParams, TJobState>()
