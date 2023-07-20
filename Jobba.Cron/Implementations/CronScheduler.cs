@@ -36,14 +36,14 @@ public class CronScheduler : ICronScheduler
     public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
     {
         var tasks = GetJobsNeedingInvoking(scope, min, max)
-            .Select(x => InvokeJobUsingReflectionAsync(scope, min, x, cancellationToken));
+            .Select(x => InvokeJobUsingReflectionAsync(scope, x, cancellationToken));
 
         await Task.WhenAll(tasks);
     }
 
-    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, DateTimeOffset now, CronJobWithRegistry job, CancellationToken cancellationToken)
+    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, CronJobWithRegistry job, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}", job.CronJob.JobName, job.Registry.Cron, now);
+        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}", job.CronJob.JobName, job.Registry.Cron, DateTimeOffset.UtcNow);
 
         var methodInfo = typeof(CronScheduler)
             .GetMethod(nameof(EnqueueJobAsync), BindingFlags.NonPublic | BindingFlags.Static)
