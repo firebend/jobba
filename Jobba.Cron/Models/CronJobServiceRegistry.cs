@@ -63,7 +63,7 @@ public class CronJobServiceRegistry
     /// </returns>
     public bool ShouldExecute(DateTimeOffset min, DateTimeOffset max)
     {
-        var isInWindow =  NextExecutionDate >= min && NextExecutionDate <= max;
+        var isInWindow = NextExecutionDate >= min && NextExecutionDate <= max;
 
         //********************************************
         // Author: JMA
