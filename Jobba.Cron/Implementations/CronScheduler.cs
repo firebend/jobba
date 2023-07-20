@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
-using Jobba.Cron.Extensions;
 using Jobba.Cron.Interfaces;
 using Jobba.Cron.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,33 +17,33 @@ public record CronJobWithRegistry(ICronJob CronJob, CronJobServiceRegistry Regis
 
 public class CronScheduler : ICronScheduler
 {
-    private readonly ICronService _cronService;
     private readonly ILogger<CronScheduler> _logger;
     private readonly IEnumerable<CronJobServiceRegistry> _registries;
     private readonly IJobScheduler _scheduler;
+    private readonly ICronService _cronService;
 
-    public CronScheduler(ICronService cronService,
-        IEnumerable<CronJobServiceRegistry> registries,
+    public CronScheduler(IEnumerable<CronJobServiceRegistry> registries,
         IJobScheduler scheduler,
-        ILogger<CronScheduler> logger)
+        ILogger<CronScheduler> logger,
+        ICronService cronService)
     {
-        _cronService = cronService;
         _registries = registries;
         _scheduler = scheduler;
         _logger = logger;
+        _cronService = cronService;
     }
 
-    public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset now, CancellationToken cancellationToken)
+    public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
     {
-        var tasks = GetJobsNeedingInvoking(scope, now)
-            .Select(x => InvokeJobUsingReflectionAsync(scope, now, x, cancellationToken));
+        var tasks = GetJobsNeedingInvoking(scope, min, max)
+            .Select(x => InvokeJobUsingReflectionAsync(scope, x, cancellationToken));
 
         await Task.WhenAll(tasks);
     }
 
-    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, DateTimeOffset now, CronJobWithRegistry job, CancellationToken cancellationToken)
+    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, CronJobWithRegistry job, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}", job.CronJob.JobName, job.Registry.Cron, now);
+        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}", job.CronJob.JobName, job.Registry.Cron, DateTimeOffset.UtcNow);
 
         var methodInfo = typeof(CronScheduler)
             .GetMethod(nameof(EnqueueJobAsync), BindingFlags.NonPublic | BindingFlags.Static)
@@ -72,13 +71,18 @@ public class CronScheduler : ICronScheduler
         }
     }
 
-    private IEnumerable<CronJobWithRegistry> GetJobsNeedingInvoking(IServiceScope scope, DateTimeOffset now)
+    private IEnumerable<CronJobWithRegistry> GetJobsNeedingInvoking(IServiceScope scope, DateTimeOffset min, DateTimeOffset max)
     {
         foreach (var registry in _registries)
         {
-            var nextExecutionDate = _cronService.GetNextExecutionDate(registry.Cron, now);
+            if (registry.NextExecutionDate is null)
+            {
+                registry.SetNextExecutionDate(_cronService, max);
+            }
 
-            var shouldExecute = nextExecutionDate.HasValue && nextExecutionDate.Value.TrimMilliseconds() == now;
+            var shouldExecute = registry.ShouldExecute(min, max);
+
+            registry.SetNextExecutionDate(_cronService, max);
 
             if (shouldExecute is false)
             {
@@ -118,5 +122,7 @@ public class CronScheduler : ICronScheduler
         };
 
         await jobScheduler.ScheduleJobAsync(request, cancellationToken);
+
+        job.Registry.PreviousExecutionDate = DateTimeOffset.UtcNow;
     }
 }
