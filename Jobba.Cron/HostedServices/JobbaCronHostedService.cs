@@ -16,14 +16,7 @@ public class JobbaCronHostedService : BackgroundService
 {
     private readonly ILogger<JobbaCronHostedService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
-
-    // ReSharper disable once MemberCanBePrivate.Global
-    // ReSharper disable once InconsistentNaming
-#pragma warning disable CA2211
-#pragma warning disable IDE1006
-    public static TimeSpan TimerDuration = TimeSpan.FromSeconds(15);
-#pragma warning restore IDE1006
-#pragma warning restore CA2211
+    private readonly TimeSpan _timerDelay = TimeSpan.FromSeconds(15);
 
     public JobbaCronHostedService(ILogger<JobbaCronHostedService> logger, IServiceScopeFactory scopeFactory)
     {
@@ -33,9 +26,11 @@ public class JobbaCronHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", TimerDuration);
+        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", _timerDelay);
 
-        using var timer = new PeriodicTimer(TimerDuration);
+        await CenterTimerAsync(stoppingToken);
+
+        using var timer = new PeriodicTimer(_timerDelay);
 
         await DoWorkAsync(stoppingToken);
 
@@ -47,9 +42,21 @@ public class JobbaCronHostedService : BackgroundService
         _logger.LogInformation("Jobba Cron Hosted service is stopping");
     }
 
+    private static async Task CenterTimerAsync(CancellationToken stoppingToken)
+    {
+        while (DateTimeOffset.UtcNow.Second % 15 != 0)
+        {
+            await Task.Delay(500, stoppingToken);
+        }
+    }
+
     private async Task DoWorkAsync(CancellationToken stoppingToken)
     {
-        var now = DateTimeOffset.UtcNow.TrimMilliseconds();
+        // var now = DateTimeOffset.UtcNow.TrimMilliseconds();
+        // var later = now.Add(TimerDuration);
+
+        var min = DateTimeOffset.Now.TrimMilliseconds();
+        var max = min.Subtract(_timerDelay);
 
         using var scope = _scopeFactory.CreateScope();
         var scheduler = scope.ServiceProvider.GetService<ICronScheduler>();
@@ -60,6 +67,6 @@ public class JobbaCronHostedService : BackgroundService
             return;
         }
 
-        await scheduler.EnqueueJobsAsync(scope, now, stoppingToken);
+        await scheduler.EnqueueJobsAsync(scope, max, min, stoppingToken);
     }
 }

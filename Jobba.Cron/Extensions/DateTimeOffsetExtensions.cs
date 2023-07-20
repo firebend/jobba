@@ -15,4 +15,14 @@ public static class DateTimeOffsetExtensions
         source.Second,
         0,
         source.Offset);
+
+    public static DateTimeOffset TrimSeconds(this DateTimeOffset source) => new(
+        source.Year,
+        source.Month,
+        source.Day,
+        source.Hour,
+        source.Minute,
+        0,
+        0,
+        source.Offset);
 }

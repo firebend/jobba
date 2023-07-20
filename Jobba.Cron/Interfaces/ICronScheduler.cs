@@ -13,8 +13,11 @@ public interface ICronScheduler
     /// <param name="scope">
     /// The service provider scope to resolve jobs from.
     /// </param>
-    /// <param name="now">
-    /// The date point in time reference to check jobs against
+    /// <param name="min">
+    /// The minimum date point in time reference to check jobs against
+    /// </param>
+    /// <param name="max">
+    /// The maximum date point in time reference to check jobs against
     /// </param>
     /// <param name="cancellationToken">
     /// Cancellation token
@@ -22,5 +25,5 @@ public interface ICronScheduler
     /// <returns>
     /// A task
     /// </returns>
-    Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset now, CancellationToken cancellationToken);
+    Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken);
 }
