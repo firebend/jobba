@@ -52,11 +52,8 @@ public class JobbaCronHostedService : BackgroundService
 
     private async Task DoWorkAsync(CancellationToken stoppingToken)
     {
-        // var now = DateTimeOffset.UtcNow.TrimMilliseconds();
-        // var later = now.Add(TimerDuration);
-
-        var min = DateTimeOffset.Now.TrimMilliseconds();
-        var max = min.Subtract(_timerDelay);
+        var max = DateTimeOffset.Now.TrimMilliseconds();
+        var min = max.Subtract(_timerDelay);
 
         using var scope = _scopeFactory.CreateScope();
         var scheduler = scope.ServiceProvider.GetService<ICronScheduler>();
@@ -67,6 +64,6 @@ public class JobbaCronHostedService : BackgroundService
             return;
         }
 
-        await scheduler.EnqueueJobsAsync(scope, max, min, stoppingToken);
+        await scheduler.EnqueueJobsAsync(scope, min, max, stoppingToken);
     }
 }
