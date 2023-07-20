@@ -2,7 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
+    <Version>4.0.0</Version>
     <LangVersion>latestmajor</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyTitle>Firebend Jobba Cron</AssemblyTitle>
+    <Description>Firebend Jobba Cron</Description>
+    <PackageTags>firebend;Jobba;job;scheduling;durable;background;jobs;cron</PackageTags>
+    <Authors>Firebend</Authors>
+    <RepositoryUrl>https://github.com/firebend/Jobba</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/firebend/Jobba/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/firebend/Jobba</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>

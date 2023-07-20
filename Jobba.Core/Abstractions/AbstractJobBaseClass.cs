@@ -10,7 +10,9 @@ namespace Jobba.Core.Abstractions;
 public abstract class AbstractJobBaseClass<TJobParams, TJobState> : IJob<TJobParams, TJobState>
 {
     private readonly IJobProgressStore _progressStore;
-    private Guid _jobId;
+
+    // ReSharper disable once MemberCanBePrivate.Global
+    protected Guid JobId { get; private set; }
 
     protected AbstractJobBaseClass(IJobProgressStore progressStore)
     {
@@ -19,7 +21,7 @@ public abstract class AbstractJobBaseClass<TJobParams, TJobState> : IJob<TJobPar
 
     public Task StartAsync(JobStartContext<TJobParams, TJobState> jobStartContext, CancellationToken cancellationToken)
     {
-        _jobId = jobStartContext.JobId;
+        JobId = jobStartContext.JobId;
         return OnStartAsync(jobStartContext, cancellationToken);
     }
 
@@ -37,7 +39,7 @@ public abstract class AbstractJobBaseClass<TJobParams, TJobState> : IJob<TJobPar
             Date = DateTimeOffset.UtcNow,
             Message = message,
             Progress = progressPercentage,
-            JobId = _jobId,
+            JobId = JobId,
             JobState = state
         };
 
