@@ -6,16 +6,13 @@ using Jobba.Core.Interfaces.Subscribers;
 using Jobba.MassTransit.Abstractions;
 using Jobba.MassTransit.Models;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobba.MassTransit.Implementations.Consumers;
 
 public class OnJobCancelConsumer : AbstractJobbaMassTransitConsumer<CancelJobEvent, IOnJobCancelSubscriber>
 {
     private bool _wasCancelled;
-
-    public OnJobCancelConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
-    {
-    }
 
     protected override async Task HandleMessageAsync(IOnJobCancelSubscriber subscriber, CancelJobEvent message, CancellationToken cancellationToken)
     {
@@ -36,5 +33,9 @@ public class OnJobCancelConsumer : AbstractJobbaMassTransitConsumer<CancelJobEve
                     WasCancelled = true
                 });
         }
+    }
+
+    public OnJobCancelConsumer(IServiceScopeFactory scopeFactory) : base(scopeFactory)
+    {
     }
 }

@@ -9,6 +9,7 @@ using Jobba.Core.Interfaces.Subscribers;
 using Jobba.MassTransit.Abstractions;
 using Jobba.Tests.AutoMoqCustomizations;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -49,11 +50,12 @@ public class AbstractJobbaMassTransitConsumerTests
 
     private class FakeConsumer : AbstractJobbaMassTransitConsumer<JobProgressEvent, IOnJobProgressSubscriber>
     {
-        public FakeConsumer(IServiceProvider serviceProvider) : base(serviceProvider)
-        {
-        }
 
         protected override Task HandleMessageAsync(IOnJobProgressSubscriber subscriber, JobProgressEvent message, CancellationToken cancellationToken) =>
             subscriber.OnJobProgressAsync(message, cancellationToken);
+
+        public FakeConsumer(IServiceScopeFactory scopeFactory) : base(scopeFactory)
+        {
+        }
     }
 }

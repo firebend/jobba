@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Subscribers;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,18 +15,16 @@ namespace Jobba.Core.Implementations;
 public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 {
     private readonly ILogger<DefaultJobEventPublisher> _logger;
-    private readonly IServiceScope _scope;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public DefaultJobEventPublisher(IServiceProvider serviceProvider,
-        ILogger<DefaultJobEventPublisher> logger)
+    public DefaultJobEventPublisher(ILogger<DefaultJobEventPublisher> logger, IServiceScopeFactory scopeFactory)
     {
-        _scope = serviceProvider.CreateScope();
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     public void Dispose()
     {
-        _scope?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -119,9 +118,17 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
     {
         try
         {
-            var subscribers = _scope.ServiceProvider.GetServices<TSubscriber>();
-            var subscribersArray = subscribers.ToArray();
-            return subscribersArray;
+            if (!_scopeFactory.TryCreateScope(out var scope))
+            {
+                return Array.Empty<TSubscriber>();
+            }
+
+            using (scope)
+            {
+                var subscribers = scope.ServiceProvider.GetServices<TSubscriber>();
+                var subscribersArray = subscribers.ToArray();
+                return subscribersArray;
+            }
         }
         catch (Exception ex)
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
@@ -11,55 +12,58 @@ namespace Jobba.MassTransit.Implementations;
 public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInfoProvider, IDisposable
 {
     private readonly JobbaMassTransitConfigurationContext _configurationContext;
-    private readonly IServiceScope _serviceScope;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public JobbaMassTransitConsumerInfoProvider(IServiceProvider serviceProvider,
-        JobbaMassTransitConfigurationContext configurationContext)
+    public JobbaMassTransitConsumerInfoProvider(JobbaMassTransitConfigurationContext configurationContext, IServiceScopeFactory scopeFactory)
     {
-        _serviceScope = serviceProvider.CreateScope();
         _configurationContext = configurationContext;
+        _scopeFactory = scopeFactory;
     }
 
-    public void Dispose()
-    {
-        _serviceScope?.Dispose();
-        GC.SuppressFinalize(this);
-    }
+    public void Dispose() => GC.SuppressFinalize(this);
 
     public IEnumerable<JobbaMassTransitConsumerInfo> GetConsumerInfos()
     {
-        var consumers = _serviceScope
-            .ServiceProvider
-            .GetServices<IJobbaMassTransitConsumer>()
-            .ToList();
-
-        if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
+        if (!_scopeFactory.TryCreateScope(out var scope))
         {
-            var jobs = _serviceScope
-                .ServiceProvider
-                .GetServices<IJob>();
+            yield break;
+        }
 
-            foreach (var job in jobs)
+        using (scope)
+        {
+            var consumers = scope
+                .ServiceProvider
+                .GetServices<IJobbaMassTransitConsumer>()
+                .ToList();
+
+            if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
+            {
+                var jobs = scope
+                    .ServiceProvider
+                    .GetServices<IJob>();
+
+                foreach (var job in jobs)
+                {
+                    foreach (var consumer in consumers)
+                    {
+                        yield return new JobbaMassTransitConsumerInfo
+                        {
+                            ConsumerType = consumer.GetType(),
+                            QueueName = job.JobName.Replace(" ", "_")
+                        };
+                    }
+                }
+            }
+            else
             {
                 foreach (var consumer in consumers)
                 {
                     yield return new JobbaMassTransitConsumerInfo
                     {
                         ConsumerType = consumer.GetType(),
-                        QueueName = job.JobName.Replace(" ", "_")
+                        QueueName = string.Empty
                     };
                 }
-            }
-        }
-        else
-        {
-            foreach (var consumer in consumers)
-            {
-                yield return new JobbaMassTransitConsumerInfo
-                {
-                    ConsumerType = consumer.GetType(),
-                    QueueName = string.Empty
-                };
             }
         }
     }

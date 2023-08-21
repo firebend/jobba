@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Extensions;
 using Jobba.MassTransit.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,28 +12,33 @@ namespace Jobba.MassTransit.Abstractions;
 public abstract class AbstractJobbaMassTransitConsumer<TMessage, TSubscriber> : IConsumer<TMessage>, IJobbaMassTransitConsumer, IDisposable
     where TMessage : class
 {
-    private readonly IServiceScope _serviceScope;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    protected AbstractJobbaMassTransitConsumer(IServiceProvider serviceProvider)
+    protected AbstractJobbaMassTransitConsumer(IServiceScopeFactory scopeFactory)
     {
-        _serviceScope = serviceProvider.CreateScope();
+        _scopeFactory = scopeFactory;
     }
 
     public async Task Consume(ConsumeContext<TMessage> context)
     {
-        var tasks = _serviceScope
-            .ServiceProvider
-            .GetServices<TSubscriber>()
-            .Select(x => HandleMessageAsync(x, context.Message, context.CancellationToken));
+        if (_scopeFactory.TryCreateScope(out var scope))
+        {
+            using (scope)
+            {
+                var tasks = scope
+                    .ServiceProvider
+                    .GetServices<TSubscriber>()
+                    .Select(x => HandleMessageAsync(x, context.Message, context.CancellationToken));
 
-        await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks);
 
-        await AfterSubscribersAsync(context);
+                await AfterSubscribersAsync(context);
+            }
+        }
     }
 
     public void Dispose()
     {
-        _serviceScope?.Dispose();
         GC.SuppressFinalize(this);
     }
 
