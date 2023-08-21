@@ -25,7 +25,7 @@ public class InMemoryJobProgressStore : IJobProgressStore
 
     public Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken)
     {
-        if(InMemoryJobProgressStoreCache.Progress.TryGetValue(id, out var progress))
+        if (InMemoryJobProgressStoreCache.Progress.TryGetValue(id, out var progress))
         {
             return Task.FromResult(progress);
         }

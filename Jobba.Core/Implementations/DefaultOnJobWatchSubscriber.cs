@@ -44,7 +44,7 @@ public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
 
             if (_scopeFactory.TryCreateScope(out var scope))
             {
-                using(scope)
+                using (scope)
                 {
                     var watcher = scope.ServiceProvider.GetService(jobWatcherType) ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
 
