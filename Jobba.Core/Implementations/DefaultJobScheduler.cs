@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -18,28 +19,26 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     private readonly IJobLockService _lockService;
     private readonly ILogger<DefaultJobScheduler> _logger;
     private readonly IJobEventPublisher _publisher;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public DefaultJobScheduler(IJobEventPublisher publisher,
         IJobStore jobStore,
-        IServiceProvider serviceProvider,
         IJobCancellationTokenStore jobCancellationTokenStore,
         IJobbaGuidGenerator guidGenerator,
         IJobLockService lockService,
-        ILogger<DefaultJobScheduler> logger)
+        ILogger<DefaultJobScheduler> logger,
+        IServiceScopeFactory scopeFactory)
     {
         _publisher = publisher;
         _jobStore = jobStore;
-        _serviceProvider = serviceProvider;
         _jobCancellationTokenStore = jobCancellationTokenStore;
         _guidGenerator = guidGenerator;
         _lockService = lockService;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() => GC.SuppressFinalize(this);
 
     public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
@@ -64,8 +63,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
         await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobWatchInterval, cancellationToken);
         var context = GetJobStartContext(request, jobInfo);
-        var scope = _serviceProvider.CreateScope();
-        var _ = RunJobAsync(jobId, request.JobType, context, scope, token, cancellationToken);
+        _ = RunJobAsync(jobId, request.JobType, context, token, cancellationToken);
         await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, cancellationToken);
 
         return jobInfo;
@@ -156,49 +154,51 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     private async Task RunJobAsync<TJobParams, TJobState>(Guid jobId,
         Type jobType,
         JobStartContext<TJobParams, TJobState> context,
-        IServiceScope scope,
         CancellationToken jobCancellationToken,
         CancellationToken cancellationToken)
     {
-        if (scope.ServiceProvider.GetService(jobType) is not IJob<TJobParams, TJobState> job)
+        if (_scopeFactory.TryCreateScope(out var scope))
         {
-            throw new Exception($"Could not resolve job from service provider. Job Type {jobType}");
+            if (scope.ServiceProvider.GetService(jobType) is not IJob<TJobParams, TJobState> job)
+            {
+                throw new Exception($"Could not resolve job from service provider. Job Type {jobType}");
+            }
+
+            await Task.Run(async () =>
+            {
+                await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
+
+                try
+                {
+                    await job.StartAsync(context, jobCancellationToken);
+
+                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
+                    {
+                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
+                    }
+                    else
+                    {
+                        await OnJobCompletedAsync(jobId, default);
+                        _jobCancellationTokenStore.RemoveCompletedJob(jobId);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
+                    {
+                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await OnJobFaulted<TJobParams, TJobState>(jobId, ex);
+                }
+                finally
+                {
+                    scope.Dispose();
+                }
+            }, cancellationToken);
         }
-
-        await Task.Run(async () =>
-        {
-            await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
-
-            try
-            {
-                await job.StartAsync(context, jobCancellationToken);
-
-                if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
-                {
-                    await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
-                }
-                else
-                {
-                    await OnJobCompletedAsync(jobId, default);
-                    _jobCancellationTokenStore.RemoveCompletedJob(jobId);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
-                {
-                    await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
-                }
-            }
-            catch (Exception ex)
-            {
-                await OnJobFaulted<TJobParams, TJobState>(jobId, ex);
-            }
-            finally
-            {
-                scope.Dispose();
-            }
-        }, cancellationToken);
     }
 
     private async Task OnJobFaulted<TJobParams, TJobState>(Guid jobId, Exception ex)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Extensions;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
@@ -16,27 +17,33 @@ namespace Jobba.MassTransit.HostedServices;
 public class MassTransitJobbaReceiverHostedService : BackgroundService
 {
     private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public MassTransitJobbaReceiverHostedService(
-        ILogger<MassTransitJobbaReceiverHostedService> logger,
-        IServiceProvider serviceProvider)
+    public MassTransitJobbaReceiverHostedService(ILogger<MassTransitJobbaReceiverHostedService> logger, IServiceScopeFactory scopeFactory)
     {
-        _serviceProvider = serviceProvider;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
+
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
-            var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? new List<JobbaMassTransitConsumerInfo>();
-
-            if (consumers.Any())
+            if (_scopeFactory.TryCreateScope(out var scope))
             {
-                RegisterJobbaEndpoints(scope, consumers);
+                using (scope)
+                {
+                    var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
+
+                    var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList()
+                                    ?? new List<JobbaMassTransitConsumerInfo>();
+
+                    if (consumers.Any())
+                    {
+                        RegisterJobbaEndpoints(scope, consumers);
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -71,7 +78,7 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
                         .Invoke(null, new object[]
                         {
                             configurator,
-                            _serviceProvider
+                            _scopeFactory
                         });
                 }
             });
@@ -112,11 +119,18 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
 
     private static void ConfigureConsumer<TConsumer>(
         IReceiveEndpointConfigurator receiveEndpointConfigurator,
-        IServiceProvider serviceProvider)
+        IServiceScopeFactory scopeFactory)
         where TConsumer : class, IConsumer => receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ =>
     {
-        var scope = serviceProvider.CreateScope();
-        var consumer = scope.ServiceProvider.GetService<TConsumer>();
-        return consumer;
+        if (!scopeFactory.TryCreateScope(out var scope))
+        {
+            return null;
+        }
+
+        using (scope)
+        {
+            var consumer = scope.ServiceProvider.GetService<TConsumer>();
+            return consumer;
+        }
     });
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Subscribers;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +13,14 @@ namespace Jobba.Core.Implementations;
 public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
 {
     private readonly ILogger<DefaultOnJobWatchSubscriber> _logger;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public DefaultOnJobWatchSubscriber(IServiceProvider serviceProvider, ILogger<DefaultOnJobWatchSubscriber> logger)
+    public DefaultOnJobWatchSubscriber(ILogger<DefaultOnJobWatchSubscriber> logger, IServiceScopeFactory scopeFactory)
     {
-        _serviceProvider = serviceProvider;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
+
 
     public async Task WatchJobAsync(JobWatchEvent jobWatchEvent, CancellationToken cancellationToken)
     {
@@ -40,21 +42,25 @@ public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
 
             var jobWatcherType = typeof(IJobWatcher<,>).MakeGenericType(jobParametersType, jobStateType);
 
-            using var scope = _serviceProvider.CreateScope();
+            if (_scopeFactory.TryCreateScope(out var scope))
             {
-                var watcher = scope.ServiceProvider.GetService(jobWatcherType) ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
-
-                var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync)) ?? throw new Exception("Could not find job watcher watch job method.");
-
-                var invokeReturn = methodInfo.Invoke(watcher, new object[]
+                using (scope)
                 {
-                    jobWatchEvent.JobId,
-                    cancellationToken
-                });
+                    var watcher = scope.ServiceProvider.GetService(jobWatcherType) ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
 
-                if (invokeReturn is Task task)
-                {
-                    await task;
+                    var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync)) ??
+                                     throw new Exception("Could not find job watcher watch job method.");
+
+                    var invokeReturn = methodInfo.Invoke(watcher, new object[]
+                    {
+                        jobWatchEvent.JobId,
+                        cancellationToken
+                    });
+
+                    if (invokeReturn is Task task)
+                    {
+                        await task;
+                    }
                 }
             }
         }
