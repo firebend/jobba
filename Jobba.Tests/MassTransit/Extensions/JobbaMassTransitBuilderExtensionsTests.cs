@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Builders;
 using Jobba.Core.Events;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.MassTransit.Extensions;
 using Jobba.MassTransit.Implementations;
@@ -21,12 +22,12 @@ public class JobbaMassTransitBuilderExtensionsTests
     public async Task Jobba_MassTransit_Builder_Extensions_Should_Register_Services()
     {
         var serviceCollection = new ServiceCollection();
-        serviceCollection.AddMassTransitInMemoryTestHarness(cfg => cfg.AddDelayedMessageScheduler());
+        serviceCollection.AddMassTransitTestHarness(cfg => cfg.AddDelayedMessageScheduler());
         var builder = new JobbaBuilder(serviceCollection);
-        builder.UsingMassTransit();
+        builder.UsingMassTransit().UsingInMemory();
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
+        var harness = serviceProvider.GetRequiredService<ITestHarness>();
         await harness.Start();
 
         try

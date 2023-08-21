@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -13,12 +14,6 @@ namespace Jobba.Store.Mongo.Implementations;
 
 public class JobbaMongoJobListStore : IJobListStore
 {
-    private static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
-        x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
-
-    private static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
-        x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
-
     private readonly IJobbaMongoRepository<JobEntity> _repository;
 
     public JobbaMongoJobListStore(IJobbaMongoRepository<JobEntity> repository)
@@ -27,10 +22,10 @@ public class JobbaMongoJobListStore : IJobListStore
     }
 
     public Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken)
-        => GetJobInfoBases(JobsInProgressExpression, cancellationToken);
+        => GetJobInfoBases(RepositoryExpressions.JobsInProgressExpression, cancellationToken);
 
     public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
-        => GetJobInfoBases(JobRetryExpression, cancellationToken);
+        => GetJobInfoBases(RepositoryExpressions.JobRetryExpression, cancellationToken);
 
     private async Task<IEnumerable<JobInfoBase>> GetJobInfoBases(Expression<Func<JobEntity, bool>> filter, CancellationToken cancellationToken)
     {

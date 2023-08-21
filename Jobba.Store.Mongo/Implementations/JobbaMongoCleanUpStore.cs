@@ -3,6 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -32,10 +33,7 @@ public class JobbaMongoCleanUpStore : IJobCleanUpStore
 
         _logger.LogDebug("Cleaning up jobs that have a last progress data <= {Date}", date);
 
-        Expression<Func<JobEntity, bool>> filter =
-            x => x.Status != JobStatus.Enqueued &&
-                 x.Status != JobStatus.InProgress &&
-                 x.LastProgressDate <= date;
+        var filter = RepositoryExpressions.GetCleanUpExpression(date);
 
         var jobs = await _jobRepo.DeleteManyAsync(filter, cancellationToken);
         var jobIds = jobs.Select(x => x.Id).ToList();
