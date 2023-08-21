@@ -23,7 +23,11 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
         _logger = logger;
     }
 
-    public void Dispose() => _scope?.Dispose();
+    public void Dispose()
+    {
+        _scope?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
 
     public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)

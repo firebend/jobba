@@ -30,7 +30,11 @@ public abstract class AbstractJobbaMassTransitConsumer<TMessage, TSubscriber> : 
         await AfterSubscribersAsync(context);
     }
 
-    public void Dispose() => _serviceScope?.Dispose();
+    public void Dispose()
+    {
+        _serviceScope?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     protected abstract Task HandleMessageAsync(TSubscriber subscriber, TMessage message, CancellationToken cancellationToken);
 

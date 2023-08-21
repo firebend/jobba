@@ -37,9 +37,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         _logger = logger;
     }
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() => GC.SuppressFinalize(this);
 
     public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,

@@ -20,7 +20,11 @@ public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInf
         _configurationContext = configurationContext;
     }
 
-    public void Dispose() => _serviceScope?.Dispose();
+    public void Dispose()
+    {
+        _serviceScope?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     public IEnumerable<JobbaMassTransitConsumerInfo> GetConsumerInfos()
     {
