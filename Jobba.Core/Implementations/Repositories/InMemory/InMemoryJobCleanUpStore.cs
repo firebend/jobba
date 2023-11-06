@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces.Repositories;
-using Jobba.Core.Models.Entities;
 
 namespace Jobba.Core.Implementations.Repositories.InMemory;
 

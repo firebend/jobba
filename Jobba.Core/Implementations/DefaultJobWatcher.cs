@@ -36,36 +36,55 @@ public class DefaultJobWatcher<TJobParams, TJobState> : IJobWatcher<TJobParams, 
             return;
         }
 
-        if (job.Status is JobStatus.InProgress or JobStatus.Enqueued)
+        switch (job.Status)
         {
-            var watchEvent = new JobWatchEvent(job.Id, typeof(TJobParams).AssemblyQualifiedName, typeof(TJobState).AssemblyQualifiedName);
-            await _publisher.PublishWatchJobEventAsync(watchEvent, job.JobWatchInterval, cancellationToken);
-            return;
-        }
-
-        if (job.Status == JobStatus.Faulted)
-        {
-            if (job.CurrentNumberOfTries != job.MaxNumberOfTries)
+            case JobStatus.InProgress or JobStatus.Enqueued:
             {
-                var request = new JobRequest<TJobParams, TJobState>
-                {
-                    Description = job.Description,
-                    IsRestart = true,
-                    JobId = job.Id,
-                    JobType = Type.GetType(job.JobType),
-                    JobWatchInterval = job.JobWatchInterval,
-                    NumberOfTries = job.CurrentNumberOfTries + 1,
-                    JobParameters = job.JobParameters,
-                    InitialJobState = job.CurrentState
-                };
+                await ContinueWatchingAsync(job, cancellationToken);
+                return;
+            }
+            case JobStatus.Faulted:
+            {
+                await RestartIfNeededAsync(job, cancellationToken);
 
-                if (request.JobType == null)
-                {
-                    return;
-                }
-
-                await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+                break;
             }
         }
+    }
+
+    private async Task RestartIfNeededAsync(JobInfo<TJobParams, TJobState> job, CancellationToken cancellationToken)
+    {
+        if (job.CurrentNumberOfTries != job.MaxNumberOfTries)
+        {
+            var request = new JobRequest<TJobParams, TJobState>
+            {
+                Description = job.Description,
+                IsRestart = true,
+                JobId = job.Id,
+                JobType = Type.GetType(job.JobType),
+                JobWatchInterval = job.JobWatchInterval,
+                NumberOfTries = job.CurrentNumberOfTries + 1,
+                JobParameters = job.JobParameters,
+                InitialJobState = job.CurrentState
+            };
+
+            if (request.JobType == null)
+            {
+                return;
+            }
+
+            await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+        }
+    }
+
+    private async Task ContinueWatchingAsync(JobInfo<TJobParams, TJobState> job, CancellationToken cancellationToken)
+    {
+        var watchEvent = new JobWatchEvent(
+            job.Id,
+            typeof(TJobParams).AssemblyQualifiedName,
+            typeof(TJobState).AssemblyQualifiedName,
+            job.JobRegistrationId);
+
+        await _publisher.PublishWatchJobEventAsync(watchEvent, job.JobWatchInterval, cancellationToken);
     }
 }

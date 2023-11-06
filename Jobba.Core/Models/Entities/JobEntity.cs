@@ -67,6 +67,11 @@ public class JobEntity : IJobbaEntity
     /// </summary>
     public Guid Id { get; set; }
 
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
+
     public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest) => new()
     {
         Description = jobRequest.Description,
@@ -84,7 +89,8 @@ public class JobEntity : IJobbaEntity
         JobState = jobRequest.InitialJobState,
         JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
         JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName,
-        IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries
+        IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries,
+        JobRegistrationId = jobRequest.JobRegistrationId
     };
 
     public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>() => new()
@@ -104,7 +110,8 @@ public class JobEntity : IJobbaEntity
         MaxNumberOfTries = MaxNumberOfTries,
         JobParamsTypeName = JobParamsTypeName,
         JobStateTypeName = JobStateTypeName,
-        IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries
+        IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
+        JobRegistrationId = JobRegistrationId
     };
 
     public JobInfoBase ToJobInfoBase() => new()
@@ -122,6 +129,7 @@ public class JobEntity : IJobbaEntity
         MaxNumberOfTries = MaxNumberOfTries,
         IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
         JobParamsTypeName = JobParamsTypeName,
-        JobStateTypeName = JobStateTypeName
+        JobStateTypeName = JobStateTypeName,
+        JobRegistrationId = JobRegistrationId
     };
 }

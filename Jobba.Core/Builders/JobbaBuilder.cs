@@ -17,8 +17,9 @@ public record JobAddedEventArgs
 
 public class JobbaBuilder
 {
-    public JobbaBuilder(IServiceCollection services)
+    public JobbaBuilder(IServiceCollection services, IJobRegistrationStore registrationStore = null)
     {
+        JobRegistrationStore = registrationStore ?? DefaultJobRegistrationStore.Instance;
         Services = services;
         AddDefaultServices();
     }
@@ -26,6 +27,8 @@ public class JobbaBuilder
     public IServiceCollection Services { get; }
 
     public Action<JobAddedEventArgs> OnJobAdded { get; set; }
+
+    public IJobRegistrationStore JobRegistrationStore { get; }
 
     private void AddDefaultServices()
     {
@@ -39,6 +42,7 @@ public class JobbaBuilder
         Services.TryAddScoped<IOnJobCancelSubscriber, DefaultOnJobCancelSubscriber>();
         Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();
         Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
+        Services.TryAddSingleton(JobRegistrationStore);
 
         Services.AddHostedService<JobbaHostedService>();
         Services.AddHostedService<JobbaCleanUpHostedService>();

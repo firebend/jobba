@@ -2,7 +2,16 @@ using System;
 
 namespace Jobba.Core.Models;
 
-public class JobStartContext<TJobParams, TJobState>
+/// <summary>
+/// The context for starting a job.
+/// </summary>
+/// <typeparam name="TJobParams">
+/// The type of job parameters.
+/// </typeparam>
+/// <typeparam name="TJobState">
+/// The type of job state.
+/// </typeparam>
+public record JobStartContext<TJobParams, TJobState>
 {
     /// <summary>
     ///     The parameters to start the job with.
@@ -20,14 +29,14 @@ public class JobStartContext<TJobParams, TJobState>
     public DateTimeOffset StartTime { get; set; }
 
     /// <summary>
-    ///     The id pointing to the worker that started the job.
-    /// </summary>
-    public string WorkerId { get; set; }
-
-    /// <summary>
     ///     The job's id.
     /// </summary>
     public Guid JobId { get; set; }
+
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 
     /// <summary>
     ///     The current number of times the job has been tried.

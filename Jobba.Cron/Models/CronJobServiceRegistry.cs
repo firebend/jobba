@@ -8,7 +8,7 @@ namespace Jobba.Cron.Models;
 /// Encapsulates metadata about a cron job.
 /// This class is used for tracking jobs registered in the applications service collection.
 /// </summary>
-public class CronJobServiceRegistry
+public record CronJobServiceRegistry
 {
     /// <summary>
     /// The cron expression

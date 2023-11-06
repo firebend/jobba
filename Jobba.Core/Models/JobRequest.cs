@@ -2,8 +2,22 @@ using System;
 
 namespace Jobba.Core.Models;
 
-public class JobRequest<TJobParams, TJobState>
+/// <summary>
+/// A request to invoked a registered job
+/// </summary>
+/// <typeparam name="TJobParams">
+/// The type of job parameters.
+/// </typeparam>
+/// <typeparam name="TJobState">
+/// The type of job state.
+/// </typeparam>
+public record JobRequest<TJobParams, TJobState>
 {
+    /// <summary>
+    /// The id corresponding to the job registration.
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
+
     /// <summary>
     ///     A description of what the job is doing.
     /// </summary>

@@ -2,12 +2,20 @@ using System;
 
 namespace Jobba.Core.Models;
 
-public class JobInfoBase
+/// <summary>
+/// Base information about a job.
+/// </summary>
+public record JobInfoBase
 {
     /// <summary>
     ///     The job's id
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 
     /// <summary>
     ///     The type of job that was enqueued

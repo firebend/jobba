@@ -36,7 +36,9 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
 
         var added = await _repository.AddAsync(entity, cancellationToken);
 
-        await _jobEventPublisher.PublishJobProgressEventAsync(new JobProgressEvent(added.Id, added.JobId), cancellationToken);
+        await _jobEventPublisher.PublishJobProgressEventAsync(
+            new JobProgressEvent(added.Id, added.JobId, added.JobRegistrationId),
+            cancellationToken);
 
         var statePatch = new JsonPatchDocument<JobEntity>();
         statePatch.Replace(x => x.JobState, jobProgress.JobState);

@@ -1,11 +1,9 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces.Repositories;
-using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Interfaces;
 using Microsoft.Extensions.Logging;

@@ -5,6 +5,9 @@ using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces;
 
+/// <summary>
+/// Encapsulates logic for publishing job events.
+/// </summary>
 public interface IJobEventPublisher
 {
     Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken);

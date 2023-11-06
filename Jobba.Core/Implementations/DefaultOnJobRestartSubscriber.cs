@@ -33,7 +33,9 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
             return;
         }
 
-        var genericMethod = method.MakeGenericMethod(Type.GetType(jobRestartEvent.JobParamsTypeName), Type.GetType(jobRestartEvent.JobStateTypeName));
+        var genericMethod = method.MakeGenericMethod(
+            Type.GetType(jobRestartEvent.JobParamsTypeName)!,
+            Type.GetType(jobRestartEvent.JobStateTypeName)!);
 
         var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
         {

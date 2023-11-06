@@ -30,6 +30,11 @@ public class JobProgressEntity : IJobbaEntity
     /// </summary>
     public decimal Progress { get; set; }
 
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
+
     public Guid Id { get; set; }
 
     public static JobProgressEntity FromJobProgress<TJobState>(JobProgress<TJobState> progress) => new()
@@ -38,6 +43,7 @@ public class JobProgressEntity : IJobbaEntity
         Message = progress.Message,
         Progress = progress.Progress,
         JobId = progress.JobId,
-        JobState = progress.JobState
+        JobState = progress.JobState,
+        JobRegistrationId = progress.JobRegistrationId
     };
 }

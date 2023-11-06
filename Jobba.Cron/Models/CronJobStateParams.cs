@@ -1,6 +1,6 @@
 namespace Jobba.Cron.Models;
 
-public class CronJobStateParams<TJobParams, TJobState>
+public record CronJobStateParams<TJobParams, TJobState>
 {
     public TJobParams Parameters { get; set; }
 

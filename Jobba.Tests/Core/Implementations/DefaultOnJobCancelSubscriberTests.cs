@@ -22,7 +22,8 @@ public class DefaultOnJobCancelSubscriberTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent(jobId);
+        var jobRegistrationId = Guid.NewGuid();
+        var cancelEvent = new CancelJobEvent(jobId, jobRegistrationId);
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore
@@ -56,7 +57,8 @@ public class DefaultOnJobCancelSubscriberTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent(jobId);
+        var jobRegistrationId = Guid.NewGuid();
+        var cancelEvent = new CancelJobEvent(jobId, jobRegistrationId);
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore

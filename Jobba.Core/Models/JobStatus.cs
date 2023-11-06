@@ -1,5 +1,8 @@
 namespace Jobba.Core.Models;
 
+/// <summary>
+/// The status of a job.
+/// </summary>
 public enum JobStatus
 {
     /// <summary>
