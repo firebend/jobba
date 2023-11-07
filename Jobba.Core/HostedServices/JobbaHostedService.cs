@@ -17,6 +17,11 @@ public class JobbaHostedService : BackgroundService
     private readonly ILogger<JobbaHostedService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
+    private static readonly CancellationTokenSource HasRegisteredJobsCancellationTokenSource = new();
+
+    public static CancellationToken HasRegisteredJobsCancellationToken
+        => HasRegisteredJobsCancellationTokenSource.Token;
+
     public JobbaHostedService(ILogger<JobbaHostedService> logger, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
@@ -62,6 +67,8 @@ public class JobbaHostedService : BackgroundService
 
             _logger.LogInformation("Jobba registered job {JobName} with id {JobId}", job.JobName, job.Id);
         }
+
+        HasRegisteredJobsCancellationTokenSource.Cancel();
     }
 
     private async Task RestartFaultedJobsAsync(IServiceScope scope, CancellationToken stoppingToken)
