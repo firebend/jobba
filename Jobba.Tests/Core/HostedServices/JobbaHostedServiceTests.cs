@@ -6,6 +6,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Models;
 using Jobba.Tests.AutoMoqCustomizations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -26,7 +27,10 @@ public class JobbaHostedServiceTests
         rescheduler.Setup(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJobReScheduler), rescheduler.Object } }));
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IJobReScheduler), rescheduler.Object }
+        }));
 
         var hostedService = fixture.Create<JobbaHostedService>();
 

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -6,6 +7,7 @@ using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Store.Mongo.Extensions;
+using Jobba.Tests.Core.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -32,7 +34,11 @@ public class JobbaMongoBuilderTests
 
         //assert
         serviceCollection.Count.Should().BeGreaterThan(21);
-        provider.GetService<FooJob>().Should().NotBeNull();
+        var registrations = provider.GetServices<JobRegistration>();
+        registrations.Count().Should().Be(1);
+        registrations.First().JobType.Should().Be<FooJob>();
+        registrations.First().JobStateType.Should().Be<FooState>();
+        registrations.First().JobParamsType.Should().Be<FooParams>();
     }
 
     private class FooState

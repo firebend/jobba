@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -29,7 +30,11 @@ public class JobbaBuilderServiceCollectionExtensionsTests
 
         //assert
         serviceCollection.Count.Should().BeGreaterThan(13);
-        provider.GetService<FooJob>().Should().NotBeNull();
+        var registrations = provider.GetServices<JobRegistration>();
+        registrations.Count().Should().Be(1);
+        registrations.First().JobType.Should().Be<FooJob>();
+        registrations.First().JobStateType.Should().Be<FooState>();
+        registrations.First().JobParamsType.Should().Be<FooParams>();
     }
 
     private class FooState
