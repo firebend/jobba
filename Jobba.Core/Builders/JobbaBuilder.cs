@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Subscribers;
+using Jobba.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -17,9 +19,8 @@ public record JobAddedEventArgs
 
 public class JobbaBuilder
 {
-    public JobbaBuilder(IServiceCollection services, IJobRegistrationStore registrationStore = null)
+    public JobbaBuilder(IServiceCollection services)
     {
-        JobRegistrationStore = registrationStore ?? DefaultJobRegistrationStore.Instance;
         Services = services;
         AddDefaultServices();
     }
@@ -28,7 +29,7 @@ public class JobbaBuilder
 
     public Action<JobAddedEventArgs> OnJobAdded { get; set; }
 
-    public IJobRegistrationStore JobRegistrationStore { get; }
+    public Dictionary<string, JobRegistration> Registrations { get; } = new();
 
     private void AddDefaultServices()
     {
@@ -42,18 +43,35 @@ public class JobbaBuilder
         Services.TryAddScoped<IOnJobCancelSubscriber, DefaultOnJobCancelSubscriber>();
         Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();
         Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
-        Services.TryAddSingleton(JobRegistrationStore);
 
         Services.AddHostedService<JobbaHostedService>();
         Services.AddHostedService<JobbaCleanUpHostedService>();
     }
 
-    public JobbaBuilder AddJob<TJob, TJobParams, TJobState>()
+    public JobbaBuilder AddJob<TJob, TJobParams, TJobState>(string name,
+        Action<JobRegistration> configureRegistration = null)
         where TJob : class, IJob<TJobParams, TJobState>
     {
         Services.TryAddScoped<IJobWatcher<TJobParams, TJobState>, DefaultJobWatcher<TJobParams, TJobState>>();
-        Services.TryAddScoped<IJob<TJobParams, TJobState>, TJob>();
-        Services.TryAddScoped<TJob>();
+
+        if (Registrations.ContainsKey(name))
+        {
+            throw new Exception($"Job {name} is already registered");
+        }
+
+        var registration = new JobRegistration
+        {
+            JobName = name,
+            JobType = typeof(TJob),
+            JobParamsType = typeof(TJobParams),
+            JobStateType = typeof(TJobState)
+        };
+
+        configureRegistration?.Invoke(registration);
+
+        Registrations.Add(name, registration);
+
+        Services.AddSingleton(registration);
 
         OnJobAdded?.Invoke(new JobAddedEventArgs
         {

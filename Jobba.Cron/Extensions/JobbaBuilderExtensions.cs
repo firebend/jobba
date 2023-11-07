@@ -68,7 +68,7 @@ public static class JobbaBuilderExtensions
             Description = description,
             JobType = typeof(TJob),
             JobParamsType = typeof(TJobParams),
-            JobStateType = typeof(TJobState)
+            JobStateType = typeof(TJobState),
         };
 
         configureRegistry?.Invoke(registry);
@@ -79,7 +79,7 @@ public static class JobbaBuilderExtensions
         configureProvider?.Invoke(provider);
         builder.Services.AddSingleton<ICronJobStateParamsProvider<TJobParams, TJobState>>(provider);
 
-        builder.AddJob<TJob, TJobParams, TJobState>();
+        builder.AddJob<TJob, TJobParams, TJobState>(jobName, reg => reg.CronExpression = cron);
 
         builder.Services.TryAddTransient<ICronScheduler, CronScheduler>();
         builder.Services.TryAddTransient<ICronService, CronService>();

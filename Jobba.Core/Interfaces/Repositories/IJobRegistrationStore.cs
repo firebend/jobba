@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
 
-namespace Jobba.Core.Interfaces;
+namespace Jobba.Core.Interfaces.Repositories;
 
 /// <summary>
 /// Encapsulates logic for registering jobs to the scheduler.
@@ -14,13 +14,13 @@ public interface IJobRegistrationStore
     /// Register a job with the scheduler.
     /// </summary>
     /// <param name="registration">
-    /// The job registration.
+    ///     The job registration.
     /// </param>
     /// <param name="cancellationToken">
-    /// The cancellation token.
+    ///     The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken);
+    Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken);
 
     /// <summary>
     /// Resolves a job registration by id.

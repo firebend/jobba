@@ -26,6 +26,14 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         _guidGenerator = guidGenerator;
     }
 
+    private async Task AssignGuidAsync(TEntity entity, CancellationToken cancellationToken)
+    {
+        if (entity.Id == Guid.Empty)
+        {
+            entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+        }
+    }
+
     public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
     {
         var asyncCursor = await FilterCollection(filter, cancellationToken);
@@ -51,23 +59,14 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
 
         patch.ApplyTo(entity);
 
-        var options = new FindOneAndReplaceOptions<TEntity>
-        {
-            ReturnDocument = ReturnDocument.After,
-            IsUpsert = true
-        };
-        var filterDef = Builders<TEntity>.Filter.Where(x => x.Id == id);
+        var saved = await UpsertAsync(x => x.Id == entity.Id, entity, cancellationToken);
 
-        var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));
-        return result;
+        return saved;
     }
 
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
-        if (entity.Id == Guid.Empty)
-        {
-            entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-        }
+        await AssignGuidAsync(entity, cancellationToken);
 
         await RetryErrorAsync(() => GetCollection().InsertOneAsync(entity, new InsertOneOptions(), cancellationToken));
 
@@ -84,6 +83,20 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         }
 
         return found;
+    }
+
+    public async Task<TEntity> UpsertAsync(Expression<Func<TEntity,bool>> expression, TEntity entity, CancellationToken cancellationToken)
+    {
+        var options = new FindOneAndReplaceOptions<TEntity>
+        {
+            ReturnDocument = ReturnDocument.After,
+            IsUpsert = true,
+        };
+
+        var filterDef = Builders<TEntity>.Filter.Where(expression);
+
+        var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));
+        return result;
     }
 
     protected Task<IAsyncCursor<TEntity>> FilterCollection(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken) =>

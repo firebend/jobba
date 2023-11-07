@@ -36,8 +36,8 @@ internal static class Program
                     jobba.UsingMassTransit()
                         .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")
-                        .AddJob<SampleJob, SampleJobParameters, SampleJobState>()
-                        .AddJob<SampleJobCancel, object, object>()
+                        .AddJob<SampleJob, SampleJobParameters, SampleJobState>("sample-job")
+                        .AddJob<SampleJobCancel, object, object>("sample-job-cancel")
                 )
                 .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
                 .AddHostedService<SampleHostedService>();

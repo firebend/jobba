@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Cron.Interfaces;
@@ -19,18 +20,21 @@ public class CronScheduler : ICronScheduler
 {
     private readonly ILogger<CronScheduler> _logger;
     private readonly IEnumerable<CronJobServiceRegistry> _registries;
+    private readonly IEnumerable<JobRegistration> _jobRegistrations;
     private readonly IJobScheduler _scheduler;
     private readonly ICronService _cronService;
 
     public CronScheduler(IEnumerable<CronJobServiceRegistry> registries,
         IJobScheduler scheduler,
         ILogger<CronScheduler> logger,
-        ICronService cronService)
+        ICronService cronService,
+        IEnumerable<JobRegistration> jobRegistrations)
     {
         _registries = registries;
         _scheduler = scheduler;
         _logger = logger;
         _cronService = cronService;
+        _jobRegistrations = jobRegistrations;
     }
 
     public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
@@ -58,6 +62,8 @@ public class CronScheduler : ICronScheduler
         var methodInfoParameters = new object[]
         {
             _scheduler,
+            _jobRegistrations,
+            _logger,
             scope,
             job,
             cancellationToken
@@ -89,11 +95,11 @@ public class CronScheduler : ICronScheduler
                 continue;
             }
 
-            var service = scope.ServiceProvider.GetService(registry.JobType);
+            var service = scope.ServiceProvider.Materialize(registry.JobType);
 
             if (service is not ICronJob job)
             {
-                _logger.LogInformation("Job is either null or not registered in service collection {Job}", registry.JobType);
+                _logger.LogInformation("Job could not be materialized from service provider {Job}", registry.JobType);
                 continue;
             }
 
@@ -102,6 +108,8 @@ public class CronScheduler : ICronScheduler
     }
 
     private static async Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
+        IEnumerable<JobRegistration> jobRegistrations,
+        ILogger<CronScheduler> logger,
         IServiceScope scope,
         CronJobWithRegistry job,
         CancellationToken cancellationToken)
@@ -109,6 +117,14 @@ public class CronScheduler : ICronScheduler
         var parametersAndState = scope.ServiceProvider
             .GetService<ICronJobStateParamsProvider<TJobParams, TJobState>>()
             ?.GetParametersAndState() ?? new CronJobStateParams<TJobParams, TJobState>();
+
+        var registration = jobRegistrations.FirstOrDefault(x => x.JobName == job.CronJob.JobName);
+
+        if (registration is null)
+        {
+            logger.LogWarning("There is no registration for cron job {JobName}, job will not execute", job.CronJob.JobName);
+            return;
+        }
 
         var request = new JobRequest<TJobParams, TJobState>
         {
@@ -118,7 +134,8 @@ public class CronScheduler : ICronScheduler
             JobId = Guid.NewGuid(),
             JobParameters = parametersAndState.Parameters,
             JobWatchInterval = job.Registry.WatchInterval,
-            InitialJobState = parametersAndState.State
+            InitialJobState = parametersAndState.State,
+            JobRegistrationId = registration.Id,
         };
 
         await jobScheduler.ScheduleJobAsync(request, cancellationToken);

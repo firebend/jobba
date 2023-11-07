@@ -24,7 +24,7 @@ public class JobbaBuilderTests
         serviceCollection.AddSingleton(mockProgressStore.Object);
 
         //act
-        builder.AddJob<FooJob, FooParams, FooState>();
+        builder.AddJob<FooJob, FooParams, FooState>("fake");
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert

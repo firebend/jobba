@@ -20,4 +20,6 @@ public interface IJobbaMongoRepository<TEntity>
     Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken);
 
     Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
+
+    Task<TEntity> UpsertAsync(Expression<Func<TEntity, bool>> expression, TEntity entity, CancellationToken cancellationToken);
 }
