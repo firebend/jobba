@@ -85,7 +85,7 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         return found;
     }
 
-    public async Task<TEntity> UpsertAsync(Expression<Func<TEntity,bool>> expression, TEntity entity, CancellationToken cancellationToken)
+    public async Task<TEntity> UpsertAsync(Expression<Func<TEntity, bool>> expression, TEntity entity, CancellationToken cancellationToken)
     {
         var options = new FindOneAndReplaceOptions<TEntity>
         {

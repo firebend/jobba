@@ -19,7 +19,7 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
     private readonly TimeSpan _timerDelay = TimeSpan.FromSeconds(15);
 
     public JobbaCronHostedService(ILogger<JobbaCronHostedService> logger,
-        IServiceScopeFactory scopeFactory): base(logger)
+        IServiceScopeFactory scopeFactory) : base(logger)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;

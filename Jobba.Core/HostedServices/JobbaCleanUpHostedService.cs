@@ -19,7 +19,7 @@ public class JobbaCleanUpHostedService : AbstractJobbaDependentBackgroundService
 #pragma warning restore CA2211
 
     public JobbaCleanUpHostedService(IServiceScopeFactory scopeFactory,
-        ILogger<JobbaCleanUpHostedService> logger): base(logger)
+        ILogger<JobbaCleanUpHostedService> logger) : base(logger)
     {
         _scopeFactory = scopeFactory;
     }

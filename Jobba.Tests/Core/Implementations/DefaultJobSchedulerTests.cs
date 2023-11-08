@@ -30,7 +30,7 @@ public class DefaultJobSchedulerTests
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new AutoMoqCustomization());
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>{ { typeof(IJob<object, object>), job.Object } }));
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
 
         var jobId = Guid.NewGuid();
 

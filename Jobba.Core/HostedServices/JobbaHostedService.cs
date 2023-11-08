@@ -49,13 +49,13 @@ public class JobbaHostedService : BackgroundService
     {
         var registrations = scope.ServiceProvider.GetServices<JobRegistration>().ToArray();
 
-        if(registrations.Length == 0)
+        if (registrations.Length == 0)
         {
             _logger.LogInformation("There are job definitions for Jobba to register");
             return;
         }
 
-        if(scope.ServiceProvider.TryGetService<IJobRegistrationStore>(out var store) is false || store is null)
+        if (scope.ServiceProvider.TryGetService<IJobRegistrationStore>(out var store) is false || store is null)
         {
             return;
         }

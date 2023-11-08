@@ -190,12 +190,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     {
         if (_scopeFactory.TryCreateScope(out var scope))
         {
-            var registration = await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken);
-
-            if (registration is null)
-            {
-               throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
-            }
+            var registration = await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken) ?? throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
 
             if (registration.JobType != jobType)
             {
