@@ -31,6 +31,26 @@ public interface IJobScheduler
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Schedule a job by registration id
+    /// </summary>
+    /// <param name="registrationId">
+    /// The job registration id.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <typeparam name="TJobParams">
+    /// The type of job parameters.
+    /// </typeparam>
+    /// <typeparam name="TJobState">
+    /// The type of job state.
+    /// </typeparam>
+    /// <returns></returns>
+    Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
+        Guid registrationId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Cancel a job.
     /// </summary>
     /// <param name="jobId">

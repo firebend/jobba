@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
@@ -70,6 +71,39 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, cancellationToken);
 
         return jobInfo;
+    }
+
+    public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId, CancellationToken cancellationToken)
+    {
+        var registration = await _jobRegistrationStore.GetJobRegistrationAsync(registrationId, cancellationToken)
+            ?? throw new Exception($"Could not resolve job registration from store with job registration id {registrationId}");
+
+        //todo:
+        /*
+         * thoughts:
+         *  1) it would be nice to stage a job by its registration
+         *      we may need to look into a default job state and params provider or just pass them in as args
+         *      we'll have to make a job request from the registration using reflection
+         *
+         * 2) do we even need job requests anymore? can we always use a registration id?
+         *
+         * 3) do we need to change job registration to save the job type as a Type object instead of a string?
+         *      we could have a helper function to return the type as an assembly qualified name
+         *
+         * 4) it might be nice to have an empty interface for IJobParams and IJobType so we can put generic constraints
+         *  - prevent mix up of type params
+         *
+         * Testing) we need to be able to test an ad hoc just in unit test and integration tests
+         *      for integration test we could make
+         *             a new controller
+         *              register a job with a new job name as a guid
+         *              have a static dictionary to make sure it gets updated
+         *              wait for that to get set and return a 200 to the integration test
+         *
+         *
+         */
+
+        throw new Exception("i ain't done");
     }
 
     public async Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken)
@@ -190,7 +224,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     {
         if (_scopeFactory.TryCreateScope(out var scope))
         {
-            var registration = await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken) ?? throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
+            var registration = await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken)
+                               ?? throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
 
             if (registration.JobType != jobType)
             {
