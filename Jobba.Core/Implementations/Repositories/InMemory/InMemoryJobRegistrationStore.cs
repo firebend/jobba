@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -38,4 +39,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         => DefaultJobRegistrationStoreCache.Registrations.TryGetValue(registrationId, out var registration)
             ? Task.FromResult(registration)
             : Task.FromResult<JobRegistration>(null);
+
+    //todo: implement
+    public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken) => null;
 }

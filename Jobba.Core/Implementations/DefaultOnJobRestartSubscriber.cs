@@ -50,6 +50,8 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
     }
 
     public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
+        where TParams : IJobParams
+        where TState : IJobState
     {
         var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
 

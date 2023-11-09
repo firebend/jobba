@@ -13,6 +13,8 @@ namespace Jobba.Core.Implementations;
 // in the subscriber the event will have the types as strings
 // we can create a type and resolve it form the IoC as this interface and call watch job async using reflection :D
 public class DefaultJobWatcher<TJobParams, TJobState> : IJobWatcher<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     private readonly IJobScheduler _jobScheduler;
     private readonly IJobStore _jobStore;

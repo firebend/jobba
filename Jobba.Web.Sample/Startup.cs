@@ -50,11 +50,10 @@ public class Startup
                     .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("* * * * *",
                         "Sample Cron Job",
                         "A Cron Job",
-                        null,
                         p =>
                     {
-                        p.JobParams = new() { StartDate = DateTimeOffset.UtcNow };
-                        p.JobState = new CronState() { Phrase = $"Hi {Guid.NewGuid()}" };
+                        p.JobParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
+                        p.JobState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
                     })
             )
             .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");

@@ -137,12 +137,12 @@ public class DefaultOnJobRestartSubscriberTests
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    public class FooParams
+    public class FooParams : IJobParams
     {
         public string Foo { get; set; }
     }
 
-    public class FooState
+    public class FooState : IJobState
     {
         public string Foo { get; set; }
     }

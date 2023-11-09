@@ -30,12 +30,12 @@ public class SampleHostedService : BackgroundService
 
         await _jobScheduler.ScheduleJobAsync(request, stoppingToken);
 
-        var cancelJobRequest = new JobRequest<object, object>
+        var cancelJobRequest = new JobRequest<DefaultJobParams, DefaultJobState>
         {
             Description = "A Sample Job that should get cancelled",
-            JobParameters = new object(),
+            JobParameters = new (),
             JobType = typeof(SampleJobCancel),
-            InitialJobState = new object(),
+            InitialJobState = new (),
             JobWatchInterval = TimeSpan.FromSeconds(2),
             MaxNumberOfTries = 100
         };

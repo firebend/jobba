@@ -2,18 +2,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Sample;
 
-public class SampleJobState
+public class SampleJobState : IJobState
 {
     public int Tries { get; set; }
 }
 
-public class SampleJobParameters
+public class SampleJobParameters : IJobParams
 {
     public string Greeting { get; set; }
 }

@@ -23,9 +23,9 @@ public class ServiceProviderCustomization : ICustomization
                 new JobRegistration
                 {
                     Id = Guid.NewGuid(),
-                    JobType = typeof(IJob<object, object>),
-                    JobParamsType = typeof(object),
-                    JobStateType = typeof(object),
+                    JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                    JobParamsType = typeof(DefaultJobParams),
+                    JobStateType = typeof(DefaultJobState),
                     JobName = "fake job"
                 }
             });

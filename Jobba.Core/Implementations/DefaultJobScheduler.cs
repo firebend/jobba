@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Events;
@@ -44,39 +43,33 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
     public void Dispose() => GC.SuppressFinalize(this);
 
-    public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
+    public Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
         CancellationToken cancellationToken)
-    {
-        var jobId = await GetJobIdAsync(request, cancellationToken);
+        where TJobParams : IJobParams
+        where TJobState : IJobState => DoScheduleJobAsync(request, null, cancellationToken);
 
-        if (!await CanRunAsync(jobId, cancellationToken))
-        {
-            return null;
-        }
-
-        using var jobLock = await _lockService.LockJobAsync(jobId, cancellationToken);
-
-        if (!await CanRunAsync(jobId, cancellationToken))
-        {
-            return null;
-        }
-
-        var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
-        await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
-        var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
-        await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, request.JobWatchInterval, cancellationToken);
-        var context = GetJobStartContext(request, jobInfo);
-        _ = RunJobAsync(request.JobRegistrationId, jobId, request.JobType, context, token, cancellationToken);
-        await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, cancellationToken);
-
-        return jobInfo;
-    }
-
-    public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId, CancellationToken cancellationToken)
+    public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId,
+        TJobParams parameters,
+        TJobState state,
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         var registration = await _jobRegistrationStore.GetJobRegistrationAsync(registrationId, cancellationToken)
             ?? throw new Exception($"Could not resolve job registration from store with job registration id {registrationId}");
+
+        var request = new JobRequest<TJobParams, TJobState>
+        {
+            InitialJobState = state,
+            JobParameters = parameters,
+            JobType = registration.JobType,
+            JobWatchInterval = registration.DefaultJobWatchInterval,
+            MaxNumberOfTries = registration.DefaultMaxNumberOfTries,
+            JobRegistrationId = registration.Id
+        };
+
+        await DoScheduleJobAsync(request, registration, cancellationToken);
 
         //todo:
         /*
@@ -127,6 +120,38 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             cancellationToken);
     }
 
+    public async Task<JobInfo<TJobParams, TJobState>> DoScheduleJobAsync<TJobParams, TJobState>(
+        JobRequest<TJobParams, TJobState> request,
+        JobRegistration jobRegistration,
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
+    {
+        var jobId = await GetJobIdAsync(request, cancellationToken);
+
+        if (!await CanRunAsync(jobId, cancellationToken))
+        {
+            return null;
+        }
+
+        using var jobLock = await _lockService.LockJobAsync(jobId, cancellationToken);
+
+        if (!await CanRunAsync(jobId, cancellationToken))
+        {
+            return null;
+        }
+
+        var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
+        await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
+        var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
+        await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, request.JobWatchInterval, cancellationToken);
+        var context = GetJobStartContext(request, jobInfo);
+        _ = RunJobAsync(request.JobRegistrationId, jobRegistration, jobId, request.JobType, context, token, cancellationToken);
+        await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, cancellationToken);
+
+        return jobInfo;
+    }
+
     private async Task<bool> CanRunAsync(Guid jobId, CancellationToken cancellationToken)
     {
         if (jobId == Guid.Empty)
@@ -140,12 +165,16 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     }
 
     private async Task<Guid> GetJobIdAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> request, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
-        if (!request.IsRestart || request.JobId == Guid.Empty)
+        if (request.IsRestart && request.JobId != Guid.Empty)
         {
-            var newGuid = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-            request.JobId = newGuid;
+            return request.JobId;
         }
+
+        var newGuid = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+        request.JobId = newGuid;
 
         return request.JobId;
     }
@@ -171,6 +200,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     private async Task<JobInfo<TJobParams, TJobState>> UpdateAttemptsOrCreateJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
         CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         JobInfo<TJobParams, TJobState> jobInfo;
 
@@ -216,15 +247,18 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     ///     Throws an exception if the job cannot be resolved from the IoC container.
     /// </exception>
     private async Task RunJobAsync<TJobParams, TJobState>(Guid jobRegistrationId,
+        JobRegistration registration,
         Guid jobId,
         Type jobType,
         JobStartContext<TJobParams, TJobState> context,
         CancellationToken jobCancellationToken,
         CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         if (_scopeFactory.TryCreateScope(out var scope))
         {
-            var registration = await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken)
+            registration ??= await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken)
                                ?? throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
 
             if (registration.JobType != jobType)
@@ -305,7 +339,9 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
     private static JobStartContext<TJobParams, TJobState> GetJobStartContext<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
-        JobInfoBase jobInfo) => new()
+        JobInfoBase jobInfo)
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
         {
             JobId = jobInfo.Id,
             JobParameters = request.JobParameters,

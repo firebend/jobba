@@ -4,9 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
+using Jobba.Cron.Extensions;
 using Jobba.Cron.Interfaces;
 using Jobba.Cron.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,44 +15,51 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Cron.Implementations;
 
-public record CronJobWithRegistry(ICronJob CronJob, CronJobServiceRegistry Registry);
 
 public class CronScheduler : ICronScheduler
 {
     private readonly ILogger<CronScheduler> _logger;
-    private readonly IEnumerable<CronJobServiceRegistry> _registries;
-    private readonly IEnumerable<JobRegistration> _jobRegistrations;
     private readonly IJobScheduler _scheduler;
     private readonly ICronService _cronService;
+    private readonly IJobRegistrationStore _jobRegistrationStore;
 
-    public CronScheduler(IEnumerable<CronJobServiceRegistry> registries,
-        IJobScheduler scheduler,
+    private record JobRegistrationWithNextExecutionTime(JobRegistration Registration, DateTimeOffset? NextExecutionDate);
+
+    public CronScheduler(IJobScheduler scheduler,
         ILogger<CronScheduler> logger,
         ICronService cronService,
-        IEnumerable<JobRegistration> jobRegistrations)
+        IJobRegistrationStore jobRegistrationStore)
     {
-        _registries = registries;
         _scheduler = scheduler;
         _logger = logger;
         _cronService = cronService;
-        _jobRegistrations = jobRegistrations;
+        _jobRegistrationStore = jobRegistrationStore;
     }
 
     public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
     {
-        var tasks = GetJobsNeedingInvoking(scope, min, max)
-            .Select(x => InvokeJobUsingReflectionAsync(scope, x, cancellationToken));
+        var jobs = await GetJobsNeedingInvokingAsync(min, max, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+
+        var tasks = jobs.Select(x
+            => InvokeJobUsingReflectionAsync(scope, x.Registration, cancellationToken));
 
         await Task.WhenAll(tasks);
+
+        //todo: create job registration store method that will save all job registrations at once with next invocation date and previous invocation date
     }
 
-    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, CronJobWithRegistry job, CancellationToken cancellationToken)
+    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, JobRegistration registration, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}", job.CronJob.JobName, job.Registry.Cron, DateTimeOffset.UtcNow);
+        _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}",
+            registration.JobName,
+            registration.CronExpression,
+            DateTimeOffset.UtcNow);
 
         var methodInfo = typeof(CronScheduler)
             .GetMethod(nameof(EnqueueJobAsync), BindingFlags.NonPublic | BindingFlags.Static)
-            ?.MakeGenericMethod(job.Registry.JobParamsType, job.Registry.JobStateType);
+            ?.MakeGenericMethod(registration.JobParamsType, registration.JobStateType);
 
         if (methodInfo is null)
         {
@@ -62,10 +70,8 @@ public class CronScheduler : ICronScheduler
         var methodInfoParameters = new object[]
         {
             _scheduler,
-            _jobRegistrations,
-            _logger,
+            registration.Id,
             scope,
-            job,
             cancellationToken
         };
 
@@ -77,69 +83,81 @@ public class CronScheduler : ICronScheduler
         }
     }
 
-    private IEnumerable<CronJobWithRegistry> GetJobsNeedingInvoking(IServiceScope scope, DateTimeOffset min, DateTimeOffset max)
+    private DateTimeOffset? GetNextExecutionDate(string cron, DateTimeOffset? start = null)
     {
-        foreach (var registry in _registries)
-        {
-            if (registry.NextExecutionDate is null)
-            {
-                registry.SetNextExecutionDate(_cronService, max);
-            }
+        start ??= DateTimeOffset.UtcNow;
 
-            var shouldExecute = registry.ShouldExecute(min, max);
+        var next = _cronService.GetNextExecutionDate(cron, start.Value);
 
-            registry.SetNextExecutionDate(_cronService, max);
-
-            if (shouldExecute is false)
-            {
-                continue;
-            }
-
-            var service = scope.ServiceProvider.Materialize(registry.JobType);
-
-            if (service is not ICronJob job)
-            {
-                _logger.LogInformation("Job could not be materialized from service provider {Job}", registry.JobType);
-                continue;
-            }
-
-            yield return new CronJobWithRegistry(job, registry);
-        }
+        return next?.TrimSeconds();
     }
 
-    private static async Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
-        IEnumerable<JobRegistration> jobRegistrations,
-        ILogger<CronScheduler> logger,
-        IServiceScope scope,
-        CronJobWithRegistry job,
+    public static bool ShouldExecute(DateTimeOffset? previous,
+        DateTimeOffset? next,
+        DateTimeOffset windowMin,
+        DateTimeOffset windowMax)
+    {
+        var isInWindow = next >= windowMin && next <= windowMax;
+
+        //********************************************
+        // Author: JMA
+        // Date: 2023-07-20 03:36:12
+        // Comment: Job has not previously executed, we should invoke it
+        //*******************************************
+        if (previous is null)
+        {
+            return isInWindow;
+        }
+
+        //********************************************
+        // Author: JMA
+        // Date: 2023-07-20 03:39:37
+        // Comment: If we are in the window of execution, make sure our previous execution is old enough
+        // this will prevent the hosted service from triggering jobs too frequently
+        //*******************************************
+        var should = previous <= windowMin && isInWindow;
+
+        return should;
+    }
+
+    private async Task<IEnumerable<JobRegistrationWithNextExecutionTime>> GetJobsNeedingInvokingAsync(DateTimeOffset min,
+        DateTimeOffset max,
         CancellationToken cancellationToken)
+    {
+        var listOfJobsThatShouldExecute = new List<JobRegistrationWithNextExecutionTime>();
+
+        var registrations = await _jobRegistrationStore.GetJobsWithCronExpressionsAsync(cancellationToken);
+
+        foreach (var registry in registrations)
+        {
+            var next = registry.NextExecutionDate ??= GetNextExecutionDate(registry.CronExpression, max);
+
+            var shouldExecute = ShouldExecute(registry.PreviousExecutionDate, registry.NextExecutionDate, min, max);
+
+            registry.NextExecutionDate = GetNextExecutionDate(registry.CronExpression, max);
+
+            if (shouldExecute)
+            {
+                listOfJobsThatShouldExecute.Add(new (registry, next));
+            }
+        }
+
+        return listOfJobsThatShouldExecute;
+    }
+
+    private static Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
+        Guid registrationId,
+        IServiceScope scope,
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         var parametersAndState = scope.ServiceProvider
             .GetService<ICronJobStateParamsProvider<TJobParams, TJobState>>()
             ?.GetParametersAndState() ?? new CronJobStateParams<TJobParams, TJobState>();
 
-        var registration = jobRegistrations.FirstOrDefault(x => x.JobName == job.CronJob.JobName);
-
-        if (registration is null)
-        {
-            logger.LogWarning("There is no registration for cron job {JobName}, job will not execute", job.CronJob.JobName);
-            return;
-        }
-
-        var request = new JobRequest<TJobParams, TJobState>
-        {
-            JobType = job.CronJob.GetType(),
-            Description = job.Registry.Description,
-            IsRestart = false,
-            JobId = Guid.NewGuid(),
-            JobParameters = parametersAndState.Parameters,
-            JobWatchInterval = job.Registry.WatchInterval,
-            InitialJobState = parametersAndState.State,
-            JobRegistrationId = registration.Id,
-        };
-
-        await jobScheduler.ScheduleJobAsync(request, cancellationToken);
-
-        job.Registry.PreviousExecutionDate = DateTimeOffset.UtcNow;
+        return jobScheduler.ScheduleJobAsync(registrationId,
+            parametersAndState.Parameters,
+            parametersAndState.State, cancellationToken);
     }
 }

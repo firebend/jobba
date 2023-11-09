@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
@@ -182,7 +183,7 @@ public class JobbaMongoJobStoreTests
         jobInfoBase.MaxNumberOfTries.Should().Be(jobEntity.MaxNumberOfTries);
     }
 
-    public class Foo
+    public class Foo : IJobParams, IJobState
     {
     }
 }

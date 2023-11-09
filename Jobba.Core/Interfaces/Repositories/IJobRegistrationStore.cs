@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
@@ -33,4 +34,6 @@ public interface IJobRegistrationStore
     /// </param>
     /// <returns></returns>
     Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken);
+
+    Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken);
 }

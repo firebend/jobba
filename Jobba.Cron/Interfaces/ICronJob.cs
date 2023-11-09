@@ -7,5 +7,7 @@ public interface ICronJob : IJob
 }
 
 public interface ICronJob<TJobParams, TJobState> : ICronJob, IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
 }

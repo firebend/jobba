@@ -26,7 +26,9 @@ public interface IJobStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, CancellationToken cancellationToken);
+    Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState;
 
     /// <summary>
     /// Sets the job attempts for a given job id
@@ -47,7 +49,9 @@ public interface IJobStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken);
+    Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState;
 
     /// <summary>
     /// Sets the job status for a given job id.
@@ -104,5 +108,7 @@ public interface IJobStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken);
+    Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState;
 }

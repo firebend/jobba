@@ -28,7 +28,9 @@ public interface IJobScheduler
     /// <returns></returns>
     Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState;
 
     /// <summary>
     /// Schedule a job by registration id
@@ -39,6 +41,12 @@ public interface IJobScheduler
     /// <param name="cancellationToken">
     /// The cancellation token.
     /// </param>
+    /// <param name="parameters">
+    /// The parameters to pass to the job.
+    /// </param>
+    /// <param name="state">
+    /// The state to pass to the job.
+    /// </param>
     /// <typeparam name="TJobParams">
     /// The type of job parameters.
     /// </typeparam>
@@ -46,9 +54,12 @@ public interface IJobScheduler
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
-        Guid registrationId,
-        CancellationToken cancellationToken);
+    Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId,
+        TJobParams parameters,
+        TJobState state,
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState;
 
     /// <summary>
     /// Cancel a job.

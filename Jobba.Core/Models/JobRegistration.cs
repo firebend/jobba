@@ -37,4 +37,19 @@ public class JobRegistration : IJobbaEntity
     /// The cron expression to use for scheduling the job.
     /// </summary>
     public string CronExpression { get; set; }
+
+    /// <summary>
+    /// The default number of tries to use for the job.
+    /// </summary>
+    public int DefaultMaxNumberOfTries { get; set; } = 5;
+
+    /// <summary>
+    /// The default job watch interval to use for the job.
+    /// </summary>
+    public TimeSpan DefaultJobWatchInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+    public DateTimeOffset? PreviousExecutionDate { get; set; }
+
+    public DateTimeOffset? NextExecutionDate { get; set; }
+    public string Descripiton { get; set; }
 }

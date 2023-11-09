@@ -22,6 +22,8 @@ public interface IJob
 /// The type of job state.
 /// </typeparam>
 public interface IJob<TJobParams, TJobState> : IJob
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     Task StartAsync(JobStartContext<TJobParams, TJobState> jobStartContext, CancellationToken cancellationToken);
 }

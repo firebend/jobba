@@ -14,6 +14,8 @@ namespace Jobba.Core.Interfaces;
 /// The type of job state.
 /// </typeparam>
 public interface IJobWatcher<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     /// <summary>
     /// Watch a job and restart it if it is faulted or not ran to completion.

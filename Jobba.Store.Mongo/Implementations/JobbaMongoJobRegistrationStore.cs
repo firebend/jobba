@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces.Repositories;
@@ -20,4 +21,8 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 
     public Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken)
         => _repo.GetFirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
+
+    //todo: implement
+    public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
+        => null;
 }

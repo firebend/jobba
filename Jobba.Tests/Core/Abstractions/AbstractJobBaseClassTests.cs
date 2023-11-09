@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Jobba.Core.Abstractions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -39,11 +40,11 @@ public class AbstractJobBaseClassTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private class JerbParameters
+    private class JerbParameters : IJobParams
     {
     }
 
-    private class JerbState
+    private class JerbState : IJobState
     {
         public string State { get; set; }
     }

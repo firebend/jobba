@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Abstractions;
@@ -10,12 +11,12 @@ using MongoDB.Bson.IO;
 
 namespace Jobba.Web.Sample;
 
-public class CronState
+public class CronState : IJobState
 {
     public string Phrase { get; set; }
 }
 
-public class CronParameters
+public class CronParameters : IJobParams
 {
     public DateTimeOffset StartDate { get; set; }
 }

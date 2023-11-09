@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -20,6 +21,8 @@ public class JobbaMongoJobStore : IJobStore
 
     public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
         CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         var added = await _repository.AddAsync(JobEntity.FromRequest(jobRequest), cancellationToken);
         var info = added.ToJobInfo<TJobParams, TJobState>();
@@ -27,6 +30,8 @@ public class JobbaMongoJobStore : IJobStore
     }
 
     public async Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         var patch = new JsonPatchDocument<JobEntity>();
         patch.Replace(x => x.CurrentNumberOfTries, attempts);
@@ -63,6 +68,8 @@ public class JobbaMongoJobStore : IJobStore
     }
 
     public async Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         var entity = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
 

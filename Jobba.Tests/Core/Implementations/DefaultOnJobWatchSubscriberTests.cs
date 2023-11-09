@@ -51,7 +51,7 @@ public class DefaultOnJobWatchSubscriberTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    public class Foo
+    public class Foo : IJobParams, IJobState
     {
     }
 }

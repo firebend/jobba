@@ -49,8 +49,11 @@ public class JobbaBuilder
     }
 
     public JobbaBuilder AddJob<TJob, TJobParams, TJobState>(string name,
+        string description = null,
         Action<JobRegistration> configureRegistration = null)
         where TJob : class, IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         Services.TryAddScoped<IJobWatcher<TJobParams, TJobState>, DefaultJobWatcher<TJobParams, TJobState>>();
 
@@ -62,6 +65,7 @@ public class JobbaBuilder
         var registration = new JobRegistration
         {
             JobName = name,
+            Descripiton = description,
             JobType = typeof(TJob),
             JobParamsType = typeof(TJobParams),
             JobStateType = typeof(TJobState)

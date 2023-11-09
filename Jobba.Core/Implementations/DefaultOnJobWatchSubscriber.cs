@@ -48,7 +48,7 @@ public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
                 {
                     var watcher = scope.ServiceProvider.GetService(jobWatcherType) ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
 
-                    var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<object, object>.WatchJobAsync)) ??
+                    var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<DefaultJobParams, DefaultJobState>.WatchJobAsync)) ??
                                      throw new Exception("Could not find job watcher watch job method.");
 
                     var invokeReturn = methodInfo.Invoke(watcher, new object[]

@@ -72,7 +72,9 @@ public class JobEntity : IJobbaEntity
     /// </summary>
     public Guid JobRegistrationId { get; set; }
 
-    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest) => new()
+    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest)
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
     {
         Description = jobRequest.Description,
         Id = jobRequest.JobId,
@@ -93,7 +95,9 @@ public class JobEntity : IJobbaEntity
         JobRegistrationId = jobRequest.JobRegistrationId
     };
 
-    public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>() => new()
+    public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>()
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
     {
         Description = Description,
         Id = Id,

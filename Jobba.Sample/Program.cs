@@ -1,6 +1,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Jobba.Core.Extensions;
+using Jobba.Core.Interfaces;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
 using Jobba.Store.Mongo;
@@ -37,7 +38,7 @@ internal static class Program
                         .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")
                         .AddJob<SampleJob, SampleJobParameters, SampleJobState>("sample-job")
-                        .AddJob<SampleJobCancel, object, object>("sample-job-cancel")
+                        .AddJob<SampleJobCancel, DefaultJobParams, DefaultJobState>("sample-job-cancel")
                 )
                 .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
                 .AddHostedService<SampleHostedService>();

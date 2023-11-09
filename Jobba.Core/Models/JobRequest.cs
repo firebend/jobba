@@ -1,4 +1,5 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
@@ -12,6 +13,8 @@ namespace Jobba.Core.Models;
 /// The type of job state.
 /// </typeparam>
 public record JobRequest<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     /// <summary>
     /// The id corresponding to the job registration.

@@ -6,7 +6,6 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Interfaces;
-using Jobba.Core.Models;
 using Jobba.Tests.AutoMoqCustomizations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;

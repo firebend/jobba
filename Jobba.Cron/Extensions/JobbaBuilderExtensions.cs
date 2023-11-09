@@ -1,6 +1,7 @@
 using System;
 using Cronos;
 using Jobba.Core.Builders;
+using Jobba.Core.Interfaces;
 using Jobba.Cron.HostedServices;
 using Jobba.Cron.Implementations;
 using Jobba.Cron.Interfaces;
@@ -47,11 +48,10 @@ public static class JobbaBuilderExtensions
         string cron,
         string jobName,
         string description,
-        Action<CronJobServiceRegistry> configureRegistry = null,
         Action<DefaultCronJobStateParamsProvider<TJobParams, TJobState>> configureProvider = null)
         where TJob : class, ICronJob<TJobParams, TJobState>
-        where TJobState : class, new()
-        where TJobParams : class, new()
+        where TJobState : class, IJobState, new()
+        where TJobParams : class, IJobParams, new()
     {
         //********************************************
         // Author: JMA
@@ -61,25 +61,16 @@ public static class JobbaBuilderExtensions
         //*******************************************
         CronExpression.Parse(cron, CronFormat.Standard);
 
-        var registry = new CronJobServiceRegistry
-        {
-            Cron = cron,
-            JobName = jobName,
-            Description = description,
-            JobType = typeof(TJob),
-            JobParamsType = typeof(TJobParams),
-            JobStateType = typeof(TJobState),
-        };
-
-        configureRegistry?.Invoke(registry);
-
-        builder.Services.AddSingleton(registry);
-
         var provider = new DefaultCronJobStateParamsProvider<TJobParams, TJobState>();
         configureProvider?.Invoke(provider);
         builder.Services.AddSingleton<ICronJobStateParamsProvider<TJobParams, TJobState>>(provider);
 
-        builder.AddJob<TJob, TJobParams, TJobState>(jobName, reg => reg.CronExpression = cron);
+        builder.AddJob<TJob, TJobParams, TJobState>(jobName,
+            description,
+            reg =>
+            {
+                reg.CronExpression = cron;
+            });
 
         builder.Services.TryAddTransient<ICronScheduler, CronScheduler>();
         builder.Services.TryAddTransient<ICronService, CronService>();
