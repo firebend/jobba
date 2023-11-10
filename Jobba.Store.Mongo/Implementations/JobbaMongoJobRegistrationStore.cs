@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces.Repositories;
@@ -17,8 +18,26 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
         _repo = repo;
     }
 
-    public Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
-        => _repo.UpsertAsync(x => x.JobName == registration.JobName, registration, cancellationToken);
+    public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
+    {
+        Expression<Func<JobRegistration, bool>> jobNameFilter = x => x.JobName == registration.JobName;
+
+        var existing = await _repo.GetFirstOrDefaultAsync(
+            jobNameFilter,
+            cancellationToken);
+
+        if (existing is not null && registration.CronExpression is not null)
+        {
+            registration.NextExecutionDate = existing.NextExecutionDate;
+            registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+        }
+
+        var updated  = await _repo.UpsertAsync(jobNameFilter,
+            registration,
+            cancellationToken);
+
+        return updated;
+    }
 
     public Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken)
         => _repo.GetFirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);

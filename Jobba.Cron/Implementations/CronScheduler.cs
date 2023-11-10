@@ -23,7 +23,10 @@ public class CronScheduler : ICronScheduler
     private readonly ICronService _cronService;
     private readonly IJobRegistrationStore _jobRegistrationStore;
 
-    private record JobRegistrationWithNextExecutionTime(JobRegistration Registration, DateTimeOffset? NextExecutionDate);
+    private record JobExecutionInfo(JobRegistration Registration,
+        bool ShouldExecute,
+        bool DidNextExecutionDateChange,
+        DateTimeOffset? NextExecutionDate);
 
     public CronScheduler(IJobScheduler scheduler,
         ILogger<CronScheduler> logger,
@@ -38,23 +41,25 @@ public class CronScheduler : ICronScheduler
 
     public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
     {
-        var jobs = await GetJobsNeedingInvokingAsync(min, max, cancellationToken);
+        var jobs = await GetCronJobsAsync(min, max, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
 
-        var tasks = jobs.Select(x
-            => InvokeJobUsingReflectionAsync(scope, x.Registration, cancellationToken));
+        var tasks = jobs.Where(x => x.ShouldExecute)
+            .Select(x => InvokeJobUsingReflectionAsync(scope, x.Registration, cancellationToken));
 
         await Task.WhenAll(tasks);
 
         await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, now, cancellationToken);
     }
 
-    private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobRegistrationWithNextExecutionTime> jobs,
+    private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobExecutionInfo> jobs,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var tasks = jobs.Select(x =>
+        var tasks = jobs
+            .Where(x => x.DidNextExecutionDateChange)
+            .Select(x =>
             _jobRegistrationStore.UpdateNextAndPreviousInvocationDatesAsync(x.Registration.Id,
                 x.NextExecutionDate,
                 now,
@@ -133,29 +138,33 @@ public class CronScheduler : ICronScheduler
         return should;
     }
 
-    private async Task<List<JobRegistrationWithNextExecutionTime>> GetJobsNeedingInvokingAsync(DateTimeOffset min,
+    private async Task<List<JobExecutionInfo>> GetCronJobsAsync(DateTimeOffset min,
         DateTimeOffset max,
         CancellationToken cancellationToken)
     {
-        var listOfJobsThatShouldExecute = new List<JobRegistrationWithNextExecutionTime>();
+        var jobs = new List<JobExecutionInfo>();
 
         var registrations = await _jobRegistrationStore.GetJobsWithCronExpressionsAsync(cancellationToken);
 
         foreach (var registry in registrations)
         {
-            var next = registry.NextExecutionDate ??= GetNextExecutionDate(registry.CronExpression, max);
+            var cron = registry.CronExpression;
+            var previous = registry.PreviousExecutionDate;
+            var next = GetNextExecutionDate(cron, max);
+            var shouldExecute = ShouldExecute(previous, next, min, max);
+            var didExecutionDateChange = registry.NextExecutionDate != next;
 
-            var shouldExecute = ShouldExecute(registry.PreviousExecutionDate, registry.NextExecutionDate, min, max);
-
-            registry.NextExecutionDate = GetNextExecutionDate(registry.CronExpression, max);
-
-            if (shouldExecute)
-            {
-                listOfJobsThatShouldExecute.Add(new(registry, next));
-            }
+            _logger.LogDebug(
+                "Job {JobName} should execute: {ShouldExecute} did execution date change: {DidExecutionDateChange} next execution date: {NextExecutionDate}",
+                registry.JobName,
+                shouldExecute,
+                didExecutionDateChange,
+                next);
+            
+            jobs.Add(new(registry, shouldExecute, didExecutionDateChange, next));
         }
 
-        return listOfJobsThatShouldExecute;
+        return jobs;
     }
 
     private static Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
