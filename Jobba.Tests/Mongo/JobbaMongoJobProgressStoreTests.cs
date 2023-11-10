@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,8 +11,8 @@ using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MongoDB.Driver;
 using Moq;
 using Neleus.LambdaCompare;
 
@@ -38,7 +37,7 @@ public class JobbaMongoJobProgressStoreTests
         var mockJobRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         mockJobRepo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -66,10 +65,11 @@ public class JobbaMongoJobProgressStoreTests
 
         mockJobRepo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                patch.Operations.Any(o => o.path == "/JobState") &&
-                patch.Operations.Any(o => o.path == "/LastProgressDate") &&
-                patch.Operations.Any(o => o.path == "/LastProgressPercentage")),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFields(
+                    nameof(JobEntity.JobState),
+                    nameof(JobEntity.LastProgressDate),
+                    nameof(JobEntity.LastProgressPercentage))),
             It.IsAny<CancellationToken>()));
     }
 

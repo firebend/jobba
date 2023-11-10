@@ -47,7 +47,20 @@ public class CronScheduler : ICronScheduler
 
         await Task.WhenAll(tasks);
 
-        //todo: create job registration store method that will save all job registrations at once with next invocation date and previous invocation date
+        await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, now, cancellationToken);
+    }
+
+    private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobRegistrationWithNextExecutionTime> jobs,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var tasks = jobs.Select(x =>
+            _jobRegistrationStore.UpdateNextAndPreviousInvocationDatesAsync(x.Registration.Id,
+                x.NextExecutionDate,
+                now,
+                cancellationToken));
+
+        return Task.WhenAll(tasks);
     }
 
     private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, JobRegistration registration, CancellationToken cancellationToken)
@@ -120,7 +133,7 @@ public class CronScheduler : ICronScheduler
         return should;
     }
 
-    private async Task<IEnumerable<JobRegistrationWithNextExecutionTime>> GetJobsNeedingInvokingAsync(DateTimeOffset min,
+    private async Task<List<JobRegistrationWithNextExecutionTime>> GetJobsNeedingInvokingAsync(DateTimeOffset min,
         DateTimeOffset max,
         CancellationToken cancellationToken)
     {

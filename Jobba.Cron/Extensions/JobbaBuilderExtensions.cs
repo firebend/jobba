@@ -5,7 +5,6 @@ using Jobba.Core.Interfaces;
 using Jobba.Cron.HostedServices;
 using Jobba.Cron.Implementations;
 using Jobba.Cron.Interfaces;
-using Jobba.Cron.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

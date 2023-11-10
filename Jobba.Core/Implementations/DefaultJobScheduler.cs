@@ -69,7 +69,9 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             JobRegistrationId = registration.Id
         };
 
-        await DoScheduleJobAsync(request, registration, cancellationToken);
+        var info = await DoScheduleJobAsync(request, registration, cancellationToken);
+
+        return info;
 
         //todo:
         /*
@@ -95,8 +97,6 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
          *
          *
          */
-
-        throw new Exception("i ain't done");
     }
 
     public async Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken)

@@ -7,7 +7,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
+using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations;
 
@@ -40,12 +40,13 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
             new JobProgressEvent(added.Id, added.JobId, added.JobRegistrationId),
             cancellationToken);
 
-        var statePatch = new JsonPatchDocument<JobEntity>();
-        statePatch.Replace(x => x.JobState, jobProgress.JobState);
-        statePatch.Replace(x => x.LastProgressDate, jobProgress.Date);
-        statePatch.Replace(x => x.LastProgressPercentage, jobProgress.Progress);
+        var update = Builders<JobEntity>
+            .Update
+            .Set(x => x.JobState, jobProgress.JobState)
+            .Set(x => x.LastProgressDate, added.Date)
+            .Set(x => x.LastProgressPercentage, added.Progress);
 
-        await _jobRepository.UpdateAsync(jobProgress.JobId, statePatch, cancellationToken);
+        await _jobRepository.UpdateAsync(jobProgress.JobId, update, cancellationToken);
     }
 
     public Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken)

@@ -8,7 +8,6 @@ using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
 using Jobba.Store.Mongo.Models;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MongoDB.Driver;
 using Moq;
@@ -124,26 +123,25 @@ public class JobbaMongoJobRepositoryTests
         {
             foo
         });
-        var patch = new JsonPatchDocument<Foo>();
-        patch.Replace(x => x.Fake, "you's fake af");
+
+        var update = Builders<Foo>.Update.Set(x => x.Fake, "you's fake af");
         fixture.Register<IJobbaMongoRetryService>(() => new JobbaMongoRetryService());
 
-        collection.Setup(x => x.FindOneAndReplaceAsync(
+        collection.Setup(x => x.FindOneAndUpdateAsync(
                 It.IsAny<FilterDefinition<Foo>>(),
-                It.IsAny<Foo>(),
-                It.IsAny<FindOneAndReplaceOptions<Foo>>(),
+                It.IsAny<UpdateDefinition<Foo>>(),
+                It.IsAny<FindOneAndUpdateOptions<Foo, Foo>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((FilterDefinition<Foo> _, Foo entity, FindOneAndReplaceOptions<Foo> _, CancellationToken _) => entity);
+            .ReturnsAsync(foo);
 
         var service = fixture.Create<JobbaMongoRepository<Foo>>();
 
         //act
-        var updated = await service.UpdateAsync(id, patch, default);
+        var updated = await service.UpdateAsync(id, update, default);
 
         //assert
         updated.Should().NotBeNull();
         updated.Id.Should().NotBeEmpty();
-        updated.Fake.Should().BeEquivalentTo("you's fake af");
     }
 
     public class Foo : IJobbaEntity

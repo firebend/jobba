@@ -6,7 +6,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
+using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations;
 
@@ -33,30 +33,32 @@ public class JobbaMongoJobStore : IJobStore
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        var patch = new JsonPatchDocument<JobEntity>();
-        patch.Replace(x => x.CurrentNumberOfTries, attempts);
+        var updateDef = Builders<JobEntity>.Update
+            .Set(x => x.CurrentNumberOfTries, attempts);
 
-        var updated = await _repository.UpdateAsync(jobId, patch, cancellationToken);
+        var updated = await _repository.UpdateAsync(jobId, updateDef, cancellationToken);
         var info = updated.ToJobInfo<TJobParams, TJobState>();
         return info;
     }
 
     public async Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken)
     {
-        var patch = new JsonPatchDocument<JobEntity>();
-        patch.Replace(x => x.Status, status);
-        patch.Replace(x => x.LastProgressDate, date);
+        var update = Builders<JobEntity>
+            .Update
+            .Set(x => x.Status, status)
+            .Set(x => x.LastProgressDate, date);
 
-        await _repository.UpdateAsync(jobId, patch, cancellationToken);
+        await _repository.UpdateAsync(jobId, update, cancellationToken);
     }
 
     public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
     {
-        var patch = new JsonPatchDocument<JobEntity>();
-        patch.Replace(x => x.FaultedReason, ex.ToString());
-        patch.Replace(x => x.Status, JobStatus.Faulted);
+        var update = Builders<JobEntity>
+            .Update
+            .Set(x => x.FaultedReason, ex.ToString())
+            .Set(x => x.Status, JobStatus.Faulted);
 
-        await _repository.UpdateAsync(jobId, patch, cancellationToken);
+        await _repository.UpdateAsync(jobId, update, cancellationToken);
     }
 
     public async Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)

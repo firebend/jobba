@@ -35,5 +35,17 @@ public interface IJobRegistrationStore
     /// <returns></returns>
     Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Returns all jobs that have a cron expression configured.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns></returns>
     Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken);
+
+    Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
+        DateTimeOffset? nextInvocationDate,
+        DateTimeOffset? previousInvocationDate,
+        CancellationToken cancellationToken);
 }

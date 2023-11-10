@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Abstractions;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -48,21 +47,13 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         return entity;
     }
 
-    public async Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken)
-    {
-        var entity = await GetFirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        if (entity == null)
-        {
-            return null;
-        }
-
-        patch.ApplyTo(entity);
-
-        var saved = await UpsertAsync(x => x.Id == entity.Id, entity, cancellationToken);
-
-        return saved;
-    }
+    public Task<TEntity> UpdateAsync(Guid id, UpdateDefinition<TEntity> update, CancellationToken cancellationToken)
+        => RetryErrorAsync(() => GetCollection()
+            .FindOneAndUpdateAsync(
+                x => x.Id == id,
+                update,
+                new(){ ReturnDocument = ReturnDocument.After },
+                cancellationToken));
 
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {

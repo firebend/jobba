@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,8 +10,8 @@ using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MongoDB.Driver;
 using Moq;
 using Neleus.LambdaCompare;
 
@@ -62,7 +61,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -76,9 +75,8 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch => patch.Operations.Any(operation
-                => operation.path == $"/{nameof(JobEntity.CurrentNumberOfTries)}" &&
-                   (int)operation.value == 2)),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldWithValue(nameof(JobEntity.CurrentNumberOfTries), 2)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -92,7 +90,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -106,9 +104,12 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Completed) &&
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.LastProgressDate)}" && (DateTimeOffset)operation.value == now)),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldsWithValues(new()
+                {
+                    {nameof(JobEntity.Status), JobStatus.Completed.ToString() },
+                    {nameof(JobEntity.LastProgressDate), now.SerializeToBsonValue() }
+                })),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -122,7 +123,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -136,9 +137,12 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Faulted) &&
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.FaultedReason)}" && (string)operation.value == ex.ToString())),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldsWithValues(new()
+                {
+                    {nameof(JobEntity.Status), JobStatus.Faulted.ToString()},
+                    {nameof(JobEntity.FaultedReason), ex.ToString()}
+                })),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

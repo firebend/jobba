@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -40,6 +41,29 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
             ? Task.FromResult(registration)
             : Task.FromResult<JobRegistration>(null);
 
-    //todo: implement
-    public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken) => null;
+    public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
+        => Task.FromResult(
+            DefaultJobRegistrationStoreCache.Registrations
+                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression))
+                .Select(x => x.Value)
+                .ToArray()
+                .AsEnumerable());
+
+    public Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
+        DateTimeOffset? nextInvocationDate,
+        DateTimeOffset? previousInvocationDate,
+        CancellationToken cancellationToken)
+    {
+        if (DefaultJobRegistrationStoreCache.Registrations.TryGetValue(registrationId, out var registration) is false)
+        {
+            return Task.CompletedTask;
+        }
+
+        registration.NextExecutionDate = nextInvocationDate;
+        registration.PreviousExecutionDate = previousInvocationDate;
+
+        DefaultJobRegistrationStoreCache.Registrations[registrationId] = registration;
+
+        return Task.CompletedTask;
+    }
 }
