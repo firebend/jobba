@@ -160,7 +160,7 @@ public class CronScheduler : ICronScheduler
                 shouldExecute,
                 didExecutionDateChange,
                 next);
-            
+
             jobs.Add(new(registry, shouldExecute, didExecutionDateChange, next));
         }
 
