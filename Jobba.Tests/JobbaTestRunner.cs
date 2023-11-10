@@ -7,8 +7,5 @@ namespace Jobba.Tests;
 public class JobbaTestRunner
 {
     [AssemblyInitialize]
-    public static void InitAssembly(TestContext testContext)
-    {
-        JobbaMongoDbConfigurator.Configure();
-    }
+    public static void InitAssembly(TestContext _) => JobbaMongoDbConfigurator.Configure();
 }
