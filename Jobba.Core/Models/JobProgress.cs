@@ -1,4 +1,5 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
@@ -9,6 +10,7 @@ namespace Jobba.Core.Models;
 /// The type of job state.
 /// </typeparam>
 public record JobProgress<TJobState>
+    where TJobState : IJobState
 {
     /// <summary>
     ///     The job's id.

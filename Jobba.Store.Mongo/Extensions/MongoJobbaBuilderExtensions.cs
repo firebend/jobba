@@ -1,5 +1,6 @@
 using System;
 using Jobba.Core.Builders;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Builders;
@@ -28,8 +29,17 @@ public static class MongoJobbaBuilderExtensions
     {
         RegisterBsonTypes(typeof(JobStatus));
 
-        var anySerializer = new ObjectSerializer(_ => true);
         var typeSerializer = new TypeSerializer();
+
+        BsonClassMap.TryRegisterClassMap<DefaultJobState>(cm =>
+        {
+            cm.AutoMap();
+        });
+
+        BsonClassMap.TryRegisterClassMap<DefaultJobParams>(cm =>
+        {
+            cm.AutoMap();
+        });
 
         BsonClassMap.RegisterClassMap<JobInfoBase>(map =>
         {
@@ -40,14 +50,12 @@ public static class MongoJobbaBuilderExtensions
         BsonClassMap.RegisterClassMap<JobProgressEntity>(map =>
         {
             map.AutoMap();
-            map.MapProperty(x => x.JobState).SetSerializer(anySerializer);
+            map.MapProperty(x => x.JobState);
         });
 
         BsonClassMap.RegisterClassMap<JobEntity>(map =>
         {
             map.AutoMap();
-            map.MapProperty(x => x.JobState).SetSerializer(anySerializer);
-            map.MapProperty(x => x.JobParameters).SetSerializer(anySerializer);
             map.MapProperty(x => x.Status);
         });
 

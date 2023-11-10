@@ -22,7 +22,8 @@ public interface IJobProgressStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken);
+    Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
+        where TJobState : IJobState;
 
     /// <summary>
     /// Retrieves progress for a job by id.

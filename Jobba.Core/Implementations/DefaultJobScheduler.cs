@@ -305,7 +305,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
                     }
                     else
                     {
-                        await OnJobCompletedAsync(jobId, jobRegistrationId, default);
+                        await OnJobCompletedAsync(jobId, jobRegistrationId, job.JobName, default);
                         _jobCancellationTokenStore.RemoveCompletedJob(jobId);
                     }
                 }
@@ -346,9 +346,9 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         return _jobStore.SetJobStatusAsync(jobId, wasForced ? JobStatus.ForceCancelled : JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
     }
 
-    private async Task OnJobCompletedAsync(Guid jobId, Guid jobRegistrationId, CancellationToken cancellationToken)
+    private async Task OnJobCompletedAsync(Guid jobId, Guid jobRegistrationId, string jobName, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Job Completed. Id: {JobId}", jobId);
+        _logger.LogDebug("Job Completed. Id: {JobId} Name: {Name}", jobId, jobName);
 
         await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
 

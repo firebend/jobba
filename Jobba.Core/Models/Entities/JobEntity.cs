@@ -57,9 +57,9 @@ public class JobEntity : IJobbaEntity
 
     public TimeSpan JobWatchInterval { get; set; }
 
-    public object JobParameters { get; set; }
+    public IJobParams JobParameters { get; set; }
 
-    public object JobState { get; set; }
+    public IJobState JobState { get; set; }
 
     public string JobStateTypeName { get; set; }
 

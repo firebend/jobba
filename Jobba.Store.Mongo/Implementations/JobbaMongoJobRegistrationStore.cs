@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Store.Mongo.Interfaces;
@@ -13,9 +14,12 @@ namespace Jobba.Store.Mongo.Implementations;
 public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 {
     private readonly IJobbaMongoRepository<JobRegistration> _repo;
-    public JobbaMongoJobRegistrationStore(IJobbaMongoRepository<JobRegistration> repo)
+    private readonly IJobbaGuidGenerator _guidGenerator;
+
+    public JobbaMongoJobRegistrationStore(IJobbaMongoRepository<JobRegistration> repo, IJobbaGuidGenerator guidGenerator)
     {
         _repo = repo;
+        _guidGenerator = guidGenerator;
     }
 
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
@@ -26,10 +30,20 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
             jobNameFilter,
             cancellationToken);
 
-        if (existing is not null && registration.CronExpression is not null)
+        if (existing is not null)
         {
-            registration.NextExecutionDate = existing.NextExecutionDate;
-            registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+            if (registration.CronExpression is not null)
+            {
+                registration.NextExecutionDate = existing.NextExecutionDate;
+                registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+            }
+        }
+        else
+        {
+            if (registration.Id == Guid.Empty)
+            {
+                registration.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+            }
         }
 
         var updated  = await _repo.UpsertAsync(jobNameFilter,

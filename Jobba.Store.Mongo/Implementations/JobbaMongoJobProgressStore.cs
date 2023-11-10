@@ -30,6 +30,7 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
     }
 
     public async Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
+        where TJobState : IJobState
     {
         var entity = JobProgressEntity.FromJobProgress(jobProgress);
         entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);

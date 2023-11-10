@@ -51,5 +51,21 @@ public class JobRegistration : IJobbaEntity
     public DateTimeOffset? PreviousExecutionDate { get; set; }
 
     public DateTimeOffset? NextExecutionDate { get; set; }
+
     public string Descripiton { get; set; }
+
+    public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
+        string description = null,
+        string cron = null)
+        where TJob : IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
+    {
+        JobName = name,
+        JobType = typeof(TJob),
+        JobParamsType = typeof(TJobParams),
+        JobStateType = typeof(TJobState),
+        CronExpression = cron,
+        Descripiton = description
+    };
 }

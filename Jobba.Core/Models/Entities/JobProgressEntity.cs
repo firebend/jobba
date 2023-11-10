@@ -23,7 +23,7 @@ public class JobProgressEntity : IJobbaEntity
     /// <summary>
     ///     A custom job state to save progress information with.
     /// </summary>
-    public object JobState { get; set; }
+    public IJobState JobState { get; set; }
 
     /// <summary>
     ///     The percentage complete
@@ -37,7 +37,8 @@ public class JobProgressEntity : IJobbaEntity
 
     public Guid Id { get; set; }
 
-    public static JobProgressEntity FromJobProgress<TJobState>(JobProgress<TJobState> progress) => new()
+    public static JobProgressEntity FromJobProgress<TJobState>(JobProgress<TJobState> progress)
+        where TJobState : IJobState => new()
     {
         Date = progress.Date,
         Message = progress.Message,

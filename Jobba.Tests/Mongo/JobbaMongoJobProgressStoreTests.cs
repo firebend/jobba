@@ -50,7 +50,7 @@ public class JobbaMongoJobProgressStoreTests
         var service = fixture.Create<JobbaMongoJobProgressStore>();
 
         //act
-        await service.LogProgressAsync(new JobProgress<object>(), default);
+        await service.LogProgressAsync(new JobProgress<DefaultJobState>(), default);
 
         //assert
         mockRepo.Verify(x => x.AddAsync(

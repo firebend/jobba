@@ -30,6 +30,10 @@ public static class JobbaMongoDbConfigurator
 
             _configured = true;
 
+
+            var objectSerializer = new ObjectSerializer(_ => true);
+
+            BsonSerializer.TryRegisterSerializer(objectSerializer);
             BsonSerializer.TryRegisterSerializer(typeof(Guid), new GuidSerializer(BsonType.String));
             BsonSerializer.TryRegisterSerializer(typeof(decimal), new DecimalSerializer(BsonType.Decimal128));
             BsonSerializer.TryRegisterSerializer(typeof(decimal?), new NullableSerializer<decimal>(new DecimalSerializer(BsonType.Decimal128)));
@@ -39,11 +43,13 @@ public static class JobbaMongoDbConfigurator
             {
                 new CamelCaseElementNameConvention(),
                 new EnumRepresentationConvention(BsonType.String),
-                new IgnoreExtraElementsConvention(true)
+                new IgnoreExtraElementsConvention(true),
+                new StringObjectIdIdGeneratorConvention()
             };
 
             var mongoEntityType = typeof(IJobbaEntity);
-            const string mongoEntityIdName = "Id";
+            const string mongoEntityIdName = nameof(IJobbaEntity.Id);
+            var guidSerializer = new GuidSerializer(BsonType.String);
 
             pack.AddClassMapConvention("Jobba Mongo ID Guid Generator", map =>
             {
@@ -55,7 +61,7 @@ public static class JobbaMongoDbConfigurator
                     {
                         map.MapIdProperty(mongoEntityIdName)
                             .SetIdGenerator(JobbaMongoIdGenerator.Instance)
-                            .SetSerializer(new GuidSerializer(BsonType.String));
+                            .SetSerializer(guidSerializer);
 
                         map.SetIgnoreExtraElements(true);
                     }
