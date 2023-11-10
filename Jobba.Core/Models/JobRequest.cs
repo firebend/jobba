@@ -76,6 +76,7 @@ public record JobRequest<TJobParams, TJobState>
         InitialJobState = info.CurrentState,
         JobWatchInterval = info.JobWatchInterval,
         NumberOfTries = info.CurrentNumberOfTries + 1,
-        MaxNumberOfTries = info.MaxNumberOfTries
+        MaxNumberOfTries = info.MaxNumberOfTries,
+        JobName = info.JobName
     };
 }

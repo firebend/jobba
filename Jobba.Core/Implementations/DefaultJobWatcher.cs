@@ -67,7 +67,9 @@ public class DefaultJobWatcher<TJobParams, TJobState> : IJobWatcher<TJobParams, 
                 JobWatchInterval = job.JobWatchInterval,
                 NumberOfTries = job.CurrentNumberOfTries + 1,
                 JobParameters = job.JobParameters,
-                InitialJobState = job.CurrentState
+                InitialJobState = job.CurrentState,
+                JobName = job.JobName,
+                MaxNumberOfTries = job.MaxNumberOfTries,
             };
 
             if (request.JobType == null)
