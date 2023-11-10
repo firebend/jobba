@@ -36,7 +36,7 @@ public record JobStartContext<TJobParams, TJobState>
     /// <summary>
     /// The job's registration id
     /// </summary>
-    public Guid JobRegistrationId { get; set; }
+    public JobRegistration JobRegistration { get; set; }
 
     /// <summary>
     ///     The current number of times the job has been tried.

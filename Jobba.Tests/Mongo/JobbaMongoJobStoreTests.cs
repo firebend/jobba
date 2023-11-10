@@ -6,6 +6,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
@@ -27,11 +28,16 @@ public class JobbaMongoJobStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
         var jobRequest = fixture.Create<JobRequest<Foo, Foo>>();
-        var jobEntity = JobEntity.FromRequest(jobRequest);
+        var jobEntity = JobEntity.FromRequest(jobRequest, Guid.NewGuid());
 
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(jobEntity);
+
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsUsingFixture(fixture);
 
         var service = fixture.Create<JobbaMongoJobStore>();
 

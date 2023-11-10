@@ -154,12 +154,12 @@ public class CronScheduler : ICronScheduler
             var shouldExecute = ShouldExecute(previous, next, min, max);
             var didExecutionDateChange = registry.NextExecutionDate != next;
 
-            _logger.LogDebug(
-                "Job {JobName} should execute: {ShouldExecute} did execution date change: {DidExecutionDateChange} next execution date: {NextExecutionDate}",
-                registry.JobName,
-                shouldExecute,
-                didExecutionDateChange,
-                next);
+            // _logger.LogDebug(
+            //     "Job {JobName} should execute: {ShouldExecute} did execution date change: {DidExecutionDateChange} next execution date: {NextExecutionDate}",
+            //     registry.JobName,
+            //     shouldExecute,
+            //     didExecutionDateChange,
+            //     next);
 
             jobs.Add(new(registry, shouldExecute, didExecutionDateChange, next));
         }

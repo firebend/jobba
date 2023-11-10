@@ -43,11 +43,28 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
     public void Dispose() => GC.SuppressFinalize(this);
 
-    public Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
+    public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
-        where TJobState : IJobState => DoScheduleJobAsync(request, null, cancellationToken);
+        where TJobState : IJobState
+    {
+        if (string.IsNullOrWhiteSpace(request.JobName))
+        {
+            throw new ArgumentException("Job name cannot be null or whitespace.", nameof(request));
+        }
+
+        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(request.JobName, cancellationToken);
+
+        if (jobRegistration is null)
+        {
+            throw new Exception($"Job registration not found for JobName {request.JobName}");
+        }
+
+        var info = await DoScheduleJobAsync(request, jobRegistration, cancellationToken);
+
+        return info;
+    }
 
     public async Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId,
         TJobParams parameters,
@@ -66,7 +83,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             JobType = registration.JobType,
             JobWatchInterval = registration.DefaultJobWatchInterval,
             MaxNumberOfTries = registration.DefaultMaxNumberOfTries,
-            JobRegistrationId = registration.Id
+            JobName = registration.JobName,
         };
 
         var info = await DoScheduleJobAsync(request, registration, cancellationToken);
@@ -144,10 +161,10 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
         await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
         var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
-        await WatchJobAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, request.JobWatchInterval, cancellationToken);
-        var context = GetJobStartContext(request, jobInfo);
-        _ = RunJobAsync(request.JobRegistrationId, jobRegistration, jobId, request.JobType, context, token, cancellationToken);
-        await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, request.JobRegistrationId, cancellationToken);
+        await WatchJobAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, request.JobWatchInterval, cancellationToken);
+        var context = GetJobStartContext(request, jobInfo, jobRegistration);
+        _ = RunJobAsync(jobRegistration.Id, jobRegistration, jobId, request.JobType, context, token, cancellationToken);
+        await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, cancellationToken);
 
         return jobInfo;
     }
@@ -207,13 +224,16 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
         if (request.IsRestart && request.JobId != Guid.Empty)
         {
-            _logger.LogDebug("Updating number of tries for job. JobId: {JobId}. Tries : {Tries}", request.JobId, request.NumberOfTries);
+            _logger.LogDebug("Updating number of tries for job. JobId: {JobId}. JobName: {JobName} Tries : {Tries}",
+                request.JobId,
+                request.JobName,
+                request.NumberOfTries);
             jobInfo = await _jobStore.SetJobAttempts<TJobParams, TJobState>(request.JobId, request.NumberOfTries, cancellationToken);
         }
         else
         {
             jobInfo = await _jobStore.AddJobAsync(request, cancellationToken);
-            _logger.LogDebug("Created job. JobId: {JobId}", jobInfo.Id);
+            _logger.LogDebug("Created job. JobId: {JobId} {JobName}", jobInfo.Id, jobInfo.JobName);
         }
 
         return jobInfo;
@@ -339,7 +359,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
     private static JobStartContext<TJobParams, TJobState> GetJobStartContext<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
-        JobInfoBase jobInfo)
+        JobInfoBase jobInfo,
+        JobRegistration jobRegistration)
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
         {
@@ -351,6 +372,6 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             LastProgressDate = jobInfo.LastProgressDate,
             LastProgressPercentage = jobInfo.LastProgressPercentage,
             CurrentNumberOfTries = request.NumberOfTries,
-            JobRegistrationId = request.JobRegistrationId,
+            JobRegistration = jobRegistration,
         };
 }

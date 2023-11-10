@@ -35,7 +35,7 @@ public class DefaultJobSchedulerTests
         var jobId = Guid.NewGuid();
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
-        registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobRegistration
             {
                 Id = Guid.NewGuid(),
@@ -101,7 +101,7 @@ public class DefaultJobSchedulerTests
             .Returns(Task.CompletedTask);
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
-        registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobRegistration
             {
                 Id = Guid.NewGuid(),
@@ -199,7 +199,7 @@ public class DefaultJobSchedulerTests
             .Returns((JobStartContext<DefaultJobParams, DefaultJobState> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
-        registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobRegistration
             {
                 Id = Guid.NewGuid(),
@@ -299,7 +299,7 @@ public class DefaultJobSchedulerTests
             .Returns((JobStartContext<DefaultJobParams, DefaultJobState> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
-        registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobRegistration
             {
                 Id = Guid.NewGuid(),
@@ -393,19 +393,25 @@ public class DefaultJobSchedulerTests
 
         var jobId = Guid.NewGuid();
 
+        var jobRegistration = new JobRegistration
+        {
+            Id = Guid.NewGuid(),
+            JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+            JobParamsType = typeof(object),
+            JobStateType = typeof(object)
+        };
+
         var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
         job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
         registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobRegistration
-            {
-                Id = Guid.NewGuid(),
-                JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
-                JobParamsType = typeof(object),
-                JobStateType = typeof(object)
-            });
+            .ReturnsAsync(jobRegistration);
+
+        registrationStore.Setup(x => x.GetByJobNameAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(jobRegistration);
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {

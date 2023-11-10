@@ -55,4 +55,7 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
                 .Set(x => x.NextExecutionDate, nextInvocationDate)
                 .Set(x => x.PreviousExecutionDate, previousInvocationDate),
             cancellationToken);
+
+    public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
+        => _repo.GetFirstOrDefaultAsync(x => x.JobName == name, cancellationToken);
 }

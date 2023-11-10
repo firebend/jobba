@@ -16,6 +16,11 @@ public class ServiceProviderCustomization : ICustomization
     {
         _resolves = resolves;
 
+        AddJobRegistrationIfNecessary();
+    }
+
+    private void AddJobRegistrationIfNecessary()
+    {
         if (_resolves.ContainsKey(typeof(IEnumerable<JobRegistration>)) is false)
         {
             _resolves.Add(typeof(IEnumerable<JobRegistration>), new[]
@@ -32,7 +37,9 @@ public class ServiceProviderCustomization : ICustomization
         }
     }
 
-    public void Customize(IFixture fixture)
+    public void Customize(IFixture fixture) => MockServiceProvider(fixture);
+
+    private void MockServiceProvider(IFixture fixture)
     {
         var serviceProvider = fixture.Freeze<Mock<IServiceProvider>>();
         var serviceScope = fixture.Freeze<Mock<IServiceScope>>();

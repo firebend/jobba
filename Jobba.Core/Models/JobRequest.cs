@@ -17,11 +17,6 @@ public record JobRequest<TJobParams, TJobState>
     where TJobState : IJobState
 {
     /// <summary>
-    /// The id corresponding to the job registration.
-    /// </summary>
-    public Guid JobRegistrationId { get; set; }
-
-    /// <summary>
     ///     A description of what the job is doing.
     /// </summary>
     public string Description { get; set; }
@@ -65,6 +60,11 @@ public record JobRequest<TJobParams, TJobState>
     ///     The maximum number of times the job can be tried.
     /// </summary>
     public int MaxNumberOfTries { get; set; } = 1;
+
+    /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
 
     public static JobRequest<TJobParams, TJobState> FromJobInfo(JobInfo<TJobParams, TJobState> info) => new()
     {

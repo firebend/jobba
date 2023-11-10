@@ -66,4 +66,13 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
         return Task.CompletedTask;
     }
+
+    public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
+    {
+        var registration = DefaultJobRegistrationStoreCache.Registrations
+            .FirstOrDefault(x => x.Value.JobName == name)
+            .Value;
+
+        return Task.FromResult(registration);
+    }
 }

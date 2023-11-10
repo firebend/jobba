@@ -44,8 +44,35 @@ public interface IJobRegistrationStore
     /// <returns></returns>
     Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Updates a registration's next and previous invocation dates.
+    /// </summary>
+    /// <param name="registrationId">
+    /// The registration id.
+    /// </param>
+    /// <param name="nextInvocationDate">
+    /// The next invocation date.
+    /// </param>
+    /// <param name="previousInvocationDate">
+    /// The previous invocation date.
+    /// </param>
+    /// <param name="cancellationToken"></param>
+    /// The cancellation token.
+    /// <returns></returns>
     Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
         DateTimeOffset? nextInvocationDate,
         DateTimeOffset? previousInvocationDate,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets a job registration by job name.
+    /// </summary>
+    /// <param name="name">
+    /// The job name.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns></returns>
+    Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken);
 }

@@ -16,6 +16,11 @@ public class JobEntity : IJobbaEntity
     public string Description { get; set; }
 
     /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
+
+    /// <summary>
     ///     The last progress logged for the job.
     /// </summary>
     public decimal LastProgressPercentage { get; set; }
@@ -72,7 +77,7 @@ public class JobEntity : IJobbaEntity
     /// </summary>
     public Guid JobRegistrationId { get; set; }
 
-    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest)
+    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, Guid jobRegistrationId)
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
         {
@@ -92,7 +97,8 @@ public class JobEntity : IJobbaEntity
             JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
             JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName,
             IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries,
-            JobRegistrationId = jobRequest.JobRegistrationId
+            JobRegistrationId = jobRegistrationId,
+            JobName = jobRequest.JobName
         };
 
     public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>()
@@ -115,7 +121,8 @@ public class JobEntity : IJobbaEntity
             JobParamsTypeName = JobParamsTypeName,
             JobStateTypeName = JobStateTypeName,
             IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
-            JobRegistrationId = JobRegistrationId
+            JobRegistrationId = JobRegistrationId,
+            JobName = JobName
         };
 
     public JobInfoBase ToJobInfoBase() => new()
@@ -134,6 +141,7 @@ public class JobEntity : IJobbaEntity
         IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
         JobParamsTypeName = JobParamsTypeName,
         JobStateTypeName = JobStateTypeName,
-        JobRegistrationId = JobRegistrationId
+        JobRegistrationId = JobRegistrationId,
+        JobName = JobName
     };
 }

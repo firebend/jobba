@@ -28,6 +28,11 @@ public record JobInfoBase
     public string Description { get; set; }
 
     /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
+
+    /// <summary>
     ///     The last progress logged for the job.
     /// </summary>
     public decimal LastProgressPercentage { get; set; }

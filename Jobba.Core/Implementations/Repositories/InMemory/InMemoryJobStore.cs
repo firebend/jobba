@@ -17,6 +17,13 @@ internal static class InMemoryJobStoreCache
 
 public class InMemoryJobStore : IJobStore
 {
+    private readonly IJobRegistrationStore _jobRegistrationStore;
+
+    public InMemoryJobStore(IJobRegistrationStore jobRegistrationStore)
+    {
+        _jobRegistrationStore = jobRegistrationStore;
+    }
+
     private static JobEntity FindJobById(Guid id) => InMemoryJobStoreCache.Jobs.TryGetValue(id, out var entity) ? entity : null;
 
     private static JobEntity ModifyJob(Guid id, Action<JobEntity> act)
@@ -31,15 +38,33 @@ public class InMemoryJobStore : IJobStore
         return entity;
     }
 
-    public Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
+    public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
+        if (string.IsNullOrWhiteSpace(jobRequest.JobName))
+        {
+            throw new ArgumentException("Job name cannot be null or whitespace.", nameof(jobRequest));
+        }
+
+        var registration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken);
+
+        if (registration is null)
+        {
+            throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
+        }
+
         jobRequest.JobId = jobRequest.JobId.Coalesce();
-        var entity = InMemoryJobStoreCache.Jobs.GetOrAdd(jobRequest.JobId, static (_, request) => JobEntity.FromRequest(request), jobRequest);
+
+        var entity = InMemoryJobStoreCache.Jobs.GetOrAdd(
+            jobRequest.JobId,
+            static (_, args) => JobEntity.FromRequest(args.jobRequest, args.registration.Id),
+            (jobRequest, registration));
+
         var info = entity?.ToJobInfo<TJobParams, TJobState>();
-        return Task.FromResult(info);
+
+        return info;
     }
 
     public Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
