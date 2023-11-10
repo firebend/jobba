@@ -95,7 +95,8 @@ public class JobbaHostedServiceTests
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
-            { typeof(IJobReScheduler), rescheduler.Object }
+            { typeof(IJobReScheduler), rescheduler.Object },
+            { typeof(IJobRegistrationStore), registrationStore.Object}
         }));
 
         var hostedService = fixture.Create<JobbaHostedService>();
