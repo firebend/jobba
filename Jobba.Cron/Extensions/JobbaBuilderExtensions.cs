@@ -66,10 +66,7 @@ public static class JobbaBuilderExtensions
 
         builder.AddJob<TJob, TJobParams, TJobState>(jobName,
             description,
-            reg =>
-            {
-                reg.CronExpression = cron;
-            });
+            reg => reg.CronExpression = cron);
 
         builder.Services.TryAddTransient<ICronScheduler, CronScheduler>();
         builder.Services.TryAddTransient<ICronService, CronService>();

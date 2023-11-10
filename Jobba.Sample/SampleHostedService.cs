@@ -33,9 +33,9 @@ public class SampleHostedService : BackgroundService
         var cancelJobRequest = new JobRequest<DefaultJobParams, DefaultJobState>
         {
             Description = "A Sample Job that should get cancelled",
-            JobParameters = new (),
+            JobParameters = new(),
             JobType = typeof(SampleJobCancel),
-            InitialJobState = new (),
+            InitialJobState = new(),
             JobWatchInterval = TimeSpan.FromSeconds(2),
             MaxNumberOfTries = 100
         };

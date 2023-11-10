@@ -52,7 +52,7 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
             .FindOneAndUpdateAsync(
                 x => x.Id == id,
                 update,
-                new(){ ReturnDocument = ReturnDocument.After },
+                new() { ReturnDocument = ReturnDocument.After },
                 cancellationToken));
 
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)

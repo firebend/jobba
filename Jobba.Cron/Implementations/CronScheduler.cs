@@ -151,7 +151,7 @@ public class CronScheduler : ICronScheduler
 
             if (shouldExecute)
             {
-                listOfJobsThatShouldExecute.Add(new (registry, next));
+                listOfJobsThatShouldExecute.Add(new(registry, next));
             }
         }
 
