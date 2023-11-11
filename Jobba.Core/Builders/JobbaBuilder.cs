@@ -65,7 +65,7 @@ public class JobbaBuilder
         var registration = new JobRegistration
         {
             JobName = name,
-            Descripiton = description,
+            Description = description,
             JobType = typeof(TJob),
             JobParamsType = typeof(TJobParams),
             JobStateType = typeof(TJobState)

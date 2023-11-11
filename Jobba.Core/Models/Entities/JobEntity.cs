@@ -94,8 +94,8 @@ public class JobEntity : IJobbaEntity
             MaxNumberOfTries = jobRequest.MaxNumberOfTries,
             JobParameters = jobRequest.JobParameters,
             JobState = jobRequest.InitialJobState,
-            JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
-            JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName,
+            JobParamsTypeName = typeof(TJobParams).AssemblyQualifiedName,
+            JobStateTypeName = typeof(TJobState).AssemblyQualifiedName,
             IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries,
             JobRegistrationId = jobRegistrationId,
             JobName = jobRequest.JobName
