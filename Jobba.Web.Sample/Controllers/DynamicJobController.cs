@@ -12,31 +12,23 @@ namespace Jobba.Web.Sample.Controllers;
 [Route("[controller]")]
 public class DynamicJobController : ControllerBase
 {
-    private readonly IJobRegistrationStore _registrationStore;
-    private readonly IJobScheduler _jobScheduler;
+    private readonly IJobOrchestrationService _jobOrchestrationService;
 
-    public DynamicJobController(IJobRegistrationStore registrationStore, IJobScheduler jobScheduler)
+    public DynamicJobController(IJobOrchestrationService jobOrchestrationService)
     {
-        _registrationStore = registrationStore;
-        _jobScheduler = jobScheduler;
+        _jobOrchestrationService = jobOrchestrationService;
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateAsync(CancellationToken cancellationToken)
     {
-        var registration = JobRegistration.FromTypes<DynamicJob, DefaultJobParams, DefaultJobState>(
+        var request = new JobOrchestrationRequest<DynamicJob, DefaultJobParams, DefaultJobState>(
             $"{DynamicJob.Name}-{Guid.NewGuid()}",
             "A dynamic job");
 
-        var created = await _registrationStore.RegisterJobAsync(registration, cancellationToken);
+        var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 
-        var jobInfo = await _jobScheduler.ScheduleJobAsync<DefaultJobParams, DefaultJobState>(
-            created.Id,
-            new(),
-            new(),
-            cancellationToken);
-
-        while (DynamicJobStatics.Runs.ContainsKey(jobInfo.Id) is false)
+        while (DynamicJobStatics.Runs.ContainsKey(result.JobInfo.Id) is false)
         {
             await Task.Delay(100, cancellationToken);
         }

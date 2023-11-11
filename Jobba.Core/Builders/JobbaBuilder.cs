@@ -43,6 +43,7 @@ public class JobbaBuilder
         Services.TryAddScoped<IOnJobCancelSubscriber, DefaultOnJobCancelSubscriber>();
         Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();
         Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
+        Services.TryAddScoped<IJobOrchestrationService, DefaultJobOrchestrationService>();
 
         Services.AddHostedService<JobbaHostedService>();
         Services.AddHostedService<JobbaCleanUpHostedService>();

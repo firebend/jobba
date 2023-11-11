@@ -12,26 +12,26 @@ namespace Jobba.Web.Sample.Controllers;
 [Route("[controller]")]
 public class DynamicCronJobController : ControllerBase
 {
-    private readonly IJobRegistrationStore _registrationStore;
-    private readonly IJobScheduler _jobScheduler;
+    private readonly IJobOrchestrationService _jobOrchestrationService;
 
-    public DynamicCronJobController(IJobRegistrationStore registrationStore, IJobScheduler jobScheduler)
+    public DynamicCronJobController(IJobOrchestrationService jobOrchestrationService)
     {
-        _registrationStore = registrationStore;
-        _jobScheduler = jobScheduler;
+        _jobOrchestrationService = jobOrchestrationService;
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateAsync(CancellationToken cancellationToken)
     {
-        var registration = JobRegistration.FromTypes<DynamicCronJob, DefaultJobParams, DefaultJobState>(
+        //todo: currently this doesn't provide a way to pass default params to the cron job
+
+        var request = new JobOrchestrationRequest<DynamicCronJob, DefaultJobParams, DefaultJobState>(
             $"{DynamicCronJob.Name}-{Guid.NewGuid()}",
             "A dynamic cron job",
             "* * * * *");
 
-        var created = await _registrationStore.RegisterJobAsync(registration, cancellationToken);
+        var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 
-        while (DynamicCronJobStatics.Runs.ContainsKey(created.Id) is false)
+        while (DynamicCronJobStatics.Runs.ContainsKey(result.Registration.Id) is false)
         {
             await Task.Delay(100, cancellationToken);
         }
