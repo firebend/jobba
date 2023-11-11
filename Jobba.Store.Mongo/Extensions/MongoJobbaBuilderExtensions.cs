@@ -31,15 +31,9 @@ public static class MongoJobbaBuilderExtensions
 
         var typeSerializer = new TypeSerializer();
 
-        BsonClassMap.TryRegisterClassMap<DefaultJobState>(cm =>
-        {
-            cm.AutoMap();
-        });
+        BsonClassMap.TryRegisterClassMap<DefaultJobState>(cm => cm.AutoMap());
 
-        BsonClassMap.TryRegisterClassMap<DefaultJobParams>(cm =>
-        {
-            cm.AutoMap();
-        });
+        BsonClassMap.TryRegisterClassMap<DefaultJobParams>(cm => cm.AutoMap());
 
         BsonClassMap.RegisterClassMap<JobInfoBase>(map =>
         {

@@ -54,12 +54,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             throw new ArgumentException("Job name cannot be null or whitespace.", nameof(request));
         }
 
-        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(request.JobName, cancellationToken);
-
-        if (jobRegistration is null)
-        {
-            throw new Exception($"Job registration not found for JobName {request.JobName}");
-        }
+        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(request.JobName, cancellationToken) ?? throw new Exception($"Job registration not found for JobName {request.JobName}");
 
         var info = await DoScheduleJobAsync(request, jobRegistration, cancellationToken);
 

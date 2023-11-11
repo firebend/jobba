@@ -31,12 +31,7 @@ public class JobbaMongoJobStore : IJobStore
             throw new ArgumentException("Job name cannot be null or whitespace.", nameof(jobRequest));
         }
 
-        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken);
-
-        if (jobRegistration is null)
-        {
-            throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
-        }
+        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken) ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
 
         var added = await _repository.AddAsync(JobEntity.FromRequest(jobRequest, jobRegistration.Id), cancellationToken);
         var info = added.ToJobInfo<TJobParams, TJobState>();

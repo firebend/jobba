@@ -39,12 +39,12 @@ public class JobProgressEntity : IJobbaEntity
 
     public static JobProgressEntity FromJobProgress<TJobState>(JobProgress<TJobState> progress)
         where TJobState : IJobState => new()
-    {
-        Date = progress.Date,
-        Message = progress.Message,
-        Progress = progress.Progress,
-        JobId = progress.JobId,
-        JobState = progress.JobState,
-        JobRegistrationId = progress.JobRegistrationId
-    };
+        {
+            Date = progress.Date,
+            Message = progress.Message,
+            Progress = progress.Progress,
+            JobId = progress.JobId,
+            JobState = progress.JobState,
+            JobRegistrationId = progress.JobRegistrationId
+        };
 }

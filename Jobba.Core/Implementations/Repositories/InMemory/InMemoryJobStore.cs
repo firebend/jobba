@@ -48,12 +48,7 @@ public class InMemoryJobStore : IJobStore
             throw new ArgumentException("Job name cannot be null or whitespace.", nameof(jobRequest));
         }
 
-        var registration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken);
-
-        if (registration is null)
-        {
-            throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
-        }
+        var registration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken) ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
 
         jobRequest.JobId = jobRequest.JobId.Coalesce();
 

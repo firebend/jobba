@@ -36,7 +36,7 @@ public class DynamicJobController : ControllerBase
             new(),
             cancellationToken);
 
-        while(DynamicJobStatics.Runs.ContainsKey(jobInfo.Id) is false)
+        while (DynamicJobStatics.Runs.ContainsKey(jobInfo.Id) is false)
         {
             await Task.Delay(100, cancellationToken);
         }

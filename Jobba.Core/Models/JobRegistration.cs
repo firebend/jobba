@@ -60,12 +60,12 @@ public class JobRegistration : IJobbaEntity
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
-    {
-        JobName = name,
-        JobType = typeof(TJob),
-        JobParamsType = typeof(TJobParams),
-        JobStateType = typeof(TJobState),
-        CronExpression = cron,
-        Description = description,
-    };
+        {
+            JobName = name,
+            JobType = typeof(TJob),
+            JobParamsType = typeof(TJobParams),
+            JobStateType = typeof(TJobState),
+            CronExpression = cron,
+            Description = description,
+        };
 }

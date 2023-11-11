@@ -31,7 +31,7 @@ public class DynamicCronJobController : ControllerBase
 
         var created = await _registrationStore.RegisterJobAsync(registration, cancellationToken);
 
-        while(DynamicCronJobStatics.Runs.ContainsKey(created.Id) is false)
+        while (DynamicCronJobStatics.Runs.ContainsKey(created.Id) is false)
         {
             await Task.Delay(100, cancellationToken);
         }

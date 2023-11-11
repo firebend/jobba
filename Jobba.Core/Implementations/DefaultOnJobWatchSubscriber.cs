@@ -86,6 +86,6 @@ public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
         var defaultWatcherType = typeof(DefaultJobWatcher<,>).MakeGenericType(paramsType, stateType);
         watcher = scope.ServiceProvider.Materialize(defaultWatcherType);
 
-        return watcher?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
+        return watcher ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
     }
 }

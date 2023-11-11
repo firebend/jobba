@@ -46,7 +46,7 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
             }
         }
 
-        var updated  = await _repo.UpsertAsync(jobNameFilter,
+        var updated = await _repo.UpsertAsync(jobNameFilter,
             registration,
             cancellationToken);
 
