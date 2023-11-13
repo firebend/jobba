@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -88,4 +89,11 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 
     public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
         => _repo.GetFirstOrDefaultAsync(x => x.JobName == name, cancellationToken);
+
+    public async Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var deleted = await _repo.DeleteManyAsync(x => x.Id == id, cancellationToken);
+
+        return deleted.FirstOrDefault();
+    }
 }

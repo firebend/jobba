@@ -75,4 +75,18 @@ public interface IJobRegistrationStore
     /// </param>
     /// <returns></returns>
     Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes a Job Registration by id.
+    /// </summary>
+    /// <param name="id">
+    /// The Job Registration id.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns>
+    /// The removed Job Registration.
+    /// </returns>
+    Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken);
 }

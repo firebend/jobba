@@ -75,4 +75,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
         return Task.FromResult(registration);
     }
+
+    public Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
+        => Task.FromResult(DefaultJobRegistrationStoreCache.Registrations.TryRemove(id, out var registration) ? registration : null);
 }

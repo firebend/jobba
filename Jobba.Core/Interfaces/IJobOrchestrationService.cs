@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
@@ -23,4 +24,6 @@ public interface IJobOrchestrationService
         where TParams : IJobParams
         where TState : IJobState
         where TJob : IJob<TParams, TState>;
+
+    Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken);
 }

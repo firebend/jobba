@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -50,4 +51,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
 
         return new(registration, jobInfo);
     }
+
+    public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken)
+        => _jobRegistrationStore.RemoveByIdAsync(jobRegistrationId, cancellationToken);
 }
