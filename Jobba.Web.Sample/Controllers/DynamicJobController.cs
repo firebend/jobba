@@ -2,8 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
-using Jobba.Core.Interfaces.Repositories;
-using Jobba.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Jobba.Web.Sample.Controllers;
@@ -22,9 +20,12 @@ public class DynamicJobController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAsync(CancellationToken cancellationToken)
     {
-        var request = new JobOrchestrationRequest<DynamicJob, DefaultJobParams, DefaultJobState>(
+        var request = new JobOrchestrationRequest<DynamicJob, SampleWebJobParameters, SampleWebJobState>(
             $"{DynamicJob.Name}-{Guid.NewGuid()}",
-            "A dynamic job");
+            "A dynamic job",
+            null,
+            new() { Greeting = $"Hello {Guid.NewGuid()}" },
+            new() { Tries = 1 });
 
         var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 

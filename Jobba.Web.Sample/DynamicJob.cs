@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
-using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,7 @@ public static class DynamicJobStatics
     public static readonly ConcurrentDictionary<Guid, bool> Runs = new();
 }
 
-public class DynamicJob : AbstractJobBaseClass<DefaultJobParams, DefaultJobState>
+public class DynamicJob : AbstractJobBaseClass<SampleWebJobParameters, SampleWebJobState>
 {
     public const string Name = "job-dynamic";
     private readonly ILogger<DynamicJob> _logger;
@@ -27,9 +26,11 @@ public class DynamicJob : AbstractJobBaseClass<DefaultJobParams, DefaultJobState
 
     public override string JobName => Name;
 
-    protected override Task OnStartAsync(JobStartContext<DefaultJobParams, DefaultJobState> jobStartContext, CancellationToken cancellationToken)
+    protected override Task OnStartAsync(JobStartContext<SampleWebJobParameters, SampleWebJobState> jobStartContext, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Dynamic job is running");
+        _logger.LogDebug("Dynamic job is running {Str1} {Str2}",
+            jobStartContext.JobParameters.Greeting,
+            jobStartContext.JobState.Tries);
         DynamicJobStatics.Runs[jobStartContext.JobId] = true;
         return Task.CompletedTask;
     }

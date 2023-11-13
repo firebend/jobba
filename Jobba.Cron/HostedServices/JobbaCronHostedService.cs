@@ -65,6 +65,8 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
             return;
         }
 
-        await scheduler.EnqueueJobsAsync(scope, min, max, stoppingToken);
+        _logger.LogDebug("Enqueuing jobs between {Min} and {Max}", min, max);
+
+        await scheduler.EnqueueJobsAsync(min, max, stoppingToken);
     }
 }

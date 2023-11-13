@@ -7,6 +7,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Store.Mongo.Interfaces;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations;
@@ -15,11 +16,15 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 {
     private readonly IJobbaMongoRepository<JobRegistration> _repo;
     private readonly IJobbaGuidGenerator _guidGenerator;
+    private readonly ILogger<JobbaMongoJobRegistrationStore> _logger;
 
-    public JobbaMongoJobRegistrationStore(IJobbaMongoRepository<JobRegistration> repo, IJobbaGuidGenerator guidGenerator)
+    public JobbaMongoJobRegistrationStore(IJobbaMongoRepository<JobRegistration> repo,
+        IJobbaGuidGenerator guidGenerator,
+        ILogger<JobbaMongoJobRegistrationStore> logger)
     {
         _repo = repo;
         _guidGenerator = guidGenerator;
+        _logger = logger;
     }
 
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
@@ -32,6 +37,8 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 
         if (existing is not null)
         {
+            _logger.LogDebug("Registering job and job already exits {JobName}", registration.JobName);
+
             if (registration.CronExpression is not null)
             {
                 registration.NextExecutionDate = existing.NextExecutionDate;
@@ -40,6 +47,8 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
         }
         else
         {
+            _logger.LogDebug("Registering job and job does not exist {JobName}", registration.JobName);
+
             if (registration.Id == Guid.Empty)
             {
                 registration.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
@@ -63,12 +72,19 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
         DateTimeOffset? nextInvocationDate,
         DateTimeOffset? previousInvocationDate,
         CancellationToken cancellationToken)
-        => _repo.UpdateAsync(
+    {
+        _logger.LogDebug("Updating next and previous invocation dates for job {JobId} {Next} {Previous}",
+            registrationId,
+            nextInvocationDate,
+            previousInvocationDate);
+
+        return _repo.UpdateAsync(
             registrationId,
             Builders<JobRegistration>.Update
                 .Set(x => x.NextExecutionDate, nextInvocationDate)
                 .Set(x => x.PreviousExecutionDate, previousInvocationDate),
             cancellationToken);
+    }
 
     public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
         => _repo.GetFirstOrDefaultAsync(x => x.JobName == name, cancellationToken);

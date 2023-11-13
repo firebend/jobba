@@ -6,7 +6,6 @@ using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Builders;
 using Jobba.Store.Mongo.Serializers;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 
 namespace Jobba.Store.Mongo.Extensions;
 

@@ -9,8 +9,6 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Extensions;
 using Jobba.Cron.Interfaces;
-using Jobba.Cron.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Cron.Implementations;
@@ -39,14 +37,14 @@ public class CronScheduler : ICronScheduler
         _jobRegistrationStore = jobRegistrationStore;
     }
 
-    public async Task EnqueueJobsAsync(IServiceScope scope, DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
+    public async Task EnqueueJobsAsync(DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
     {
         var jobs = await GetCronJobsAsync(min, max, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
 
         var tasks = jobs.Where(x => x.ShouldExecute)
-            .Select(x => InvokeJobUsingReflectionAsync(scope, x.Registration, cancellationToken));
+            .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken));
 
         await Task.WhenAll(tasks);
 
@@ -62,13 +60,13 @@ public class CronScheduler : ICronScheduler
             .Select(x =>
             _jobRegistrationStore.UpdateNextAndPreviousInvocationDatesAsync(x.Registration.Id,
                 x.NextExecutionDate,
-                now,
+                x.ShouldExecute ? now : x.Registration.PreviousExecutionDate,
                 cancellationToken));
 
         return Task.WhenAll(tasks);
     }
 
-    private async Task InvokeJobUsingReflectionAsync(IServiceScope scope, JobRegistration registration, CancellationToken cancellationToken)
+    private async Task InvokeJobUsingReflectionAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}",
             registration.JobName,
@@ -88,8 +86,7 @@ public class CronScheduler : ICronScheduler
         var methodInfoParameters = new object[]
         {
             _scheduler,
-            registration.Id,
-            scope,
+            registration,
             cancellationToken
         };
 
@@ -140,6 +137,7 @@ public class CronScheduler : ICronScheduler
 
     private async Task<List<JobExecutionInfo>> GetCronJobsAsync(DateTimeOffset min,
         DateTimeOffset max,
+
         CancellationToken cancellationToken)
     {
         var jobs = new List<JobExecutionInfo>();
@@ -154,12 +152,12 @@ public class CronScheduler : ICronScheduler
             var shouldExecute = ShouldExecute(previous, next, min, max);
             var didExecutionDateChange = registry.NextExecutionDate != next;
 
-            // _logger.LogDebug(
-            //     "Job {JobName} should execute: {ShouldExecute} did execution date change: {DidExecutionDateChange} next execution date: {NextExecutionDate}",
-            //     registry.JobName,
-            //     shouldExecute,
-            //     didExecutionDateChange,
-            //     next);
+            _logger.LogDebug(
+                "Job {JobName} should execute: {ShouldExecute} did execution date change: {DidExecutionDateChange} next execution date: {NextExecutionDate}",
+                registry.JobName,
+                shouldExecute,
+                didExecutionDateChange,
+                next);
 
             jobs.Add(new(registry, shouldExecute, didExecutionDateChange, next));
         }
@@ -168,18 +166,11 @@ public class CronScheduler : ICronScheduler
     }
 
     private static Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
-        Guid registrationId,
-        IServiceScope scope,
+        JobRegistration jobRegistration,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
-        where TJobState : IJobState
-    {
-        var parametersAndState = scope.ServiceProvider
-            .GetService<ICronJobStateParamsProvider<TJobParams, TJobState>>()
-            ?.GetParametersAndState() ?? new CronJobStateParams<TJobParams, TJobState>();
-
-        return jobScheduler.ScheduleJobAsync(registrationId,
-            parametersAndState.Parameters,
-            parametersAndState.State, cancellationToken);
-    }
+        where TJobState : IJobState => jobScheduler.ScheduleJobAsync(jobRegistration.Id,
+        jobRegistration.DefaultParams == default ? default : (TJobParams)jobRegistration.DefaultParams,
+        jobRegistration.DefaultState == default ? default : (TJobState)jobRegistration.DefaultState,
+        cancellationToken);
 }

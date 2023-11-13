@@ -8,7 +8,9 @@ public record JobOrchestrationResult(JobRegistration Registration, JobInfoBase J
 
 public record JobOrchestrationRequest<TJob, TParams, TState>(string JobName,
     string Description,
-    string Cron = null)
+    string Cron = default,
+    TParams DefaultJobParams = default,
+    TState DefaultJobState = default)
     where TParams : IJobParams
     where TState : IJobState
     where TJob : IJob<TParams, TState>;

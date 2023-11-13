@@ -248,17 +248,14 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     {
         if (_scopeFactory.TryCreateScope(out var scope))
         {
-            registration ??= await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken)
-                               ?? throw new Exception($"Could not resolve job registration from store. Job Registration Id {jobRegistrationId}");
+            var job = await CreateJobInstanceAsync<TJobParams, TJobState>(jobRegistrationId,
+                registration,
+                jobType,
+                scope, cancellationToken);
 
-            if (registration.JobType != jobType)
+            if (job is null)
             {
-                throw new Exception($"Job type mismatch. Job Registration Id {jobRegistrationId}. Expected {registration.JobType}. Actual {jobType}");
-            }
-
-            if (scope.ServiceProvider.Materialize(registration.JobType) is not IJob<TJobParams, TJobState> job)
-            {
-                throw new Exception($"Could not resolve job from service provider. Job Type {jobType}");
+                return;
             }
 
             await Task.Run(async () =>
@@ -298,6 +295,49 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         }
     }
 
+    private async Task<IJob<TJobParams, TJobState>> CreateJobInstanceAsync<TJobParams, TJobState>(Guid jobRegistrationId,
+        JobRegistration registration,
+        Type jobType,
+        IServiceScope scope,
+        CancellationToken cancellationToken)
+        where TJobParams : IJobParams
+        where TJobState : IJobState
+    {
+        registration ??= await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken);
+
+        if (registration is null)
+        {
+            _logger.LogCritical("Could not resolve job registration from store. Job Registration Id {JobRegistrationId}", jobRegistrationId);
+            return null;
+        }
+
+        if (registration.JobType != jobType)
+        {
+            _logger.LogCritical("Job type mismatch. Job Registration Id {JobRegistrationId}. Expected {RegistrationJobType}. Actual {JobType}",
+                jobRegistrationId,
+                registration.JobType,
+                jobType);
+
+            return null;
+        }
+
+        var instance = scope.ServiceProvider.Materialize(registration.JobType);
+
+        if (instance is null)
+        {
+            _logger.LogCritical("Could not materialize job from service provider JobType {JobType}", jobType);
+            return null;
+        }
+
+        if (instance is not IJob<TJobParams, TJobState> job)
+        {
+            _logger.LogCritical("Instance type {Type} does not match Job Type {JobType}", instance.GetType(), jobType);
+            return null;
+        }
+
+        return job;
+    }
+
     private async Task OnJobFaulted<TJobParams, TJobState>(Guid jobId, Guid jobRegistrationId, Exception ex)
     {
         _logger.LogDebug("Job Faulted. JobId: {JobId}. Message: {ExceptionMessage}", jobId, ex.Message);
@@ -335,8 +375,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         where TJobState : IJobState => new()
         {
             JobId = jobInfo.Id,
-            JobParameters = request.JobParameters,
-            JobState = request.InitialJobState,
+            JobParameters = request.JobParameters ?? (TJobParams)jobRegistration.DefaultParams,
+            JobState = request.InitialJobState ?? (TJobState)jobRegistration.DefaultState,
             StartTime = jobInfo.EnqueuedTime,
             IsRestart = request.IsRestart,
             LastProgressDate = jobInfo.LastProgressDate,

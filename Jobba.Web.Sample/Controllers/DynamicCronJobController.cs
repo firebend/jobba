@@ -2,8 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
-using Jobba.Core.Interfaces.Repositories;
-using Jobba.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Jobba.Web.Sample.Controllers;
@@ -24,10 +22,12 @@ public class DynamicCronJobController : ControllerBase
     {
         //todo: currently this doesn't provide a way to pass default params to the cron job
 
-        var request = new JobOrchestrationRequest<DynamicCronJob, DefaultJobParams, DefaultJobState>(
+        var request = new JobOrchestrationRequest<DynamicCronJob, CronParameters, CronState>(
             $"{DynamicCronJob.Name}-{Guid.NewGuid()}",
             "A dynamic cron job",
-            "* * * * *");
+            "* * * * *",
+            new(){ StartDate = DateTimeOffset.UtcNow},
+            new() { Phrase = $"I Like Turtles {Guid.NewGuid()}"});
 
         var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 

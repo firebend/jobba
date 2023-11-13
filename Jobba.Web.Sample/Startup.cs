@@ -44,17 +44,21 @@ public class Startup
                 jobba.UsingMassTransit()
                     .UsingMongo("mongodb://localhost:27017/jobba-web-sample", false)
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
+                    .UsingCron(cron =>
+                    {
+                        ///schedule a sample job running every 1 minute with default job parameters and state
+                        cron.AddCronJob<SampleCronJob, CronParameters, CronState>("* * * * *",
+                            "Sample Cron Job",
+                            "A Cron Job",
+                            p =>
+                            {
+                                p.DefaultParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
+                                p.DefaultState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
+                            });
+                    })
                     .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>("sample-job")
                     .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>("sample-faulted-job")
-                    ///schedule a sample job running every 1 minute with default job parameters and state
-                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("* * * * *",
-                        "Sample Cron Job",
-                        "A Cron Job",
-                        p =>
-                    {
-                        p.JobParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
-                        p.JobState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
-                    })
+
             )
             .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");
     }

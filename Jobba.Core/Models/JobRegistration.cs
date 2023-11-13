@@ -48,15 +48,36 @@ public class JobRegistration : IJobbaEntity
     /// </summary>
     public TimeSpan DefaultJobWatchInterval { get; set; } = TimeSpan.FromSeconds(10);
 
+    /// <summary>
+    /// The last time the job executed
+    /// </summary>
     public DateTimeOffset? PreviousExecutionDate { get; set; }
 
+    /// <summary>
+    /// The next time the job will execute
+    /// </summary>
     public DateTimeOffset? NextExecutionDate { get; set; }
 
+    /// <summary>
+    /// The job's description
+    /// </summary>
     public string Description { get; set; }
 
+    /// <summary>
+    /// The job's default state
+    /// </summary>
+    public IJobState DefaultState { get; set; }
+
+    /// <summary>
+    /// The job's default parameters
+    /// </summary>
+    public IJobParams DefaultParams { get; set; }
+
     public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
-        string description = null,
-        string cron = null)
+        string description = default,
+        string cron = default,
+        TJobParams defaultJobParams = default,
+        TJobState defaultJobState = default)
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
@@ -67,5 +88,7 @@ public class JobRegistration : IJobbaEntity
             JobStateType = typeof(TJobState),
             CronExpression = cron,
             Description = description,
+            DefaultParams = defaultJobParams,
+            DefaultState = defaultJobState
         };
 }

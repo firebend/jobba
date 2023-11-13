@@ -1,10 +1,7 @@
-using System;
 using System.Net;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Flurl.Http;
-using Jobba.Core.Models;
-using Jobba.IntegrationTests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Jobba.IntegrationTests;

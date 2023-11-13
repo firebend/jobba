@@ -21,11 +21,11 @@ public class CronParameters : IJobParams
     public DateTimeOffset StartDate { get; set; }
 }
 
-public class SampleCronJobWithParametersAndState : AbstractCronJobBaseClass<CronParameters, CronState>
+public class SampleCronJob : AbstractCronJobBaseClass<CronParameters, CronState>
 {
-    private readonly ILogger<SampleCronJobWithParametersAndState> _logger;
+    private readonly ILogger<SampleCronJob> _logger;
 
-    public SampleCronJobWithParametersAndState(IJobProgressStore progressStore, ILogger<SampleCronJobWithParametersAndState> logger) : base(progressStore)
+    public SampleCronJob(IJobProgressStore progressStore, ILogger<SampleCronJob> logger) : base(progressStore)
     {
         _logger = logger;
     }

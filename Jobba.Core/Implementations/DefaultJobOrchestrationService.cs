@@ -25,7 +25,9 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
         var registration = JobRegistration.FromTypes<TJob, TParams, TState>(
             request.JobName,
             request.Description,
-            request.Cron);
+            request.Cron,
+            request.DefaultJobParams,
+            request.DefaultJobState);
 
         var created = await _jobRegistrationStore.RegisterJobAsync(registration, cancellationToken);
 
@@ -40,10 +42,10 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             return new(registration, null);
         }
 
-        var jobInfo = await _jobScheduler.ScheduleJobAsync<DefaultJobParams, DefaultJobState>(
+        var jobInfo = await _jobScheduler.ScheduleJobAsync<TParams, TState>(
             created.Id,
-            new(),
-            new(),
+            request.DefaultJobParams,
+            request.DefaultJobState,
             cancellationToken);
 
         return new(registration, jobInfo);

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Abstractions;
-using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Abstractions;
@@ -16,7 +14,7 @@ public static class DynamicCronJobStatics
     public static readonly ConcurrentDictionary<Guid, Guid> Runs = new();
 }
 
-public class DynamicCronJob : AbstractCronJobBaseClass<DefaultJobParams, DefaultJobState>
+public class DynamicCronJob : AbstractCronJobBaseClass<CronParameters, CronState>
 {
     public const string Name = "job-cron-dynamic";
     private readonly ILogger<DynamicCronJob> _logger;
@@ -28,10 +26,14 @@ public class DynamicCronJob : AbstractCronJobBaseClass<DefaultJobParams, Default
 
     public override string JobName => Name;
 
-    protected override Task OnStartAsync(JobStartContext<DefaultJobParams, DefaultJobState> jobStartContext, CancellationToken cancellationToken)
+    protected override Task OnStartAsync(JobStartContext<CronParameters, CronState> jobStartContext, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Dynamic cron job is running");
+        _logger.LogDebug("Dynamic cron job is running {Str1} {Str2}",
+            jobStartContext.JobParameters.StartDate,
+            jobStartContext.JobState.Phrase);
+
         DynamicCronJobStatics.Runs[jobStartContext.JobRegistration.Id] = jobStartContext.JobId;
+
         return Task.CompletedTask;
     }
 }
