@@ -9,6 +9,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Store.Mongo.Interfaces;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Implementations;
@@ -48,6 +49,9 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
         }
         else
         {
+            BsonClassMap.LookupClassMap(registration.JobParamsType);
+            BsonClassMap.LookupClassMap(registration.JobStateType);
+
             _logger.LogDebug("Registering job and job does not exist {JobName}", registration.JobName);
 
             if (registration.Id == Guid.Empty)

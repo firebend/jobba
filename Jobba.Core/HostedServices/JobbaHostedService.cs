@@ -52,6 +52,7 @@ public class JobbaHostedService : BackgroundService
         if (registrations.Length == 0)
         {
             _logger.LogInformation("There are job definitions for Jobba to register");
+            HasRegisteredJobsCancellationTokenSource.Cancel();
             return;
         }
 
