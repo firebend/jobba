@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Implementations;
+using Jobba.Store.Mongo.Serializers;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -31,7 +32,8 @@ public static class JobbaMongoDbConfigurator
             _configured = true;
 
 
-            var objectSerializer = new ObjectSerializer(_ => true);
+            var objectSerializer = new ObjectSerializer(_ => true)
+                .WithDiscriminatorConvention(JobbaDiscriminatorConvention.Instance);
 
             BsonSerializer.TryRegisterSerializer(objectSerializer);
             BsonSerializer.TryRegisterSerializer(typeof(Guid), new GuidSerializer(BsonType.String));
