@@ -89,4 +89,19 @@ public interface IJobRegistrationStore
     /// The removed Job Registration.
     /// </returns>
     Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sets the IsInactive flag on a Job Registration
+    /// </summary>
+    /// <param name="registrationId">
+    /// The registration id
+    /// </param>
+    /// <param name="isInactive">
+    /// True if the registration should be inactivated; otherwise, false.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns></returns>
+    Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken);
 }

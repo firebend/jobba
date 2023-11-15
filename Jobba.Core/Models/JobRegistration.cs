@@ -73,6 +73,11 @@ public class JobRegistration : IJobbaEntity
     /// </summary>
     public IJobParams DefaultParams { get; set; }
 
+    /// <summary>
+    /// True if the registration should be inactive, thus preventing future jobs from being invoked; otherwise, true.
+    /// </summary>
+    public bool IsInactive { get; set; }
+
     public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
         string description = default,
         string cron = default,

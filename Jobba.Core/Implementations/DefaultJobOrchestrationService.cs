@@ -43,7 +43,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             return new(registration, null);
         }
 
-        var jobInfo = await _jobScheduler.ScheduleJobAsync<TParams, TState>(
+        var jobInfo = await _jobScheduler.ScheduleJobAsync(
             created.Id,
             request.DefaultJobParams,
             request.DefaultJobState,

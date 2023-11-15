@@ -114,16 +114,21 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
+        if (ValidateJobRegistration(jobRegistration, request.JobType) is false)
+        {
+            return null;
+        }
+
         var jobId = await GetJobIdAsync(request, cancellationToken);
 
-        if (!await CanRunAsync(jobId, cancellationToken))
+        if (!await IsJobStatusValidAsync(jobId, cancellationToken))
         {
             return null;
         }
 
         using var jobLock = await _lockService.LockJobAsync(jobId, cancellationToken);
 
-        if (!await CanRunAsync(jobId, cancellationToken))
+        if (!await IsJobStatusValidAsync(jobId, cancellationToken))
         {
             return null;
         }
@@ -133,13 +138,43 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
         await WatchJobAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, request.JobWatchInterval, cancellationToken);
         var context = GetJobStartContext(request, jobInfo, jobRegistration);
-        _ = RunJobAsync(jobRegistration.Id, jobRegistration, jobId, request.JobType, context, token, cancellationToken);
+        _ = RunJobAsync(jobRegistration, jobId, request.JobType, context, token, cancellationToken);
         await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, cancellationToken);
 
         return jobInfo;
     }
 
-    private async Task<bool> CanRunAsync(Guid jobId, CancellationToken cancellationToken)
+    private bool ValidateJobRegistration(JobRegistration registration, Type jobType)
+    {
+        if (registration is null)
+        {
+            _logger.LogCritical("Could not resolve job registration");
+            return false;
+        }
+
+        if (registration.IsInactive)
+        {
+            _logger.LogDebug("Job is inactive. Job Registration Id {JobRegistrationId} Job Name {JobName}",
+                registration.Id,
+                registration.JobName);
+
+            return false;
+        }
+
+        if (registration.JobType != jobType)
+        {
+            _logger.LogCritical("Job type mismatch. Job Registration Id {JobRegistrationId}. Expected {RegistrationJobType}. Actual {JobType}",
+                registration.JobType,
+                registration.JobType,
+                jobType);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> IsJobStatusValidAsync(Guid jobId, CancellationToken cancellationToken)
     {
         if (jobId == Guid.Empty)
         {
@@ -236,8 +271,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     /// <exception cref="Exception">
     ///     Throws an exception if the job cannot be resolved from the IoC container.
     /// </exception>
-    private async Task RunJobAsync<TJobParams, TJobState>(Guid jobRegistrationId,
-        JobRegistration registration,
+    private async Task RunJobAsync<TJobParams, TJobState>(JobRegistration registration,
         Guid jobId,
         Type jobType,
         JobStartContext<TJobParams, TJobState> context,
@@ -248,10 +282,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     {
         if (_scopeFactory.TryCreateScope(out var scope))
         {
-            var job = await CreateJobInstanceAsync<TJobParams, TJobState>(jobRegistrationId,
-                registration,
-                jobType,
-                scope, cancellationToken);
+            var job = CreateJobInstance<TJobParams, TJobState>(registration, jobType, scope);
 
             if (job is null)
             {
@@ -272,7 +303,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
                     }
                     else
                     {
-                        await OnJobCompletedAsync(jobId, jobRegistrationId, job.JobName, default);
+                        await OnJobCompletedAsync(jobId, registration.Id, job.JobName, default);
                         _jobCancellationTokenStore.RemoveCompletedJob(jobId);
                     }
                 }
@@ -285,7 +316,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    await OnJobFaulted<TJobParams, TJobState>(jobId, jobRegistrationId, ex);
+                    await OnJobFaulted<TJobParams, TJobState>(jobId, registration.Id, ex);
                 }
                 finally
                 {
@@ -295,32 +326,13 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         }
     }
 
-    private async Task<IJob<TJobParams, TJobState>> CreateJobInstanceAsync<TJobParams, TJobState>(Guid jobRegistrationId,
+    private IJob<TJobParams, TJobState> CreateJobInstance<TJobParams, TJobState>(
         JobRegistration registration,
         Type jobType,
-        IServiceScope scope,
-        CancellationToken cancellationToken)
+        IServiceScope scope)
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        registration ??= await _jobRegistrationStore.GetJobRegistrationAsync(jobRegistrationId, cancellationToken);
-
-        if (registration is null)
-        {
-            _logger.LogCritical("Could not resolve job registration from store. Job Registration Id {JobRegistrationId}", jobRegistrationId);
-            return null;
-        }
-
-        if (registration.JobType != jobType)
-        {
-            _logger.LogCritical("Job type mismatch. Job Registration Id {JobRegistrationId}. Expected {RegistrationJobType}. Actual {JobType}",
-                jobRegistrationId,
-                registration.JobType,
-                jobType);
-
-            return null;
-        }
-
         var instance = scope.ServiceProvider.Materialize(registration.JobType);
 
         if (instance is null)

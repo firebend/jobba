@@ -24,6 +24,20 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         _guidGenerator = guidGenerator;
     }
 
+    private static Task<JobRegistration> Update(Guid id, Action<JobRegistration> update)
+    {
+        if (DefaultJobRegistrationStoreCache.Registrations.TryGetValue(id, out var registration) is false)
+        {
+            return Task.FromResult<JobRegistration>(null);
+        }
+
+        update(registration);
+
+        DefaultJobRegistrationStoreCache.Registrations[id] = registration;
+
+        return Task.FromResult(registration);
+    }
+
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
         if (registration.Id == Guid.Empty)
@@ -45,6 +59,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         => Task.FromResult(
             DefaultJobRegistrationStoreCache.Registrations
                 .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression))
+                .Where(x => x.Value.IsInactive is false)
                 .Select(x => x.Value)
                 .ToArray()
                 .AsEnumerable());
@@ -53,19 +68,11 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         DateTimeOffset? nextInvocationDate,
         DateTimeOffset? previousInvocationDate,
         CancellationToken cancellationToken)
-    {
-        if (DefaultJobRegistrationStoreCache.Registrations.TryGetValue(registrationId, out var registration) is false)
+        => Update(registrationId, registration =>
         {
-            return Task.CompletedTask;
-        }
-
-        registration.NextExecutionDate = nextInvocationDate;
-        registration.PreviousExecutionDate = previousInvocationDate;
-
-        DefaultJobRegistrationStoreCache.Registrations[registrationId] = registration;
-
-        return Task.CompletedTask;
-    }
+            registration.NextExecutionDate = nextInvocationDate;
+            registration.PreviousExecutionDate = previousInvocationDate;
+        });
 
     public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
     {
@@ -78,4 +85,10 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
     public Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
         => Task.FromResult(DefaultJobRegistrationStoreCache.Registrations.TryRemove(id, out var registration) ? registration : null);
+
+    public Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken)
+        => Update(registrationId, registration =>
+        {
+            registration.IsInactive = isInactive;
+        });
 }
