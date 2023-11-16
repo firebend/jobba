@@ -71,7 +71,7 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
         => _repo.GetFirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
 
     public async Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
-        => await _repo.GetAllAsync(x => x.CronExpression != null && x.IsInactive == false, cancellationToken);
+        => await _repo.GetAllAsync(x => x.CronExpression != null && x.IsInactive != true, cancellationToken);
 
     public Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
         DateTimeOffset? nextInvocationDate,
