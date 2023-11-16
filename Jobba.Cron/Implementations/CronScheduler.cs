@@ -61,11 +61,11 @@ public class CronScheduler : ICronScheduler
 
             var start = Stopwatch.GetTimestamp();
             await DoJobScheduling(context, cancellationToken);
-            await HoldLockAsync(context, start);
+            await HoldLockAsync(context, start, cancellationToken);
         }
     }
 
-    private async Task HoldLockAsync(CronSchedulerContext context, long start)
+    private async Task HoldLockAsync(CronSchedulerContext context, long start, CancellationToken cancellationToken)
     {
         var end = Stopwatch.GetTimestamp();
         var duration = Stopwatch.GetElapsedTime(start, end);
@@ -74,7 +74,7 @@ public class CronScheduler : ICronScheduler
 
         _logger.LogDebug("Holding lock for {HoldTime}", holdTime);
 
-        await Task.Delay(holdTime);
+        await Task.Delay(holdTime, cancellationToken);
     }
 
     private async Task DoJobScheduling(CronSchedulerContext context, CancellationToken cancellationToken)
