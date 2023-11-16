@@ -30,7 +30,7 @@ public class JobbaBuilderTests
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert
-        serviceCollection.Count.Should().BeGreaterThan(13);
+        serviceCollection.Count.Should().Be(16);
         var registrations = provider.GetServices<JobRegistration>().ToArray();
         registrations.Length.Should().Be(1);
         registrations.First().JobType.Should().Be<FooJob>();

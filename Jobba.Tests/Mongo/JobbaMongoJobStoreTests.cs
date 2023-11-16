@@ -27,8 +27,13 @@ public class JobbaMongoJobStoreTests
         //arrange
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
+
         var jobRequest = fixture.Create<JobRequest<Foo, Foo>>();
-        var jobEntity = JobEntity.FromRequest(jobRequest, Guid.NewGuid(), new("a", "b", "c", "d"));
+
+        var systemInfo = new JobSystemInfo("a", "b", "c", "d");
+
+        var jobEntity = JobEntity.FromRequest(jobRequest,
+            Guid.NewGuid(),systemInfo);
 
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))
@@ -38,6 +43,11 @@ public class JobbaMongoJobStoreTests
         registrationStore.Setup(x => x.GetByJobNameAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsUsingFixture(fixture);
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(systemInfo)
+            .Verifiable();
 
         var service = fixture.Create<JobbaMongoJobStore>();
 
@@ -55,6 +65,7 @@ public class JobbaMongoJobStoreTests
         jobInfo.CurrentNumberOfTries.Should().Be(jobRequest.NumberOfTries);
 
         repo.Verify(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()), Times.Once);
+        systemInfoProvider.VerifyAll();
     }
 
     [TestMethod]
