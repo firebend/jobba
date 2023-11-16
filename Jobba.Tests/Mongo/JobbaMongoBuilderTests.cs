@@ -24,7 +24,7 @@ public class JobbaMongoBuilderTests
         serviceCollection.AddLogging();
 
         //act
-        serviceCollection.AddJobba(builder =>
+        serviceCollection.AddJobba("fake",builder =>
         {
             builder.AddJob<FooJob, FooParams, FooState>("fake");
             builder.UsingMongo("mongodb://localhost:27017/jobba", true);

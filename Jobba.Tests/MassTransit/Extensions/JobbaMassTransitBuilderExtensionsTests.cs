@@ -23,7 +23,7 @@ public class JobbaMassTransitBuilderExtensionsTests
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddMassTransitTestHarness(cfg => cfg.AddDelayedMessageScheduler());
-        var builder = new JobbaBuilder(serviceCollection);
+        var builder = new JobbaBuilder(serviceCollection, "fake");
         builder.UsingMassTransit().UsingInMemory();
         var serviceProvider = serviceCollection.BuildServiceProvider();
 

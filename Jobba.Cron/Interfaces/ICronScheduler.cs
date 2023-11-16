@@ -4,16 +4,22 @@ using System.Threading.Tasks;
 
 namespace Jobba.Cron.Interfaces;
 
+public record CronSchedulerContext(TimeSpan Interval,
+    DateTimeOffset Min,
+    DateTimeOffset Max,
+    string SystemMoniker)
+{
+    public override string ToString()
+        => $"Interval: {Interval} Min: {Min} Max: {Max} System Moniker: {SystemMoniker}";
+}
+
 public interface ICronScheduler
 {
     /// <summary>
     /// Give a service provider scope and a date all registered cron jobs will be resolved and executed.
     /// </summary>
-    /// <param name="min">
-    /// The minimum date point in time reference to check jobs against
-    /// </param>
-    /// <param name="max">
-    /// The maximum date point in time reference to check jobs against
+    /// <param name="context">
+    /// A context encapsulating information about when to check for cron job invocations.
     /// </param>
     /// <param name="cancellationToken">
     /// Cancellation token
@@ -21,5 +27,5 @@ public interface ICronScheduler
     /// <returns>
     /// A task
     /// </returns>
-    Task EnqueueJobsAsync(DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken);
+    Task EnqueueJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken);
 }

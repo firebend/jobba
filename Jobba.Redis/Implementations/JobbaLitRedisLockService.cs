@@ -31,4 +31,16 @@ public class LitRedisJobLockService : IJobLockService
 
         throw new Exception($"Could not acquire lock. Job Id {jobId}");
     }
+
+    public async Task<SystemLockResult> LockSystemAsync(string systemMoniker, TimeSpan span, CancellationToken cancellationToken)
+    {
+        var lockModel = RequestLockModel
+            .WithKey($"Jobba_System_{systemMoniker}")
+            .WithLockWaitTimeout(span);
+
+        var locker = await _lockService.AcquireLockAsync(lockModel, cancellationToken);
+
+        return new(locker.Succeeded, locker);
+    }
+
 }

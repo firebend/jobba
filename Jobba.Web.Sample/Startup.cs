@@ -40,7 +40,7 @@ public class Startup
         }));
         services
             .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
-            .AddJobba(jobba =>
+            .AddJobba("jobba-web-sample", jobba =>
                 jobba.UsingMassTransit()
                     .UsingMongo("mongodb://localhost:27017/jobba-web-sample", false)
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")

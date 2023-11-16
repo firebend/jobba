@@ -33,7 +33,7 @@ internal static class Program
         {
             services
                 .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
-                .AddJobba(jobba =>
+                .AddJobba("jobba-sample", jobba =>
                     jobba.UsingMassTransit()
                         .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")

@@ -20,36 +20,53 @@ public class CronScheduler : ICronScheduler
     private readonly IJobScheduler _scheduler;
     private readonly ICronService _cronService;
     private readonly IJobRegistrationStore _jobRegistrationStore;
+    private readonly IJobLockService _lockService;
 
     private record JobExecutionInfo(JobRegistration Registration,
         DateTimeOffset? NextExecutionDate,
         DateTimeOffset? PreviousExecutionDate)
     {
-        public override string ToString() => $"{Registration?.JobName} {NextExecutionDate} {PreviousExecutionDate}";
+        public override string ToString()
+            => $"JobName: {Registration?.JobName} Next Execution Date: {NextExecutionDate} Previous Execution Date: {PreviousExecutionDate}";
     };
 
     public CronScheduler(IJobScheduler scheduler,
         ILogger<CronScheduler> logger,
         ICronService cronService,
-        IJobRegistrationStore jobRegistrationStore)
+        IJobRegistrationStore jobRegistrationStore,
+        IJobLockService lockService)
     {
         _scheduler = scheduler;
         _logger = logger;
         _cronService = cronService;
         _jobRegistrationStore = jobRegistrationStore;
+        _lockService = lockService;
     }
 
-    public async Task EnqueueJobsAsync(DateTimeOffset min, DateTimeOffset max, CancellationToken cancellationToken)
+    public async Task EnqueueJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken)
     {
-        var jobs = await GetCronJobsAsync(min, max, cancellationToken);
+        var systemLock = await _lockService.LockSystemAsync(
+            context.SystemMoniker,
+            context.Interval,
+            cancellationToken);
 
-        var tasks = jobs
-            .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken))
-            .ToArray();
+        using (systemLock.Lock)
+        {
+            if (systemLock.WasLockAcquired is false)
+            {
+                return;
+            }
 
-        await Task.WhenAll(tasks);
+            var jobs = await GetCronJobsAsync(context, cancellationToken);
 
-        await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, cancellationToken);
+            var tasks = jobs
+                .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken))
+                .ToArray();
+
+            await Task.WhenAll(tasks);
+
+            await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, cancellationToken);
+        }
     }
 
     private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobExecutionInfo> jobs, CancellationToken cancellationToken)
@@ -133,10 +150,7 @@ public class CronScheduler : ICronScheduler
         return should;
     }
 
-    private async Task<List<JobExecutionInfo>> GetCronJobsAsync(DateTimeOffset min,
-        DateTimeOffset max,
-
-        CancellationToken cancellationToken)
+    private async Task<List<JobExecutionInfo>> GetCronJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken)
     {
         var jobs = new List<JobExecutionInfo>();
 
@@ -146,8 +160,8 @@ public class CronScheduler : ICronScheduler
         {
             var cron = registry.CronExpression;
             var previous = registry.PreviousExecutionDate;
-            var currentExecutionDate = GetNextExecutionDate(cron, max);
-            var shouldExecute = ShouldExecute(previous, currentExecutionDate, min, max);
+            var currentExecutionDate = GetNextExecutionDate(cron, context.Max);
+            var shouldExecute = ShouldExecute(previous, currentExecutionDate, context.Min, context.Max);
 
             if (shouldExecute is false)
             {

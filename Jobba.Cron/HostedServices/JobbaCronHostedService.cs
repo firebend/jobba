@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.HostedServices;
+using Jobba.Core.Interfaces;
 using Jobba.Cron.Extensions;
 using Jobba.Cron.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,8 +66,19 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
             return;
         }
 
-        _logger.LogDebug("Enqueuing jobs between {Min} and {Max}", min, max);
+        var infoProvider = scope.ServiceProvider.GetService<IJobSystemInfoProvider>();
 
-        await scheduler.EnqueueJobsAsync(min, max, stoppingToken);
+        if(infoProvider is null)
+        {
+            _logger.LogCritical("No {InfoProvider} is registered", nameof(IJobSystemInfoProvider));
+            return;
+        }
+
+        var systemMoniker = infoProvider.GetSystemInfo().SystemMoniker;
+        var context = new CronSchedulerContext(_timerDelay, min, max, systemMoniker);
+
+        _logger.LogDebug("Enqueuing jobs between {Context}", context);
+
+        await scheduler.EnqueueJobsAsync(context, stoppingToken);
     }
 }

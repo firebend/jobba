@@ -21,7 +21,7 @@ public class JobbaBuilderTests
     {
         //arrange
         var serviceCollection = new ServiceCollection();
-        var builder = new JobbaBuilder(serviceCollection);
+        var builder = new JobbaBuilder(serviceCollection, "fake");
         var mockProgressStore = new Mock<IJobProgressStore>();
         serviceCollection.AddSingleton(mockProgressStore.Object);
 

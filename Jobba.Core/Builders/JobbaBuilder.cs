@@ -19,8 +19,11 @@ public record JobAddedEventArgs
 
 public class JobbaBuilder
 {
-    public JobbaBuilder(IServiceCollection services)
+    private readonly string _systemMoniker;
+
+    public JobbaBuilder(IServiceCollection services, string systemMoniker)
     {
+        _systemMoniker = systemMoniker;
         Services = services;
         AddDefaultServices();
     }
@@ -44,6 +47,7 @@ public class JobbaBuilder
         Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();
         Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
         Services.TryAddScoped<IJobOrchestrationService, DefaultJobOrchestrationService>();
+        Services.TryAddSingleton<IJobSystemInfoProvider>(new DefaultJobSystemInfoProvider(_systemMoniker));
 
         Services.AddHostedService<JobbaHostedService>();
         Services.AddHostedService<JobbaCleanUpHostedService>();
