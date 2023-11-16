@@ -1,4 +1,5 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
@@ -71,4 +72,6 @@ public record JobInfoBase
     public string JobStateTypeName { get; set; }
     public string JobParamsTypeName { get; set; }
     public bool IsOutOfRetry { get; set; }
+
+    public JobSystemInfo SystemInfo { get; set; }
 }

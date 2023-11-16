@@ -14,11 +14,15 @@ public class JobbaMongoJobStore : IJobStore
 {
     private readonly IJobbaMongoRepository<JobEntity> _repository;
     private readonly IJobRegistrationStore _jobRegistrationStore;
+    private readonly IJobSystemInfoProvider _systemInfoProvider;
 
-    public JobbaMongoJobStore(IJobbaMongoRepository<JobEntity> repository, IJobRegistrationStore jobRegistrationStore)
+    public JobbaMongoJobStore(IJobbaMongoRepository<JobEntity> repository,
+        IJobRegistrationStore jobRegistrationStore,
+        IJobSystemInfoProvider systemInfoProvider)
     {
         _repository = repository;
         _jobRegistrationStore = jobRegistrationStore;
+        _systemInfoProvider = systemInfoProvider;
     }
 
     public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
@@ -31,9 +35,13 @@ public class JobbaMongoJobStore : IJobStore
             throw new ArgumentException("Job name cannot be null or whitespace.", nameof(jobRequest));
         }
 
-        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken) ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
+        var jobRegistration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken)
+                              ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
 
-        var added = await _repository.AddAsync(JobEntity.FromRequest(jobRequest, jobRegistration.Id), cancellationToken);
+        var systemInfo = _systemInfoProvider.GetSystemInfo();
+        var request = JobEntity.FromRequest(jobRequest, jobRegistration.Id, systemInfo);
+
+        var added = await _repository.AddAsync(request, cancellationToken);
         var info = added.ToJobInfo<TJobParams, TJobState>();
 
         return info;

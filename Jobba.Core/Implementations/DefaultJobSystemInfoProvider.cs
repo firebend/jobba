@@ -11,7 +11,7 @@ public class DefaultJobSystemInfoProvider : IJobSystemInfoProvider
     {
         _info = new(moniker,
             Environment.MachineName,
-            Environment.UserDomainName,
+            Environment.UserName,
             Environment.OSVersion.VersionString);
     }
 

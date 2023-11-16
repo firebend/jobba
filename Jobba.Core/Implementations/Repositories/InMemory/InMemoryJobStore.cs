@@ -18,10 +18,12 @@ internal static class InMemoryJobStoreCache
 public class InMemoryJobStore : IJobStore
 {
     private readonly IJobRegistrationStore _jobRegistrationStore;
+    private readonly IJobSystemInfoProvider _jobSystemInfoProvider;
 
-    public InMemoryJobStore(IJobRegistrationStore jobRegistrationStore)
+    public InMemoryJobStore(IJobRegistrationStore jobRegistrationStore, IJobSystemInfoProvider jobSystemInfoProvider)
     {
         _jobRegistrationStore = jobRegistrationStore;
+        _jobSystemInfoProvider = jobSystemInfoProvider;
     }
 
     private static JobEntity FindJobById(Guid id) => InMemoryJobStoreCache.Jobs.TryGetValue(id, out var entity) ? entity : null;
@@ -48,14 +50,18 @@ public class InMemoryJobStore : IJobStore
             throw new ArgumentException("Job name cannot be null or whitespace.", nameof(jobRequest));
         }
 
-        var registration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken) ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
+        var registration = await _jobRegistrationStore.GetByJobNameAsync(jobRequest.JobName, cancellationToken)
+                           ?? throw new Exception($"Job registration not found for JobName {jobRequest.JobName}");
+
+        var systemInfo = _jobSystemInfoProvider.GetSystemInfo();
 
         jobRequest.JobId = jobRequest.JobId.Coalesce();
 
         var entity = InMemoryJobStoreCache.Jobs.GetOrAdd(
             jobRequest.JobId,
-            static (_, args) => JobEntity.FromRequest(args.jobRequest, args.registration.Id),
-            (jobRequest, registration));
+            static (_, args)
+                => JobEntity.FromRequest(args.jobRequest, args.registration.Id, args.systemInfo),
+            (jobRequest, registration, systemInfo));
 
         var info = entity?.ToJobInfo<TJobParams, TJobState>();
 

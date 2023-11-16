@@ -28,7 +28,7 @@ public class JobbaMongoJobStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
         var jobRequest = fixture.Create<JobRequest<Foo, Foo>>();
-        var jobEntity = JobEntity.FromRequest(jobRequest, Guid.NewGuid());
+        var jobEntity = JobEntity.FromRequest(jobRequest, Guid.NewGuid(), new("a", "b", "c", "d"));
 
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))

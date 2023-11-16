@@ -77,7 +77,14 @@ public class JobEntity : IJobbaEntity
     /// </summary>
     public Guid JobRegistrationId { get; set; }
 
-    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, Guid jobRegistrationId)
+    /// <summary>
+    /// Information about the system that the job is running on.
+    /// </summary>
+    public JobSystemInfo SystemInfo { get; set; }
+
+    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
+        Guid jobRegistrationId,
+        JobSystemInfo jobSystemInfo)
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
         {
@@ -98,7 +105,8 @@ public class JobEntity : IJobbaEntity
             JobStateTypeName = typeof(TJobState).AssemblyQualifiedName,
             IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries,
             JobRegistrationId = jobRegistrationId,
-            JobName = jobRequest.JobName
+            JobName = jobRequest.JobName,
+            SystemInfo = jobSystemInfo
         };
 
     public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>()
@@ -122,7 +130,8 @@ public class JobEntity : IJobbaEntity
             JobStateTypeName = JobStateTypeName,
             IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
             JobRegistrationId = JobRegistrationId,
-            JobName = JobName
+            JobName = JobName,
+            SystemInfo = SystemInfo
         };
 
     public JobInfoBase ToJobInfoBase() => new()
@@ -142,6 +151,7 @@ public class JobEntity : IJobbaEntity
         JobParamsTypeName = JobParamsTypeName,
         JobStateTypeName = JobStateTypeName,
         JobRegistrationId = JobRegistrationId,
-        JobName = JobName
+        JobName = JobName,
+        SystemInfo = SystemInfo
     };
 }
