@@ -11,6 +11,8 @@ namespace Jobba.Sample;
 
 public class SampleJobCancel : AbstractJobBaseClass<DefaultJobParams, DefaultJobState>
 {
+    public const string Name = "sample-job-cancel";
+
     private readonly ILogger<SampleJobCancel> _logger;
 
     public SampleJobCancel(IJobProgressStore progressStore, ILogger<SampleJobCancel> logger) : base(progressStore)
@@ -20,7 +22,7 @@ public class SampleJobCancel : AbstractJobBaseClass<DefaultJobParams, DefaultJob
 
     private Guid MyId { get; } = Guid.NewGuid();
 
-    public override string JobName => "Sample Job Cancel";
+    public override string JobName => Name;
 
     protected override async Task OnStartAsync(JobStartContext<DefaultJobParams, DefaultJobState> jobStartContext, CancellationToken cancellationToken)
     {

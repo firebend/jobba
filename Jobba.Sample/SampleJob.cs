@@ -21,6 +21,7 @@ public class SampleJobParameters : IJobParams
 
 public class SampleJob : AbstractJobBaseClass<SampleJobParameters, SampleJobState>
 {
+    public const string Name = "sample-job";
     private readonly ILogger<SampleJob> _logger;
 
     public SampleJob(IJobProgressStore progressStore, ILogger<SampleJob> logger) : base(progressStore)
@@ -28,7 +29,7 @@ public class SampleJob : AbstractJobBaseClass<SampleJobParameters, SampleJobStat
         _logger = logger;
     }
 
-    public override string JobName => "Sample Job";
+    public override string JobName => Name;
 
     protected override async Task OnStartAsync(JobStartContext<SampleJobParameters, SampleJobState> jobStartContext, CancellationToken cancellationToken)
     {

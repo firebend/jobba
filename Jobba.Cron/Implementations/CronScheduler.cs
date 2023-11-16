@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -47,26 +48,52 @@ public class CronScheduler : ICronScheduler
     {
         var systemLock = await _lockService.LockSystemAsync(
             context.SystemMoniker,
-            context.Interval,
+            TimeSpan.FromMilliseconds(100),
             cancellationToken);
 
         using (systemLock.Lock)
         {
             if (systemLock.WasLockAcquired is false)
             {
+                _logger.LogDebug("Could not acquire lock for {SystemMoniker} another process must be scheduling cron jobs", context.SystemMoniker);
                 return;
             }
 
-            var jobs = await GetCronJobsAsync(context, cancellationToken);
-
-            var tasks = jobs
-                .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken))
-                .ToArray();
-
-            await Task.WhenAll(tasks);
-
-            await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, cancellationToken);
+            var start = Stopwatch.GetTimestamp();
+            await DoJobScheduling(context, cancellationToken);
+            await HoldLockAsync(context, start);
         }
+    }
+
+    private async Task HoldLockAsync(CronSchedulerContext context, long start)
+    {
+        var end = Stopwatch.GetTimestamp();
+        var duration = Stopwatch.GetElapsedTime(start, end);
+        var diffTime = context.Interval - duration;
+        var holdTime = diffTime - TimeSpan.FromMilliseconds(100);
+
+        _logger.LogDebug("Holding lock for {HoldTime}", holdTime);
+
+        await Task.Delay(holdTime);
+    }
+
+    private async Task DoJobScheduling(CronSchedulerContext context, CancellationToken cancellationToken)
+    {
+        var jobs = await GetCronJobsAsync(context, cancellationToken);
+
+        if (jobs.Count <= 0)
+        {
+            _logger.LogDebug("No jobs to execute at this time");
+            return;
+        }
+
+        var tasks = jobs
+            .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken))
+            .ToArray();
+
+        await Task.WhenAll(tasks);
+
+        await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, cancellationToken);
     }
 
     private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobExecutionInfo> jobs, CancellationToken cancellationToken)
