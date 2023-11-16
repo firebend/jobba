@@ -40,7 +40,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             // Comment: if this is a new cron expression job
             // add the registration and the cron scheduler will kick off the job when needed
             //*******************************************
-            return new(registration, null);
+            return new(created, null);
         }
 
         var jobInfo = await _jobScheduler.ScheduleJobAsync(
@@ -49,7 +49,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             request.DefaultJobState,
             cancellationToken);
 
-        return new(registration, jobInfo);
+        return new(created, jobInfo);
     }
 
     public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken)
