@@ -33,7 +33,7 @@ public class JobbaMongoJobStoreTests
         var systemInfo = new JobSystemInfo("a", "b", "c", "d");
 
         var jobEntity = JobEntity.FromRequest(jobRequest,
-            Guid.NewGuid(),systemInfo);
+            Guid.NewGuid(), systemInfo);
 
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))

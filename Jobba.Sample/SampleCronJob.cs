@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Sample;
 
-public class SampleCronJob : AbstractCronJobBaseClass<DefaultJobParams,DefaultJobState>
+public class SampleCronJob : AbstractCronJobBaseClass<DefaultJobParams, DefaultJobState>
 {
     private readonly ILogger<SampleCronJob> _logger;
 

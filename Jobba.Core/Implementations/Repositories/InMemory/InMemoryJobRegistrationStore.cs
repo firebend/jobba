@@ -87,8 +87,5 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         => Task.FromResult(DefaultJobRegistrationStoreCache.Registrations.TryRemove(id, out var registration) ? registration : null);
 
     public Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken)
-        => Update(registrationId, registration =>
-        {
-            registration.IsInactive = isInactive;
-        });
+        => Update(registrationId, registration => registration.IsInactive = isInactive);
 }

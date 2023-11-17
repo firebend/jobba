@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Conventions;
 
 namespace Jobba.Store.Mongo.Serializers;
 
-public class JobbaDiscriminatorConvention: IDiscriminatorConvention
+public class JobbaDiscriminatorConvention : IDiscriminatorConvention
 {
     public static ConcurrentDictionary<string, Type> TypeCache { get; } = new();
 

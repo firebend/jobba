@@ -43,10 +43,7 @@ internal static class Program
                     jobba.UsingMassTransit()
                         .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")
-                        .UsingCron(cron =>
-                        {
-                            cron.AddCronJob<SampleCronJob, DefaultJobParams, DefaultJobState>("* * * * *", SampleCronJob.Name);
-                        })
+                        .UsingCron(cron => cron.AddCronJob<SampleCronJob, DefaultJobParams, DefaultJobState>("* * * * *", SampleCronJob.Name))
                         .AddJob<SampleJob, SampleJobParameters, SampleJobState>(SampleJob.Name)
                         .AddJob<SampleJobCancel, DefaultJobParams, DefaultJobState>(SampleJobCancel.Name)
                 )

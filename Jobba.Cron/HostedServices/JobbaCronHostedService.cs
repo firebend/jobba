@@ -68,7 +68,7 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
 
         var infoProvider = scope.ServiceProvider.GetService<IJobSystemInfoProvider>();
 
-        if(infoProvider is null)
+        if (infoProvider is null)
         {
             _logger.LogCritical("No {InfoProvider} is registered", nameof(IJobSystemInfoProvider));
             return;
