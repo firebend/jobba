@@ -35,8 +35,6 @@ public static class ServiceProviderExtensions
         }
     }
 
-    //todo: write tests for this
-
     /// <summary>
     /// Given a type that may not be registered with the service provider, tr to resolve all constructor parameters and
     /// return an instance of the type using reflection.

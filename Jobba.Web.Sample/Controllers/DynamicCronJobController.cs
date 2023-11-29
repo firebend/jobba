@@ -20,8 +20,6 @@ public class DynamicCronJobController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAsync(CancellationToken cancellationToken)
     {
-        //todo: currently this doesn't provide a way to pass default params to the cron job
-
         var request = new JobOrchestrationRequest<DynamicCronJob, CronParameters, CronState>(
             $"{DynamicCronJob.Name}-{Guid.NewGuid()}",
             "A dynamic cron job",
