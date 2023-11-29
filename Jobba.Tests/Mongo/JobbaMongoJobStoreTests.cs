@@ -1,17 +1,18 @@
 using System;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
+using Jobba.Core.Interfaces;
+using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MongoDB.Driver;
 using Moq;
 using Neleus.LambdaCompare;
 
@@ -26,12 +27,27 @@ public class JobbaMongoJobStoreTests
         //arrange
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
+
         var jobRequest = fixture.Create<JobRequest<Foo, Foo>>();
-        var jobEntity = JobEntity.FromRequest(jobRequest);
+
+        var systemInfo = new JobSystemInfo("a", "b", "c", "d");
+
+        var jobEntity = JobEntity.FromRequest(jobRequest,
+            Guid.NewGuid(), systemInfo);
 
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(jobEntity);
+
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsUsingFixture(fixture);
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(systemInfo)
+            .Verifiable();
 
         var service = fixture.Create<JobbaMongoJobStore>();
 
@@ -49,6 +65,7 @@ public class JobbaMongoJobStoreTests
         jobInfo.CurrentNumberOfTries.Should().Be(jobRequest.NumberOfTries);
 
         repo.Verify(x => x.AddAsync(It.IsAny<JobEntity>(), It.IsAny<CancellationToken>()), Times.Once);
+        systemInfoProvider.VerifyAll();
     }
 
     [TestMethod]
@@ -61,7 +78,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -75,9 +92,8 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch => patch.Operations.Any(operation
-                => operation.path == $"/{nameof(JobEntity.CurrentNumberOfTries)}" &&
-                   (int)operation.value == 2)),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldWithValue(nameof(JobEntity.CurrentNumberOfTries), 2)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -91,7 +107,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -105,9 +121,12 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Completed) &&
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.LastProgressDate)}" && (DateTimeOffset)operation.value == now)),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldsWithValues(new()
+                {
+                    {nameof(JobEntity.Status), JobStatus.Completed.ToString() },
+                    {nameof(JobEntity.LastProgressDate), now.SerializeToBsonValue() }
+                })),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -121,7 +140,7 @@ public class JobbaMongoJobStoreTests
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<JsonPatchDocument<JobEntity>>(),
+                It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
@@ -135,9 +154,12 @@ public class JobbaMongoJobStoreTests
 
         repo.Verify(x => x.UpdateAsync(
             It.IsAny<Guid>(),
-            It.Is<JsonPatchDocument<JobEntity>>(patch =>
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.Status)}" && (JobStatus)operation.value == JobStatus.Faulted) &&
-                patch.Operations.Any(operation => operation.path == $"/{nameof(JobEntity.FaultedReason)}" && (string)operation.value == ex.ToString())),
+            It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
+                .ShouldSetFieldsWithValues(new()
+                {
+                    {nameof(JobEntity.Status), JobStatus.Faulted.ToString()},
+                    {nameof(JobEntity.FaultedReason), ex.ToString()}
+                })),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -182,7 +204,7 @@ public class JobbaMongoJobStoreTests
         jobInfoBase.MaxNumberOfTries.Should().Be(jobEntity.MaxNumberOfTries);
     }
 
-    public class Foo
+    public class Foo : IJobParams, IJobState
     {
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Implementations;
+using Jobba.Store.Mongo.Serializers;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -30,20 +31,27 @@ public static class JobbaMongoDbConfigurator
 
             _configured = true;
 
-            BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(BsonType.String));
-            BsonSerializer.RegisterSerializer(typeof(decimal), new DecimalSerializer(BsonType.Decimal128));
-            BsonSerializer.RegisterSerializer(typeof(decimal?), new NullableSerializer<decimal>(new DecimalSerializer(BsonType.Decimal128)));
-            BsonSerializer.RegisterSerializer(typeof(DateTimeOffset), new DateTimeOffsetSerializer(BsonType.String));
+
+            var objectSerializer = new ObjectSerializer(_ => true)
+                .WithDiscriminatorConvention(JobbaDiscriminatorConvention.Instance);
+
+            BsonSerializer.TryRegisterSerializer(objectSerializer);
+            BsonSerializer.TryRegisterSerializer(typeof(Guid), new GuidSerializer(BsonType.String));
+            BsonSerializer.TryRegisterSerializer(typeof(decimal), new DecimalSerializer(BsonType.Decimal128));
+            BsonSerializer.TryRegisterSerializer(typeof(decimal?), new NullableSerializer<decimal>(new DecimalSerializer(BsonType.Decimal128)));
+            BsonSerializer.TryRegisterSerializer(typeof(DateTimeOffset), new DateTimeOffsetSerializer(BsonType.String));
 
             var pack = new ConventionPack
             {
                 new CamelCaseElementNameConvention(),
                 new EnumRepresentationConvention(BsonType.String),
-                new IgnoreExtraElementsConvention(true)
+                new IgnoreExtraElementsConvention(true),
+                new StringObjectIdIdGeneratorConvention()
             };
 
             var mongoEntityType = typeof(IJobbaEntity);
-            const string mongoEntityIdName = "Id";
+            const string mongoEntityIdName = nameof(IJobbaEntity.Id);
+            var guidSerializer = new GuidSerializer(BsonType.String);
 
             pack.AddClassMapConvention("Jobba Mongo ID Guid Generator", map =>
             {
@@ -55,7 +63,7 @@ public static class JobbaMongoDbConfigurator
                     {
                         map.MapIdProperty(mongoEntityIdName)
                             .SetIdGenerator(JobbaMongoIdGenerator.Instance)
-                            .SetSerializer(new GuidSerializer(BsonType.String));
+                            .SetSerializer(guidSerializer);
 
                         map.SetIgnoreExtraElements(true);
                     }

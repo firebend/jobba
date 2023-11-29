@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ public class DefaultJobReScheduler : IJobReScheduler
     public async Task RestartFaultedJobsAsync(CancellationToken cancellationToken)
     {
         var jobs = await _jobListStore.GetJobsToRetry(cancellationToken);
-        var jobsArray = jobs ?? new JobInfoBase[0];
+        var jobsArray = jobs ?? Array.Empty<JobInfoBase>();
 
         var tasks = jobsArray
             .Select(job =>
@@ -36,12 +37,11 @@ public class DefaultJobReScheduler : IJobReScheduler
 
                 return _jobEventPublisher
                     .PublishJobRestartEvent(
-                        new JobRestartEvent
-                        {
-                            JobId = job.Id,
-                            JobParamsTypeName = job.JobParamsTypeName,
-                            JobStateTypeName = job.JobStateTypeName
-                        },
+                        new JobRestartEvent(job.Id,
+                            job.JobParamsTypeName,
+                            job.JobStateTypeName,
+                            job.JobRegistrationId
+                        ),
                         cancellationToken);
             })
             .ToArray();

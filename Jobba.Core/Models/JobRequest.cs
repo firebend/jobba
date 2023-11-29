@@ -1,8 +1,20 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
-public class JobRequest<TJobParams, TJobState>
+/// <summary>
+/// A request to invoked a registered job
+/// </summary>
+/// <typeparam name="TJobParams">
+/// The type of job parameters.
+/// </typeparam>
+/// <typeparam name="TJobState">
+/// The type of job state.
+/// </typeparam>
+public record JobRequest<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     /// <summary>
     ///     A description of what the job is doing.
@@ -49,6 +61,11 @@ public class JobRequest<TJobParams, TJobState>
     /// </summary>
     public int MaxNumberOfTries { get; set; } = 1;
 
+    /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
+
     public static JobRequest<TJobParams, TJobState> FromJobInfo(JobInfo<TJobParams, TJobState> info) => new()
     {
         Description = info.Description,
@@ -59,6 +76,7 @@ public class JobRequest<TJobParams, TJobState>
         InitialJobState = info.CurrentState,
         JobWatchInterval = info.JobWatchInterval,
         NumberOfTries = info.CurrentNumberOfTries + 1,
-        MaxNumberOfTries = info.MaxNumberOfTries
+        MaxNumberOfTries = info.MaxNumberOfTries,
+        JobName = info.JobName
     };
 }

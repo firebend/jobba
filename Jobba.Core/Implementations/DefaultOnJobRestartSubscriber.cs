@@ -33,7 +33,9 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
             return;
         }
 
-        var genericMethod = method.MakeGenericMethod(Type.GetType(jobRestartEvent.JobParamsTypeName), Type.GetType(jobRestartEvent.JobStateTypeName));
+        var genericMethod = method.MakeGenericMethod(
+            Type.GetType(jobRestartEvent.JobParamsTypeName)!,
+            Type.GetType(jobRestartEvent.JobStateTypeName)!);
 
         var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
         {
@@ -48,6 +50,8 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
     }
 
     public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
+        where TParams : IJobParams
+        where TState : IJobState
     {
         var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
 

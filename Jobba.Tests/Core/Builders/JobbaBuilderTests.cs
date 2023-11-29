@@ -1,8 +1,10 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Abstractions;
 using Jobba.Core.Builders;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,24 +21,28 @@ public class JobbaBuilderTests
     {
         //arrange
         var serviceCollection = new ServiceCollection();
-        var builder = new JobbaBuilder(serviceCollection);
+        var builder = new JobbaBuilder(serviceCollection, "fake");
         var mockProgressStore = new Mock<IJobProgressStore>();
         serviceCollection.AddSingleton(mockProgressStore.Object);
 
         //act
-        builder.AddJob<FooJob, FooParams, FooState>();
+        builder.AddJob<FooJob, FooParams, FooState>("fake");
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert
-        serviceCollection.Count.Should().BeGreaterThan(13);
-        provider.GetService<FooJob>().Should().NotBeNull();
+        serviceCollection.Count.Should().Be(16);
+        var registrations = provider.GetServices<JobRegistration>().ToArray();
+        registrations.Length.Should().Be(1);
+        registrations.First().JobType.Should().Be<FooJob>();
+        registrations.First().JobStateType.Should().Be<FooState>();
+        registrations.First().JobParamsType.Should().Be<FooParams>();
     }
 
-    private class FooState
+    private class FooState : IJobState
     {
     }
 
-    private class FooParams
+    private class FooParams : IJobParams
     {
     }
 

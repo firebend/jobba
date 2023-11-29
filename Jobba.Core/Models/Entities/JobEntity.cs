@@ -16,6 +16,11 @@ public class JobEntity : IJobbaEntity
     public string Description { get; set; }
 
     /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
+
+    /// <summary>
     ///     The last progress logged for the job.
     /// </summary>
     public decimal LastProgressPercentage { get; set; }
@@ -52,9 +57,9 @@ public class JobEntity : IJobbaEntity
 
     public TimeSpan JobWatchInterval { get; set; }
 
-    public object JobParameters { get; set; }
+    public IJobParams JobParameters { get; set; }
 
-    public object JobState { get; set; }
+    public IJobState JobState { get; set; }
 
     public string JobStateTypeName { get; set; }
 
@@ -67,45 +72,67 @@ public class JobEntity : IJobbaEntity
     /// </summary>
     public Guid Id { get; set; }
 
-    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest) => new()
-    {
-        Description = jobRequest.Description,
-        Id = jobRequest.JobId,
-        Status = JobStatus.Unknown,
-        EnqueuedTime = DateTimeOffset.UtcNow,
-        FaultedReason = null,
-        JobType = jobRequest.JobType.AssemblyQualifiedName,
-        JobWatchInterval = jobRequest.JobWatchInterval,
-        LastProgressDate = DateTimeOffset.UtcNow,
-        LastProgressPercentage = 0,
-        CurrentNumberOfTries = jobRequest.NumberOfTries,
-        MaxNumberOfTries = jobRequest.MaxNumberOfTries,
-        JobParameters = jobRequest.JobParameters,
-        JobState = jobRequest.InitialJobState,
-        JobParamsTypeName = jobRequest.JobParameters.GetType().AssemblyQualifiedName,
-        JobStateTypeName = jobRequest.InitialJobState.GetType().AssemblyQualifiedName,
-        IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries
-    };
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 
-    public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>() => new()
-    {
-        Description = Description,
-        Id = Id,
-        Status = Status,
-        CurrentState = (TJobState)JobState,
-        EnqueuedTime = EnqueuedTime,
-        FaultedReason = FaultedReason,
-        JobParameters = (TJobParams)JobParameters,
-        JobType = JobType,
-        JobWatchInterval = JobWatchInterval,
-        LastProgressDate = LastProgressDate,
-        LastProgressPercentage = LastProgressPercentage,
-        CurrentNumberOfTries = CurrentNumberOfTries,
-        MaxNumberOfTries = MaxNumberOfTries,
-        JobParamsTypeName = JobParamsTypeName,
-        JobStateTypeName = JobStateTypeName,
-        IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries
-    };
+    /// <summary>
+    /// Information about the system that the job is running on.
+    /// </summary>
+    public JobSystemInfo SystemInfo { get; set; }
+
+    public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
+        Guid jobRegistrationId,
+        JobSystemInfo jobSystemInfo)
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
+        {
+            Description = jobRequest.Description,
+            Id = jobRequest.JobId,
+            Status = JobStatus.Unknown,
+            EnqueuedTime = DateTimeOffset.UtcNow,
+            FaultedReason = null,
+            JobType = jobRequest.JobType.AssemblyQualifiedName,
+            JobWatchInterval = jobRequest.JobWatchInterval,
+            LastProgressDate = DateTimeOffset.UtcNow,
+            LastProgressPercentage = 0,
+            CurrentNumberOfTries = jobRequest.NumberOfTries,
+            MaxNumberOfTries = jobRequest.MaxNumberOfTries,
+            JobParameters = jobRequest.JobParameters,
+            JobState = jobRequest.InitialJobState,
+            JobParamsTypeName = typeof(TJobParams).AssemblyQualifiedName,
+            JobStateTypeName = typeof(TJobState).AssemblyQualifiedName,
+            IsOutOfRetry = jobRequest.MaxNumberOfTries <= jobRequest.NumberOfTries,
+            JobRegistrationId = jobRegistrationId,
+            JobName = jobRequest.JobName,
+            SystemInfo = jobSystemInfo
+        };
+
+    public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>()
+        where TJobParams : IJobParams
+        where TJobState : IJobState => new()
+        {
+            Description = Description,
+            Id = Id,
+            Status = Status,
+            CurrentState = (TJobState)JobState,
+            EnqueuedTime = EnqueuedTime,
+            FaultedReason = FaultedReason,
+            JobParameters = (TJobParams)JobParameters,
+            JobType = JobType,
+            JobWatchInterval = JobWatchInterval,
+            LastProgressDate = LastProgressDate,
+            LastProgressPercentage = LastProgressPercentage,
+            CurrentNumberOfTries = CurrentNumberOfTries,
+            MaxNumberOfTries = MaxNumberOfTries,
+            JobParamsTypeName = JobParamsTypeName,
+            JobStateTypeName = JobStateTypeName,
+            IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
+            JobRegistrationId = JobRegistrationId,
+            JobName = JobName,
+            SystemInfo = SystemInfo
+        };
 
     public JobInfoBase ToJobInfoBase() => new()
     {
@@ -122,6 +149,9 @@ public class JobEntity : IJobbaEntity
         MaxNumberOfTries = MaxNumberOfTries,
         IsOutOfRetry = MaxNumberOfTries <= CurrentNumberOfTries,
         JobParamsTypeName = JobParamsTypeName,
-        JobStateTypeName = JobStateTypeName
+        JobStateTypeName = JobStateTypeName,
+        JobRegistrationId = JobRegistrationId,
+        JobName = JobName,
+        SystemInfo = SystemInfo
     };
 }

@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
+using MongoDB.Driver;
 
 namespace Jobba.Store.Mongo.Interfaces;
 
@@ -15,9 +15,11 @@ public interface IJobbaMongoRepository<TEntity>
 
     Task<TEntity> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
 
-    Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken);
+    Task<TEntity> UpdateAsync(Guid id, UpdateDefinition<TEntity> update, CancellationToken cancellationToken);
 
     Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken);
 
     Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
+
+    Task<TEntity> UpsertAsync(Expression<Func<TEntity, bool>> expression, TEntity entity, CancellationToken cancellationToken);
 }

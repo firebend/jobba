@@ -1,13 +1,22 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
-public class JobInfoBase
+/// <summary>
+/// Base information about a job.
+/// </summary>
+public record JobInfoBase
 {
     /// <summary>
     ///     The job's id
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 
     /// <summary>
     ///     The type of job that was enqueued
@@ -18,6 +27,11 @@ public class JobInfoBase
     ///     The job's description
     /// </summary>
     public string Description { get; set; }
+
+    /// <summary>
+    /// The job's name
+    /// </summary>
+    public string JobName { get; set; }
 
     /// <summary>
     ///     The last progress logged for the job.
@@ -58,4 +72,6 @@ public class JobInfoBase
     public string JobStateTypeName { get; set; }
     public string JobParamsTypeName { get; set; }
     public bool IsOutOfRetry { get; set; }
+
+    public JobSystemInfo SystemInfo { get; set; }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -32,12 +33,12 @@ public static class SampleFaultWebJobFaultContext
     }
 }
 
-public class SampleFaultWebJobState
+public class SampleFaultWebJobState : IJobState
 {
     public int Tries { get; set; }
 }
 
-public class SampleFaultWebJobParameters
+public class SampleFaultWebJobParameters : IJobParams
 {
     public string Greeting { get; set; }
 }

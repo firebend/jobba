@@ -8,10 +8,11 @@ public class JobProgressEvent
     {
     }
 
-    public JobProgressEvent(Guid jobProgressId, Guid jobId)
+    public JobProgressEvent(Guid jobProgressId, Guid jobId, Guid jobRegistrationId)
     {
         JobProgressId = jobProgressId;
         JobId = jobId;
+        JobRegistrationId = jobRegistrationId;
     }
 
     /// <summary>
@@ -23,4 +24,9 @@ public class JobProgressEvent
     ///     The Id of the job reporting progress
     /// </summary>
     public Guid JobId { get; set; }
+
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 }

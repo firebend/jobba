@@ -44,9 +44,10 @@ public class OnJobCancelConsumerTests
             .Returns(Task.CompletedTask);
 
         var jobId = Guid.NewGuid();
+        var jobRegistrationId = Guid.NewGuid();
 
         consumeContextMock.Setup(x => x.Message)
-            .Returns(new CancelJobEvent(jobId));
+            .Returns(new CancelJobEvent(jobId, jobRegistrationId));
 
         var consumer = fixture.Create<OnJobCancelConsumer>();
 

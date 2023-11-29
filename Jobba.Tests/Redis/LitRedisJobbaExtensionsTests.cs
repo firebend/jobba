@@ -17,7 +17,7 @@ public class LitRedisJobbaExtensionsTests
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging();
-        serviceCollection.AddJobba(jobba => jobba.UsingLitRedis("connString"));
+        serviceCollection.AddJobba("fake", jobba => jobba.UsingLitRedis("connString"));
 
         using var provider = serviceCollection.BuildServiceProvider();
 

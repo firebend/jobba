@@ -30,7 +30,9 @@ public class DefaultOnJobCancelSubscriber : IOnJobCancelSubscriber
 
         if (wasCancelled)
         {
-            _jobEventPublisher.PublishJobCancelledEventAsync(new JobCancelledEvent(cancelJobEvent.JobId), cancellationToken);
+            _jobEventPublisher.PublishJobCancelledEventAsync(
+                new JobCancelledEvent(cancelJobEvent.JobId, cancelJobEvent.JobRegistrationId),
+                cancellationToken);
         }
 
         return Task.FromResult(wasCancelled);

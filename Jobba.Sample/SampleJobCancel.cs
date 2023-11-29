@@ -2,14 +2,17 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Sample;
 
-public class SampleJobCancel : AbstractJobBaseClass<object, object>
+public class SampleJobCancel : AbstractJobBaseClass<DefaultJobParams, DefaultJobState>
 {
+    public const string Name = "sample-job-cancel";
+
     private readonly ILogger<SampleJobCancel> _logger;
 
     public SampleJobCancel(IJobProgressStore progressStore, ILogger<SampleJobCancel> logger) : base(progressStore)
@@ -19,9 +22,9 @@ public class SampleJobCancel : AbstractJobBaseClass<object, object>
 
     private Guid MyId { get; } = Guid.NewGuid();
 
-    public override string JobName => "Sample Job Cancel";
+    public override string JobName => Name;
 
-    protected override async Task OnStartAsync(JobStartContext<object, object> jobStartContext, CancellationToken cancellationToken)
+    protected override async Task OnStartAsync(JobStartContext<DefaultJobParams, DefaultJobState> jobStartContext, CancellationToken cancellationToken)
     {
         _logger.LogInformation("I'm running and running {@MyId}", MyId);
 

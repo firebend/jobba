@@ -1,10 +1,11 @@
 using System;
 using Jobba.Core.Builders;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Builders;
+using Jobba.Store.Mongo.Serializers;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 
 namespace Jobba.Store.Mongo.Extensions;
 
@@ -15,9 +16,23 @@ public static class MongoJobbaBuilderExtensions
         bool enableCommandLogging,
         Action<JobbaMongoBuilder> configure = null)
     {
+        RegisterSerializers();
+
+        jobbaBuilder.OnJobAdded += OnJobAdded;
+        var jobbaMongoBuilder = new JobbaMongoBuilder(jobbaBuilder, connectionString, enableCommandLogging);
+        configure?.Invoke(jobbaMongoBuilder);
+        return jobbaBuilder;
+    }
+
+    private static void RegisterSerializers()
+    {
         RegisterBsonTypes(typeof(JobStatus));
 
-        var anySerializer = new ObjectSerializer(_ => true);
+        var typeSerializer = new TypeSerializer();
+
+        BsonClassMap.TryRegisterClassMap<DefaultJobState>(cm => cm.AutoMap());
+
+        BsonClassMap.TryRegisterClassMap<DefaultJobParams>(cm => cm.AutoMap());
 
         BsonClassMap.RegisterClassMap<JobInfoBase>(map =>
         {
@@ -28,21 +43,22 @@ public static class MongoJobbaBuilderExtensions
         BsonClassMap.RegisterClassMap<JobProgressEntity>(map =>
         {
             map.AutoMap();
-            map.MapProperty(x => x.JobState).SetSerializer(anySerializer);
+            map.MapProperty(x => x.JobState);
         });
 
         BsonClassMap.RegisterClassMap<JobEntity>(map =>
         {
             map.AutoMap();
-            map.MapProperty(x => x.JobState).SetSerializer(anySerializer);
-            map.MapProperty(x => x.JobParameters).SetSerializer(anySerializer);
             map.MapProperty(x => x.Status);
         });
 
-        jobbaBuilder.OnJobAdded += OnJobAdded;
-        var jobbaMongoBuilder = new JobbaMongoBuilder(jobbaBuilder, connectionString, enableCommandLogging);
-        configure?.Invoke(jobbaMongoBuilder);
-        return jobbaBuilder;
+        BsonClassMap.RegisterClassMap<JobRegistration>(map =>
+        {
+            map.AutoMap();
+            map.MapProperty(x => x.JobType).SetSerializer(typeSerializer);
+            map.MapProperty(x => x.JobStateType).SetSerializer(typeSerializer);
+            map.MapProperty(x => x.JobParamsType).SetSerializer(typeSerializer);
+        });
     }
 
     private static void OnJobAdded(JobAddedEventArgs obj)

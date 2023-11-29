@@ -56,7 +56,7 @@ namespace Jobba.Sample
         public string Greeting { get; set; }
     }
 
-    public class SampleJob : AbstractJobBaseClass<SampleJobParameters, SampleJobState> // or use `AbstractJobBaseClass<object, object>` to not use state or parameters
+    public class SampleJob : AbstractJobBaseClass<SampleJobParameters, SampleJobState> // or use `AbstractJobBaseClass<DefaultJobParams, DefaultJobState>` to not use state or parameters
     {
         private readonly ILogger<SampleJob> _logger;
 

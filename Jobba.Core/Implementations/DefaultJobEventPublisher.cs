@@ -142,7 +142,7 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
         Func<TSubscriber, TEvent, CancellationToken, Task> func,
         CancellationToken cancellationToken)
     {
-        var _ = Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             var tasks = subscribers.Select(x => func(x, @event, cancellationToken));
             await Task.WhenAll(tasks);

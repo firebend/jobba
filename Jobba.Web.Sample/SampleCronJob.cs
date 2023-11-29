@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Abstractions;
@@ -10,21 +11,21 @@ using MongoDB.Bson.IO;
 
 namespace Jobba.Web.Sample;
 
-public class CronState
+public class CronState : IJobState
 {
     public string Phrase { get; set; }
 }
 
-public class CronParameters
+public class CronParameters : IJobParams
 {
     public DateTimeOffset StartDate { get; set; }
 }
 
-public class SampleCronJobWithParametersAndState : AbstractCronJobBaseClass<CronParameters, CronState>
+public class SampleCronJob : AbstractCronJobBaseClass<CronParameters, CronState>
 {
-    private readonly ILogger<SampleCronJobWithParametersAndState> _logger;
+    private readonly ILogger<SampleCronJob> _logger;
 
-    public SampleCronJobWithParametersAndState(IJobProgressStore progressStore, ILogger<SampleCronJobWithParametersAndState> logger) : base(progressStore)
+    public SampleCronJob(IJobProgressStore progressStore, ILogger<SampleCronJob> logger) : base(progressStore)
     {
         _logger = logger;
     }

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
 using Jobba.Store.Mongo.Abstractions;
 using Jobba.Store.Mongo.Interfaces;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -26,6 +25,14 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         _guidGenerator = guidGenerator;
     }
 
+    private async Task AssignGuidAsync(TEntity entity, CancellationToken cancellationToken)
+    {
+        if (entity.Id == Guid.Empty)
+        {
+            entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+        }
+    }
+
     public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
     {
         var asyncCursor = await FilterCollection(filter, cancellationToken);
@@ -40,34 +47,17 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         return entity;
     }
 
-    public async Task<TEntity> UpdateAsync(Guid id, JsonPatchDocument<TEntity> patch, CancellationToken cancellationToken)
-    {
-        var entity = await GetFirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        if (entity == null)
-        {
-            return null;
-        }
-
-        patch.ApplyTo(entity);
-
-        var options = new FindOneAndReplaceOptions<TEntity>
-        {
-            ReturnDocument = ReturnDocument.After,
-            IsUpsert = true
-        };
-        var filterDef = Builders<TEntity>.Filter.Where(x => x.Id == id);
-
-        var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));
-        return result;
-    }
+    public Task<TEntity> UpdateAsync(Guid id, UpdateDefinition<TEntity> update, CancellationToken cancellationToken)
+        => RetryErrorAsync(() => GetCollection()
+            .FindOneAndUpdateAsync(
+                x => x.Id == id,
+                update,
+                new() { ReturnDocument = ReturnDocument.After },
+                cancellationToken));
 
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
-        if (entity.Id == Guid.Empty)
-        {
-            entity.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-        }
+        await AssignGuidAsync(entity, cancellationToken);
 
         await RetryErrorAsync(() => GetCollection().InsertOneAsync(entity, new InsertOneOptions(), cancellationToken));
 
@@ -84,6 +74,20 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         }
 
         return found;
+    }
+
+    public async Task<TEntity> UpsertAsync(Expression<Func<TEntity, bool>> expression, TEntity entity, CancellationToken cancellationToken)
+    {
+        var options = new FindOneAndReplaceOptions<TEntity>
+        {
+            ReturnDocument = ReturnDocument.After,
+            IsUpsert = true,
+        };
+
+        var filterDef = Builders<TEntity>.Filter.Where(expression);
+
+        var result = await RetryErrorAsync(() => GetCollection().FindOneAndReplaceAsync(filterDef, entity, options, cancellationToken));
+        return result;
     }
 
     protected Task<IAsyncCursor<TEntity>> FilterCollection(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken) =>

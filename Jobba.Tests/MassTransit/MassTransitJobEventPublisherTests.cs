@@ -24,35 +24,35 @@ public class MassTransitJobEventPublisherTests
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Progress_Messages()
     {
-        var message = new JobProgressEvent(Guid.NewGuid(), Guid.NewGuid());
+        var message = new JobProgressEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         await PublishEventHelper<JobProgressEvent>(publisher => publisher.PublishJobProgressEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Started_Messages()
     {
-        var message = new JobStartedEvent(Guid.NewGuid());
+        var message = new JobStartedEvent(Guid.NewGuid(), Guid.NewGuid());
         await PublishEventHelper<JobStartedEvent>(publisher => publisher.PublishJobStartedEvent(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Cancelled_Messages()
     {
-        var message = new JobCancelledEvent(Guid.NewGuid());
+        var message = new JobCancelledEvent(Guid.NewGuid(), Guid.NewGuid());
         await PublishEventHelper<JobCancelledEvent>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Completed_Messages()
     {
-        var message = new JobCompletedEvent(Guid.NewGuid());
+        var message = new JobCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
         await PublishEventHelper<JobCompletedEvent>(publisher => publisher.PublishJobCompletedEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Faulted_Messages()
     {
-        var message = new JobFaultedEvent(Guid.NewGuid());
+        var message = new JobFaultedEvent(Guid.NewGuid(), Guid.NewGuid());
         await PublishEventHelper<JobFaultedEvent>(publisher => publisher.PublishJobFaultedEventAsync(message, default));
     }
 
@@ -77,7 +77,7 @@ public class MassTransitJobEventPublisherTests
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging();
         serviceCollection.AddMassTransitTestHarness(cfg => cfg.AddDelayedMessageScheduler());
-        var builder = new JobbaBuilder(serviceCollection);
+        var builder = new JobbaBuilder(serviceCollection, "fake");
         builder.UsingMassTransit().UsingInMemory();
         var serviceProvider = serviceCollection.BuildServiceProvider();
 

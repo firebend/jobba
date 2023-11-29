@@ -1,11 +1,13 @@
+using Jobba.Core.Interfaces;
+
 namespace Jobba.IntegrationTests.Models;
 
-public class SampleWebJobState
+public class SampleWebJobState : IJobState
 {
     public int Tries { get; set; }
 }
 
-public class SampleWebJobParameters
+public class SampleWebJobParameters : IJobParams
 {
     public string Greeting { get; set; }
 }

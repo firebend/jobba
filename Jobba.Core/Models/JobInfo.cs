@@ -1,6 +1,19 @@
+using Jobba.Core.Interfaces;
+
 namespace Jobba.Core.Models;
 
-public class JobInfo<TJobParams, TJobState> : JobInfoBase
+/// <summary>
+/// Information about a job, its parameters, and its state.
+/// </summary>
+/// <typeparam name="TJobParams">
+/// The type of job parameters.
+/// </typeparam>
+/// <typeparam name="TJobState">
+/// The type of job state.
+/// </typeparam>
+public record JobInfo<TJobParams, TJobState> : JobInfoBase
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     /// <summary>
     ///     The parameters that were passed to the job.

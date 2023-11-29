@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using AutoFixture;
+using Jobba.Core.Interfaces;
+using Jobba.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
@@ -13,9 +15,31 @@ public class ServiceProviderCustomization : ICustomization
     public ServiceProviderCustomization(IDictionary<Type, object> resolves)
     {
         _resolves = resolves;
+
+        AddJobRegistrationIfNecessary();
     }
 
-    public void Customize(IFixture fixture)
+    private void AddJobRegistrationIfNecessary()
+    {
+        if (_resolves.ContainsKey(typeof(IEnumerable<JobRegistration>)) is false)
+        {
+            _resolves.Add(typeof(IEnumerable<JobRegistration>), new[]
+            {
+                new JobRegistration
+                {
+                    Id = Guid.NewGuid(),
+                    JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                    JobParamsType = typeof(DefaultJobParams),
+                    JobStateType = typeof(DefaultJobState),
+                    JobName = "fake job"
+                }
+            });
+        }
+    }
+
+    public void Customize(IFixture fixture) => MockServiceProvider(fixture);
+
+    private void MockServiceProvider(IFixture fixture)
     {
         var serviceProvider = fixture.Freeze<Mock<IServiceProvider>>();
         var serviceScope = fixture.Freeze<Mock<IServiceScope>>();

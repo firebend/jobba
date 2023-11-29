@@ -31,7 +31,8 @@ public class SampleFaultJobController : ControllerBase
             JobType = typeof(SampleFaultWebJob),
             InitialJobState = new SampleFaultWebJobState { Tries = 1 },
             JobWatchInterval = TimeSpan.FromSeconds(10),
-            MaxNumberOfTries = 5
+            MaxNumberOfTries = 5,
+            JobName = "sample-faulted-job"
         };
 
         var job = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);

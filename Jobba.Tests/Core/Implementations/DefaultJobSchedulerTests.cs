@@ -24,22 +24,32 @@ public class DefaultJobSchedulerTests
     {
         //arrange
         var fixture = new Fixture();
+
+        var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
+        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         fixture.Customize(new AutoMoqCustomization());
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<DefaultJobParams, DefaultJobState>), job.Object } }));
 
         var jobId = Guid.NewGuid();
 
-        var job = fixture.Freeze<Mock<IJob<object, object>>>();
-        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobRegistration
+            {
+                Id = Guid.NewGuid(),
+                JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                JobParamsType = typeof(object),
+                JobStateType = typeof(object)
+            });
 
         fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
-        var request = fixture.Create<JobRequest<object, object>>();
+        var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
         request.JobId = Guid.Empty;
         request.IsRestart = false;
-        request.JobType = typeof(IJob<object, object>);
+        request.JobType = typeof(IJob<DefaultJobParams, DefaultJobState>);
 
         var guidGenerator = fixture.Freeze<Mock<IJobbaGuidGenerator>>();
         guidGenerator.Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
@@ -47,7 +57,7 @@ public class DefaultJobSchedulerTests
 
         var store = fixture.Freeze<Mock<IJobStore>>();
         store.Setup(x => x.AddJobAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<object, object> { Id = jobId });
+            .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState> { Id = jobId });
 
         store.Setup(x => x.SetJobStatusAsync(It.IsAny<Guid>(), It.IsAny<JobStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -65,16 +75,14 @@ public class DefaultJobSchedulerTests
         //act
         var scheduler = fixture.Create<DefaultJobScheduler>();
         var jobInfo = await scheduler.ScheduleJobAsync(request, default);
+        await Task.Delay(TimeSpan.FromSeconds(5));
 
         //assert
-
-        //adding a delay because this test keeps failing on the CI server but always passes locally. :shrug:
-        await Task.Delay(TimeSpan.FromSeconds(5));
         jobInfo.Should().NotBeNull();
         publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
         publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
-        store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-        job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
+        store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()), Times.Once);
+        job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -88,24 +96,34 @@ public class DefaultJobSchedulerTests
         var jobId = Guid.NewGuid();
         fixture.Customize(new AutoMoqCustomization());
 
-        var job = fixture.Freeze<Mock<IJob<object, object>>>();
-        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
+        var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
+        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobRegistration
+            {
+                Id = Guid.NewGuid(),
+                JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                JobParamsType = typeof(object),
+                JobStateType = typeof(object)
+            });
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<DefaultJobParams, DefaultJobState>), job.Object } }));
 
         fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
-        var request = fixture.Create<JobRequest<object, object>>();
+        var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
         request.JobId = jobId;
         request.IsRestart = true;
-        request.JobType = typeof(IJob<object, object>);
+        request.JobType = typeof(IJob<DefaultJobParams, DefaultJobState>);
         request.NumberOfTries = 2;
         request.JobWatchInterval = TimeSpan.FromMinutes(1);
 
         var store = fixture.Freeze<Mock<IJobStore>>();
-        store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<object, object>
+        store.Setup(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(jobId, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState>
             {
                 Id = jobId,
                 CurrentNumberOfTries = 2,
@@ -128,8 +146,6 @@ public class DefaultJobSchedulerTests
 
         //assert
 
-        //adding a delay because this test keeps failing on the CI server but always passes locally. :shrug:
-        await Task.Delay(TimeSpan.FromSeconds(5));
         jobInfo.Should().NotBeNull();
         publisher.Verify(x => x.PublishJobStartedEvent(
             It.Is<JobStartedEvent>(@event => @event.JobId == jobId),
@@ -144,13 +160,13 @@ public class DefaultJobSchedulerTests
             It.Is<JobCompletedEvent>(jobCompletedEvent => jobCompletedEvent.JobId == jobId),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        store.Verify(x => x.SetJobAttempts<object, object>(
+        store.Verify(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(
             jobId,
             2,
             It.IsAny<CancellationToken>()), Times.Once);
 
         job.Verify(x => x.StartAsync(
-                It.IsAny<JobStartContext<object, object>>(),
+                It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
@@ -178,23 +194,33 @@ public class DefaultJobSchedulerTests
         var jobId = Guid.NewGuid();
         fixture.Customize(new AutoMoqCustomization());
 
-        var job = fixture.Freeze<Mock<IJob<object, object>>>();
-        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
-            .Returns((JobStartContext<object, object> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
+        var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
+        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
+            .Returns((JobStartContext<DefaultJobParams, DefaultJobState> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobRegistration
+            {
+                Id = Guid.NewGuid(),
+                JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                JobParamsType = typeof(object),
+                JobStateType = typeof(object)
+            });
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<DefaultJobParams, DefaultJobState>), job.Object } }));
 
         fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
-        var request = fixture.Create<JobRequest<object, object>>();
+        var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
         request.JobId = jobId;
         request.IsRestart = true;
-        request.JobType = typeof(IJob<object, object>);
+        request.JobType = typeof(IJob<DefaultJobParams, DefaultJobState>);
         request.NumberOfTries = 2;
 
         var store = fixture.Freeze<Mock<IJobStore>>();
-        store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<object, object>
+        store.Setup(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(jobId, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState>
             {
                 Id = jobId,
                 CurrentNumberOfTries = 2,
@@ -233,13 +259,13 @@ public class DefaultJobSchedulerTests
             It.IsAny<TimeSpan>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        store.Verify(x => x.SetJobAttempts<object, object>(
+        store.Verify(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(
             jobId,
             2,
             It.IsAny<CancellationToken>()), Times.Once);
 
         job.Verify(x => x.StartAsync(
-            It.IsAny<JobStartContext<object, object>>(),
+            It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         store.Verify(x => x.SetJobStatusAsync(jobId,
@@ -268,24 +294,33 @@ public class DefaultJobSchedulerTests
 
         var jobCancellationStore = new DefaultJobCancellationTokenStore();
 
-        var job = fixture.Freeze<Mock<IJob<object, object>>>();
-        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
-            .Returns((JobStartContext<object, object> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
+        var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
+        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
+            .Returns((JobStartContext<DefaultJobParams, DefaultJobState> _, CancellationToken cancellationToken) => Task.Delay(TimeSpan.FromMinutes(5), cancellationToken));
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobRegistration
+            {
+                Id = Guid.NewGuid(),
+                JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+                JobParamsType = typeof(object),
+                JobStateType = typeof(object)
+            });
 
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<DefaultJobParams, DefaultJobState>), job.Object } }));
 
         fixture.Register<IJobCancellationTokenStore>(() => jobCancellationStore);
 
-        var request = fixture.Create<JobRequest<object, object>>();
+        var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
         request.JobId = jobId;
         request.IsRestart = true;
-        request.JobType = typeof(IJob<object, object>);
+        request.JobType = typeof(IJob<DefaultJobParams, DefaultJobState>);
         request.NumberOfTries = 2;
 
         var store = fixture.Freeze<Mock<IJobStore>>();
-        store.Setup(x => x.SetJobAttempts<object, object>(jobId, 2, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<object, object>
+        store.Setup(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(jobId, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState>
             {
                 Id = jobId,
                 CurrentNumberOfTries = 2,
@@ -324,13 +359,13 @@ public class DefaultJobSchedulerTests
             It.IsAny<TimeSpan>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        store.Verify(x => x.SetJobAttempts<object, object>(
+        store.Verify(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(
             jobId,
             2,
             It.IsAny<CancellationToken>()), Times.Once);
 
         job.Verify(x => x.StartAsync(
-            It.IsAny<JobStartContext<object, object>>(),
+            It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         store.Verify(x => x.SetJobStatusAsync(jobId,
@@ -358,18 +393,37 @@ public class DefaultJobSchedulerTests
 
         var jobId = Guid.NewGuid();
 
-        var job = fixture.Freeze<Mock<IJob<object, object>>>();
-        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()))
+        var jobRegistration = new JobRegistration
+        {
+            Id = Guid.NewGuid(),
+            JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
+            JobParamsType = typeof(object),
+            JobStateType = typeof(object)
+        };
+
+        var job = fixture.Freeze<Mock<IJob<DefaultJobParams, DefaultJobState>>>();
+        job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IJob<object, object>), job.Object } }));
+        var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
+        registrationStore.Setup(x => x.GetJobRegistrationAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(jobRegistration);
+
+        registrationStore.Setup(x => x.GetByJobNameAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(jobRegistration);
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IJob<DefaultJobParams, DefaultJobState>), job.Object }
+        }));
 
         fixture.Register<IJobCancellationTokenStore>(() => new DefaultJobCancellationTokenStore());
 
-        var request = fixture.Create<JobRequest<object, object>>();
+        var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
         request.JobId = Guid.Empty;
         request.IsRestart = false;
-        request.JobType = typeof(IJob<object, object>);
+        request.JobType = typeof(IJob<DefaultJobParams, DefaultJobState>);
 
         var guidGenerator = fixture.Freeze<Mock<IJobbaGuidGenerator>>();
         guidGenerator.Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
@@ -377,7 +431,7 @@ public class DefaultJobSchedulerTests
 
         var store = fixture.Freeze<Mock<IJobStore>>();
         store.Setup(x => x.AddJobAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<object, object> { Id = jobId });
+            .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState> { Id = jobId });
 
         store.Setup(x => x.SetJobStatusAsync(It.IsAny<Guid>(), It.IsAny<JobStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -395,13 +449,14 @@ public class DefaultJobSchedulerTests
         //act
         var scheduler = fixture.Create<DefaultJobScheduler>();
         var jobInfo = await scheduler.ScheduleJobAsync(request, default);
+        await Task.Delay(TimeSpan.FromSeconds(2));
 
         //assert
         jobInfo.Should().NotBeNull();
         publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
         publisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
-        store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
-        job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<object, object>>(), It.IsAny<CancellationToken>()), Times.Once);
+        store.Verify(x => x.AddJobAsync(It.IsAny<JobRequest<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()), Times.Once);
+        job.Verify(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.InProgress, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(x => x.SetJobStatusAsync(jobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);

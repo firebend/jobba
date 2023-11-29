@@ -1,8 +1,16 @@
 using System;
+using Jobba.Core.Interfaces;
 
 namespace Jobba.Core.Models;
 
-public class JobProgress<TJobState>
+/// <summary>
+/// Information about a job's progress
+/// </summary>
+/// <typeparam name="TJobState">
+/// The type of job state.
+/// </typeparam>
+public record JobProgress<TJobState>
+    where TJobState : IJobState
 {
     /// <summary>
     ///     The job's id.
@@ -28,4 +36,9 @@ public class JobProgress<TJobState>
     ///     The percentage complete
     /// </summary>
     public decimal Progress { get; set; }
+
+    /// <summary>
+    /// The job's registration id
+    /// </summary>
+    public Guid JobRegistrationId { get; set; }
 }

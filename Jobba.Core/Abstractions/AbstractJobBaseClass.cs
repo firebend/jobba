@@ -8,6 +8,8 @@ using Jobba.Core.Models;
 namespace Jobba.Core.Abstractions;
 
 public abstract class AbstractJobBaseClass<TJobParams, TJobState> : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     private readonly IJobProgressStore _progressStore;
 

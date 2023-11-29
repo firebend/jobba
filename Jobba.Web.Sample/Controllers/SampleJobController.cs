@@ -31,7 +31,8 @@ public class SampleJobController : ControllerBase
             JobType = typeof(SampleWebJob),
             InitialJobState = new SampleWebJobState { Tries = 1 },
             JobWatchInterval = TimeSpan.FromSeconds(10),
-            MaxNumberOfTries = 100
+            MaxNumberOfTries = 100,
+            JobName = "sample-job"
         };
 
         var job = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);

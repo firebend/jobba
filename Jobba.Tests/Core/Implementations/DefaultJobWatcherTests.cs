@@ -156,12 +156,12 @@ public class DefaultJobWatcherTests
             Times.Once);
     }
 
-    public class FooParams
+    public class FooParams : IJobParams
     {
         public string Foo { get; set; }
     }
 
-    public class FooState
+    public class FooState : IJobState
     {
         public string Foo { get; set; }
     }

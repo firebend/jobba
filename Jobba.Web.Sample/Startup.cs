@@ -40,22 +40,25 @@ public class Startup
         }));
         services
             .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
-            .AddJobba(jobba =>
+            .AddJobba("jobba-web-sample", jobba =>
                 jobba.UsingMassTransit()
                     .UsingMongo("mongodb://localhost:27017/jobba-web-sample", false)
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
-                    .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>()
-                    .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>()
-                    ///schedule a sample job running every 1 minute with default job parameters and state
-                    .AddCronJob<SampleCronJobWithParametersAndState, CronParameters, CronState>("* * * * *",
-                        "Sample Cron Job",
-                        "A Cron Job",
-                        null,
-                        p =>
+                    .UsingCron(cron =>
                     {
-                        p.JobParams = new() { StartDate = DateTimeOffset.UtcNow };
-                        p.JobState = new CronState() { Phrase = $"Hi {Guid.NewGuid()}" };
+                        ///schedule a sample job running every 1 minute with default job parameters and state
+                        cron.AddCronJob<SampleCronJob, CronParameters, CronState>("* * * * *",
+                            "Sample Cron Job",
+                            "A Cron Job",
+                            p =>
+                            {
+                                p.DefaultParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
+                                p.DefaultState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
+                            });
                     })
+                    .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>("sample-job")
+                    .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>("sample-faulted-job")
+
             )
             .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");
     }

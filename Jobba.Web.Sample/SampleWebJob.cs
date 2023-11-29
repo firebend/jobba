@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Abstractions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -8,12 +9,12 @@ using static System.Threading.Tasks.Task;
 
 namespace Jobba.Web.Sample;
 
-public class SampleWebJobState
+public class SampleWebJobState : IJobState
 {
     public int Tries { get; set; }
 }
 
-public class SampleWebJobParameters
+public class SampleWebJobParameters : IJobParams
 {
     public string Greeting { get; set; }
 }

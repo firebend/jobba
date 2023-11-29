@@ -1,6 +1,7 @@
 using Jobba.Core.Builders;
 using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces.Repositories;
+using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
 using Jobba.Store.Mongo.Interfaces;
@@ -18,7 +19,20 @@ public class JobbaMongoBuilder
         bool enableCommandLogging)
     {
         Builder = jobbaBuilder;
+        MongoUrl = new MongoUrl(connectionString);
 
+        RegisterJobbaRequiredStores(jobbaBuilder);
+        RegisterMongoRequiredServices(jobbaBuilder, connectionString, enableCommandLogging);
+
+        WithJobCollection("Jobs");
+        WithJobProgressCollection("JobProgress");
+        WithJobRegistrationCollection("JobRegistrations");
+    }
+
+    private static void RegisterMongoRequiredServices(JobbaBuilder jobbaBuilder,
+            string connectionString,
+            bool enableCommandLogging)
+    {
         jobbaBuilder.Services.TryAddScoped<IJobbaMongoClientFactory, JobbaMongoClientFactory>();
 
         jobbaBuilder.Services.AddSingleton(provider =>
@@ -29,18 +43,20 @@ public class JobbaMongoBuilder
             return client;
         });
 
-        MongoUrl = new MongoUrl(connectionString);
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobEntity>, JobbaMongoRepository<JobEntity>>();
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobProgressEntity>, JobbaMongoRepository<JobProgressEntity>>();
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobRegistration>, JobbaMongoRepository<JobRegistration>>();
 
+        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRetryService, JobbaMongoRetryService>();
+    }
+
+    private static void RegisterJobbaRequiredStores(JobbaBuilder jobbaBuilder)
+    {
         jobbaBuilder.Services.TryAddScoped<IJobListStore, JobbaMongoJobListStore>();
         jobbaBuilder.Services.TryAddScoped<IJobProgressStore, JobbaMongoJobProgressStore>();
         jobbaBuilder.Services.TryAddScoped<IJobStore, JobbaMongoJobStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobEntity>, JobbaMongoRepository<JobEntity>>();
-        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRepository<JobProgressEntity>, JobbaMongoRepository<JobProgressEntity>>();
-        jobbaBuilder.Services.TryAddScoped<IJobbaMongoRetryService, JobbaMongoRetryService>();
         jobbaBuilder.Services.TryAddScoped<IJobCleanUpStore, JobbaMongoCleanUpStore>();
-
-        WithJobCollection("Jobs");
-        WithJobProgressCollection("JobProgress");
+        jobbaBuilder.Services.TryAddScoped<IJobRegistrationStore, JobbaMongoJobRegistrationStore>();
     }
 
     public JobbaBuilder Builder { get; }
@@ -89,6 +105,24 @@ public class JobbaMongoBuilder
         where TProvider : IJobbaEntityConfigurationProvider<JobProgressEntity>
     {
         RegisterEntityConfiguration<JobProgressEntity, TProvider>();
+        return this;
+    }
+
+    public JobbaMongoBuilder WithJobRegistrationCollection(string name, string database = null)
+    {
+        var configuration = new JobbaEntityConfiguration
+        {
+            Collection = name,
+            Database = GetDatabaseName(database)
+        };
+        RegisterEntityConfiguration<JobRegistration>(configuration);
+        return this;
+    }
+
+    public JobbaMongoBuilder WithJobRegistration<TProvider>()
+        where TProvider : IJobbaEntityConfigurationProvider<JobRegistration>
+    {
+        RegisterEntityConfiguration<JobRegistration, TProvider>();
         return this;
     }
 }

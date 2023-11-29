@@ -22,12 +22,17 @@ public class DefaultOnJobWatchSubscriberTests
         //arrange
         var fixture = new Fixture();
         var jobId = Guid.NewGuid();
-        var watchEvent = new JobWatchEvent(jobId, typeof(Foo).AssemblyQualifiedName, typeof(Foo).AssemblyQualifiedName);
+        var jobRegistrationId = Guid.NewGuid();
+
+        var watchEvent = new JobWatchEvent(
+            jobId,
+            typeof(Foo).AssemblyQualifiedName,
+            typeof(Foo).AssemblyQualifiedName,
+            jobRegistrationId);
 
         var watcher = fixture.Freeze<Mock<IJobWatcher<Foo, Foo>>>();
         watcher.Setup(x => x.WatchJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
 
         fixture.Customize(new AutoMoqCustomization());
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
@@ -46,7 +51,7 @@ public class DefaultOnJobWatchSubscriberTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    public class Foo
+    public class Foo : IJobParams, IJobState
     {
     }
 }
