@@ -82,7 +82,8 @@ public class JobRegistration : IJobbaEntity
         string description = default,
         string cron = default,
         TJobParams defaultJobParams = default,
-        TJobState defaultJobState = default)
+        TJobState defaultJobState = default,
+        bool isInactive = false)
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
@@ -94,6 +95,7 @@ public class JobRegistration : IJobbaEntity
             CronExpression = cron,
             Description = description,
             DefaultParams = defaultJobParams,
-            DefaultState = defaultJobState
+            DefaultState = defaultJobState,
+            IsInactive = isInactive
         };
 }

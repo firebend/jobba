@@ -11,7 +11,8 @@ public record JobOrchestrationRequest<TJob, TParams, TState>(string JobName,
     string Description,
     string Cron = default,
     TParams DefaultJobParams = default,
-    TState DefaultJobState = default)
+    TState DefaultJobState = default,
+    bool IsInactive = false)
     where TParams : IJobParams
     where TState : IJobState
     where TJob : IJob<TParams, TState>;
