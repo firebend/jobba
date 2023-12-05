@@ -32,6 +32,6 @@ public class DefaultJobLockService : IJobLockService
     {
         var result = await AsyncKeyedSystemLocker.LockAsync(systemMoniker, span, cancellationToken);
 
-        return new(result.EnteredSemaphore is false, result);
+        return new(result.EnteredSemaphore, result);
     }
 }

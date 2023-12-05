@@ -58,7 +58,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
     public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
         => Task.FromResult(
             DefaultJobRegistrationStoreCache.Registrations
-                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression))
+                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression) is false)
                 .Where(x => x.Value.IsInactive is false)
                 .Select(x => x.Value)
                 .ToArray()
