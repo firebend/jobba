@@ -40,13 +40,36 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
-        if (registration.Id == Guid.Empty)
+        var existing = DefaultJobRegistrationStoreCache.Registrations
+            .FirstOrDefault(x => x.Value.JobName == registration.JobName)
+            .Value;
+
+        if (existing is not null)
         {
-            var registrationId = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-            registration.Id = registrationId;
+            if (registration.CronExpression is not null)
+            {
+                if (registration.CronExpression == existing.CronExpression)
+                {
+                    registration.NextExecutionDate = existing.NextExecutionDate;
+                    registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+                }
+                else
+                {
+                    registration.NextExecutionDate = null;
+                    registration.PreviousExecutionDate = null;
+                }
+            }
+        }
+        else
+        {
+            if (registration.Id == Guid.Empty)
+            {
+                registration.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+            }
         }
 
-        DefaultJobRegistrationStoreCache.Registrations.AddOrUpdate(registration.Id, registration, (_, _) => registration);
+        DefaultJobRegistrationStoreCache.Registrations[registration.Id] = registration;
+
         return registration;
     }
 

@@ -8,6 +8,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Abstractions;
 using Jobba.Cron.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -49,13 +50,7 @@ public class CronSchedulerTests
     [TestMethod]
     public async Task Cron_Scheduler_Should_Schedule_New_Job()
     {
-        var builder = Host.CreateDefaultBuilder();
-        builder.ConfigureServices(services => services.AddJobba("test", j =>
-        {
-            j.UsingInMemory()
-                .UsingCron(cron =>
-                    cron.AddCronJob<CronSchedulerTestsJob, DefaultJobParams, DefaultJobState>("* * * * *", CronSchedulerTestsJob.Name));
-        }));
+        var builder = CreateHostBuilder();
 
         var host = builder.Build();
         await host.StartAsync();
@@ -71,5 +66,56 @@ public class CronSchedulerTests
                 Assert.Fail("Job did not run.");
             }
         }
+    }
+
+    [TestMethod]
+    public async Task Cron_Scheduler_Should_Handle_Cron_Change()
+    {
+        var builder = CreateHostBuilder();
+
+        var host = builder.Build();
+        await host.StartAsync();
+
+        var start = Stopwatch.GetTimestamp();
+
+        while(CronSchedulerTestsJob.HasRan is false)
+        {
+            await Task.Delay(100);
+
+            if(Stopwatch.GetElapsedTime(start).TotalMinutes > 5)
+            {
+                Assert.Fail("Job did not run");
+            }
+        }
+
+        var store = host.Services.GetService<IJobRegistrationStore>();
+        var job = await store.GetByJobNameAsync(CronSchedulerTestsJob.Name, default);
+
+        const string everySecondMinute = "*/2 * * * *";
+        job.CronExpression = everySecondMinute;
+
+        await store.RegisterJobAsync(job, default);
+
+        while(CronSchedulerTestsJob.RunCounter < 2)
+        {
+            await Task.Delay(100);
+
+            if(Stopwatch.GetElapsedTime(start).TotalMinutes > 2)
+            {
+                Assert.Fail("Job did not run again");
+            }
+        }
+    }
+
+    private static IHostBuilder CreateHostBuilder()
+    {
+        var builder = Host.CreateDefaultBuilder();
+        builder.ConfigureServices(services => services.AddJobba("test", j =>
+        {
+            j.UsingInMemory()
+                .UsingCron(cron =>
+                    cron.AddCronJob<CronSchedulerTestsJob, DefaultJobParams, DefaultJobState>("* * * * *", CronSchedulerTestsJob.Name));
+        }));
+        return builder;
     }
 }
