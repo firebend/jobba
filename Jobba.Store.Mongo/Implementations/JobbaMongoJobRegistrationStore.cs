@@ -43,8 +43,16 @@ public class JobbaMongoJobRegistrationStore : IJobRegistrationStore
 
             if (registration.CronExpression is not null)
             {
-                registration.NextExecutionDate = existing.NextExecutionDate;
-                registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+                if (registration.CronExpression == existing.CronExpression)
+                {
+                    registration.NextExecutionDate = existing.NextExecutionDate;
+                    registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+                }
+                else
+                {
+                    registration.NextExecutionDate = null;
+                    registration.PreviousExecutionDate = null;
+                }
             }
         }
         else
