@@ -27,4 +27,6 @@ public interface IJobOrchestrationService
         where TJob : IJob<TParams, TState>;
 
     Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken);
+
+    Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken);
 }

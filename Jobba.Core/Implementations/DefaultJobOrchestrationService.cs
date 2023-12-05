@@ -17,6 +17,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
         _jobRegistrationStore = jobRegistrationStore;
         _jobScheduler = jobScheduler;
     }
+
     public async Task<JobOrchestrationResult> OrchestrateJobAsync<TJob, TParams, TState>(JobOrchestrationRequest<TJob, TParams, TState> request,
         CancellationToken cancellationToken)
         where TJob : IJob<TParams, TState>
@@ -65,4 +66,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
 
     public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken)
         => _jobRegistrationStore.RemoveByIdAsync(jobRegistrationId, cancellationToken);
+
+    public Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken)
+        => _jobRegistrationStore.SetIsInactiveAsync(jobRegistrationId, isInactive, cancellationToken);
 }
