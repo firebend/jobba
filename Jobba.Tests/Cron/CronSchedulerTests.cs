@@ -18,9 +18,6 @@ namespace Jobba.Tests.Cron;
 [TestClass]
 public class CronSchedulerTests
 {
-    [TestMethod]
-    public async Task Cron_Scheduler_Should_Schedule_New_Job() => await WatchForTestJobToRunAsync();
-
     private static async Task<IHost> WatchForTestJobToRunAsync()
     {
         var builder = CreateHostBuilder();
@@ -42,6 +39,9 @@ public class CronSchedulerTests
 
         return host;
     }
+
+    [TestMethod]
+    public async Task Cron_Scheduler_Should_Schedule_New_Job() => await WatchForTestJobToRunAsync();
 
     [TestMethod]
     public async Task Cron_Scheduler_Should_Handle_Cron_Change()
