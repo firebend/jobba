@@ -8,6 +8,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Cron.Abstractions;
 using Jobba.Cron.Extensions;
+using Jobba.Store.Mongo.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,9 +19,18 @@ namespace Jobba.Tests.Cron;
 [TestClass]
 public class CronSchedulerTests
 {
-    private static async Task<IHost> WatchForTestJobToRunAsync()
+    [TestMethod]
+    public Task Cron_Scheduler_Should_Schedule_New_Job() => WatchForTestJobToRunAsync();
+
+    [TestMethod]
+    public Task Cron_Scheduler_Should_Handle_Cron_Change() => JobChangeCronExpressionTest();
+
+    //[TestMethod]
+    public Task Cron_Scheduler_Should_Handle_Cron_Change_Mongo() => JobChangeCronExpressionTest(false);
+
+    private static async Task<IHost> WatchForTestJobToRunAsync(bool useInMemory = true)
     {
-        var builder = CreateHostBuilder();
+        var builder = CreateHostBuilder(useInMemory);
 
         var host = builder.Build();
         await host.StartAsync();
@@ -40,13 +50,9 @@ public class CronSchedulerTests
         return host;
     }
 
-    [TestMethod]
-    public async Task Cron_Scheduler_Should_Schedule_New_Job() => await WatchForTestJobToRunAsync();
-
-    [TestMethod]
-    public async Task Cron_Scheduler_Should_Handle_Cron_Change()
+    private static async Task JobChangeCronExpressionTest(bool useInMemory = true)
     {
-        var host = await WatchForTestJobToRunAsync();
+        var host = await WatchForTestJobToRunAsync(useInMemory);
 
         var store = host.Services.GetService<IJobRegistrationStore>();
         var job = await store.GetByJobNameAsync(CronSchedulerTestsJob.Name, default);
@@ -69,13 +75,20 @@ public class CronSchedulerTests
         }
     }
 
-    private static IHostBuilder CreateHostBuilder()
+    private static IHostBuilder CreateHostBuilder(bool useInMemory = true)
         => Host.CreateDefaultBuilder()
             .ConfigureServices(services => services.AddJobba("test", j =>
             {
-                j.UsingInMemory()
-                    .UsingCron(cron =>
-                        cron.AddCronJob<CronSchedulerTestsJob, DefaultJobParams, DefaultJobState>("* * * * *", CronSchedulerTestsJob.Name));
+                if (useInMemory)
+                {
+                    j.UsingInMemory();
+                }
+                else
+                {
+                    j.UsingMongo("mongodb://localhost:27017/jobba-unit-tests", true);
+                }
+
+                j.UsingCron(cron => cron.AddCronJob<CronSchedulerTestsJob, DefaultJobParams, DefaultJobState>("* * * * *", CronSchedulerTestsJob.Name));
             }));
 
     public class CronSchedulerTestsJob : AbstractCronJobBaseClass<DefaultJobParams, DefaultJobState>
@@ -83,7 +96,7 @@ public class CronSchedulerTests
         public const string Name = "test";
         public static bool HasRan;
         public static int RunCounter;
-        public static object Lock = new();
+        private static readonly object Lock = new();
 
         private readonly ILogger<CronSchedulerTestsJob> _logger;
 
