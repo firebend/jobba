@@ -50,6 +50,7 @@ public class Startup
                         cron.AddCronJob<SampleCronJob, CronParameters, CronState>("* * * * *",
                             "Sample Cron Job",
                             "A Cron Job",
+                            TimeZoneInfo.Utc,
                             p =>
                             {
                                 p.DefaultParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
