@@ -74,7 +74,14 @@ public class CronScheduler : ICronScheduler
 
         _logger.LogDebug("Holding lock for {HoldTime}", holdTime);
 
-        await Task.Delay(holdTime, cancellationToken);
+        if (holdTime > TimeSpan.Zero)
+        {
+            await Task.Delay(holdTime, cancellationToken);
+        }
+        else
+        {
+            _logger.LogDebug("Hold time was negative, not holding lock. {HoldTime}", holdTime);
+        }
     }
 
     private async Task DoJobScheduling(CronSchedulerContext context, CancellationToken cancellationToken)
@@ -140,11 +147,11 @@ public class CronScheduler : ICronScheduler
         }
     }
 
-    private DateTimeOffset? GetNextExecutionDate(string cron, DateTimeOffset? start = null)
+    private DateTimeOffset? GetNextExecutionDate(string cron, TimeZoneInfo timeZoneInfo, DateTimeOffset? start = null)
     {
         start ??= DateTimeOffset.UtcNow;
 
-        var next = _cronService.GetNextExecutionDate(cron, start.Value);
+        var next = _cronService.GetNextExecutionDate(cron, start.Value, timeZoneInfo);
 
         return next?.TrimSeconds();
     }
@@ -187,7 +194,7 @@ public class CronScheduler : ICronScheduler
         {
             var cron = registry.CronExpression;
             var previous = registry.PreviousExecutionDate;
-            var currentExecutionDate = GetNextExecutionDate(cron, context.Max);
+            var currentExecutionDate = GetNextExecutionDate(cron, registry.TimeZoneInfo, context.Max);
             var shouldExecute = ShouldExecute(previous, currentExecutionDate, context.Min, context.Max);
 
             if (shouldExecute is false)
@@ -195,7 +202,10 @@ public class CronScheduler : ICronScheduler
                 continue;
             }
 
-            var nextExecutionDate = GetNextExecutionDate(cron, currentExecutionDate.GetValueOrDefault().AddSeconds(1));
+            var nextExecutionDate = GetNextExecutionDate(
+                cron,
+                registry.TimeZoneInfo,
+                currentExecutionDate.GetValueOrDefault().AddSeconds(1));
 
             var jobExecutionInfo = new JobExecutionInfo(registry, nextExecutionDate, currentExecutionDate);
 
