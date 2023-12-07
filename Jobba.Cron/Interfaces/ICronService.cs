@@ -10,10 +10,13 @@ public interface ICronService
     /// <param name="expression">
     /// The cron expression
     /// </param>
+    /// <param name="timeZone">
+    /// The time zone to use
+    /// </param>
     /// <returns>
     /// The date
     /// </returns>
-    DateTimeOffset? GetNextExecutionDate(string expression);
+    DateTimeOffset? GetNextExecutionDate(string expression, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets the next time the expression should execute given a specific start date
@@ -24,10 +27,13 @@ public interface ICronService
     /// <param name="start">
     /// The <see cref="DateTimeOffset"/> to assume the start window for
     /// </param>
+    /// <param name="timeZone">
+    /// The timezone id to use
+    /// </param>
     /// <returns>
     /// The date
     /// </returns>
-    DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start);
+    DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets a value indicating if the job will occur in the given <see cref="DateTimeOffset"/> window
@@ -40,10 +46,13 @@ public interface ICronService
     /// <param name="end">
     /// The <see cref="DateTimeOffset"/> to assume the start window for
     /// </param>
+    /// <param name="timeZone">
+    /// The time zone to use
+    /// </param>
     /// <returns>
     /// True if the cron will execute; otherwise, false.
     /// </returns>
-    bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end);
+    bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets a value indicating all the of occurrences for a cron expression in the given <see cref="DateTimeOffset"/> window.
@@ -56,8 +65,11 @@ public interface ICronService
     /// <param name="end">
     /// The <see cref="DateTimeOffset"/> to assume the start window for
     /// </param>
+    /// <param name="timeZoneId">
+    /// The time zone to use.
+    /// </param>
     /// <returns>
     /// An array of all the execution dates.
     /// </returns>
-    DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end);
+    DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
 }
