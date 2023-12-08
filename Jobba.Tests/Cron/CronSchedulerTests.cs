@@ -93,10 +93,18 @@ public class CronSchedulerTests
 
     public class CronSchedulerTestsJob : AbstractCronJobBaseClass<DefaultJobParams, DefaultJobState>
     {
-        public const string Name = "test";
+
+#pragma warning disable CA2211
+#pragma warning disable IDE1006
+        // ReSharper disable InconsistentNaming
         public static bool HasRan;
         public static int RunCounter;
+        // ReSharper restore InconsistentNaming
         private static readonly object Lock = new();
+#pragma warning restore CA2211
+#pragma warning restore IDE1006
+
+        public const string Name = "test";
 
         private readonly ILogger<CronSchedulerTestsJob> _logger;
 
