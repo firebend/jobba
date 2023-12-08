@@ -40,13 +40,36 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
-        if (registration.Id == Guid.Empty)
+        var existing = DefaultJobRegistrationStoreCache.Registrations
+            .FirstOrDefault(x => x.Value.JobName == registration.JobName)
+            .Value;
+
+        if (existing is not null)
         {
-            var registrationId = await _guidGenerator.GenerateGuidAsync(cancellationToken);
-            registration.Id = registrationId;
+            if (registration.CronExpression is not null)
+            {
+                if (registration.CronExpression == existing.CronExpression)
+                {
+                    registration.NextExecutionDate = existing.NextExecutionDate;
+                    registration.PreviousExecutionDate = existing.PreviousExecutionDate;
+                }
+                else
+                {
+                    registration.NextExecutionDate = null;
+                    registration.PreviousExecutionDate = null;
+                }
+            }
+        }
+        else
+        {
+            if (registration.Id == Guid.Empty)
+            {
+                registration.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+            }
         }
 
-        DefaultJobRegistrationStoreCache.Registrations.AddOrUpdate(registration.Id, registration, (_, _) => registration);
+        DefaultJobRegistrationStoreCache.Registrations[registration.Id] = registration;
+
         return registration;
     }
 
@@ -58,7 +81,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
     public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
         => Task.FromResult(
             DefaultJobRegistrationStoreCache.Registrations
-                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression))
+                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression) is false)
                 .Where(x => x.Value.IsInactive is false)
                 .Select(x => x.Value)
                 .ToArray()

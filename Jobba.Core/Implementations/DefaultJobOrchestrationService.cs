@@ -17,6 +17,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
         _jobRegistrationStore = jobRegistrationStore;
         _jobScheduler = jobScheduler;
     }
+
     public async Task<JobOrchestrationResult> OrchestrateJobAsync<TJob, TParams, TState>(JobOrchestrationRequest<TJob, TParams, TState> request,
         CancellationToken cancellationToken)
         where TJob : IJob<TParams, TState>
@@ -28,7 +29,9 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             request.Description,
             request.Cron,
             request.DefaultJobParams,
-            request.DefaultJobState);
+            request.DefaultJobState,
+            request.IsInactive,
+            request.TimeZone);
 
         var created = await _jobRegistrationStore.RegisterJobAsync(registration, cancellationToken);
 
@@ -39,6 +42,16 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             // Date: 2023-11-11 03:51:08
             // Comment: if this is a new cron expression job
             // add the registration and the cron scheduler will kick off the job when needed
+            //*******************************************
+            return new(created, null);
+        }
+
+        if (request.IsInactive)
+        {
+            //********************************************
+            // Author: JMA
+            // Date: 2023-12-05 05:00:29
+            // Comment: if the job is defaulted to not be enabled yet, do not run it
             //*******************************************
             return new(created, null);
         }
@@ -54,4 +67,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
 
     public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken)
         => _jobRegistrationStore.RemoveByIdAsync(jobRegistrationId, cancellationToken);
+
+    public Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken)
+        => _jobRegistrationStore.SetIsInactiveAsync(jobRegistrationId, isInactive, cancellationToken);
 }

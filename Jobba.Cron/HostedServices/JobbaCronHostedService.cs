@@ -28,20 +28,27 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
 
     protected override async Task DoWorkAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", _timerDelay);
-
-        await CenterTimerAsync(stoppingToken);
-
-        using var timer = new PeriodicTimer(_timerDelay);
-
-        await TimerTickAsync(stoppingToken);
-
-        while (await timer.WaitForNextTickAsync(stoppingToken))
+        try
         {
-            await TimerTickAsync(stoppingToken);
-        }
+            _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", _timerDelay);
 
-        _logger.LogInformation("Jobba Cron Hosted service is stopping");
+            await CenterTimerAsync(stoppingToken);
+
+            using var timer = new PeriodicTimer(_timerDelay);
+
+            await TimerTickAsync(stoppingToken);
+
+            while (await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                await TimerTickAsync(stoppingToken);
+            }
+
+            _logger.LogInformation("Jobba Cron Hosted service is stopping");
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical(e, "Jobba Cron Hosted Service encountered a fatal error");
+        }
     }
 
     private static async Task CenterTimerAsync(CancellationToken stoppingToken)

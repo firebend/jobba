@@ -39,6 +39,9 @@ public class JobbaCronBuilder
     /// <param name="cron">
     /// The cron expression.
     /// </param>
+    /// <param name="timeZone">
+    /// The time zone the cron should run in.
+    /// </param>
     /// <param name="jobName">
     /// The job's name.
     /// </param>
@@ -64,6 +67,7 @@ public class JobbaCronBuilder
     public JobbaCronBuilder AddCronJob<TJob, TJobParams, TJobState>(string cron,
         string jobName,
         string description = null,
+        TimeZoneInfo timeZone = null,
         Action<JobRegistration> configureRegistration = null)
         where TJob : class, ICronJob<TJobParams, TJobState>
         where TJobState : class, IJobState, new()
@@ -77,11 +81,14 @@ public class JobbaCronBuilder
         //*******************************************
         CronExpression.Parse(cron, CronFormat.Standard);
 
+        timeZone ??= TimeZoneInfo.Utc;
+
         Builder.AddJob<TJob, TJobParams, TJobState>(jobName,
             description,
             reg =>
             {
                 reg.CronExpression = cron;
+                reg.TimeZoneId = timeZone.Id;
                 configureRegistration?.Invoke(reg);
             });
 

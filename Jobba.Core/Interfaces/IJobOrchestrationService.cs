@@ -11,7 +11,9 @@ public record JobOrchestrationRequest<TJob, TParams, TState>(string JobName,
     string Description,
     string Cron = default,
     TParams DefaultJobParams = default,
-    TState DefaultJobState = default)
+    TState DefaultJobState = default,
+    string TimeZone = "UTC",
+    bool IsInactive = false)
     where TParams : IJobParams
     where TState : IJobState
     where TJob : IJob<TParams, TState>;
@@ -26,4 +28,6 @@ public interface IJobOrchestrationService
         where TJob : IJob<TParams, TState>;
 
     Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken);
+
+    Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken);
 }

@@ -11,21 +11,21 @@ public class CronService : ICronService
     private static CronExpression GetCronExpression(string expression)
         => CronExpression.Parse(expression, CronFormat.Standard);
 
-    public DateTimeOffset? GetNextExecutionDate(string expression)
-        => GetNextExecutionDate(expression, DateTimeOffset.UtcNow);
+    public DateTimeOffset? GetNextExecutionDate(string expression, TimeZoneInfo timeZone)
+        => GetNextExecutionDate(expression, DateTimeOffset.UtcNow, timeZone);
 
-    public DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start)
-        => GetCronExpression(expression).GetNextOccurrence(start.ToUniversalTime(), TimeZoneInfo.Utc, true);
+    public DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start, TimeZoneInfo timeZone)
+        => GetCronExpression(expression).GetNextOccurrence(start, timeZone, true);
 
-    public bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end)
+    public bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone)
     {
-        var next = GetNextExecutionDate(expression);
+        var next = GetNextExecutionDate(expression, timeZone);
 
         return next is not null && next.Value.IsBetween(start, end);
     }
 
-    public DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end)
+    public DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone)
         => GetCronExpression(expression)
-            .GetOccurrences(start, end, TimeZoneInfo.Utc)
+            .GetOccurrences(start, end, timeZone)
             .ToArray();
 }

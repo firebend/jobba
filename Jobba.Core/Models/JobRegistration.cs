@@ -8,6 +8,9 @@ namespace Jobba.Core.Models;
 /// </summary>
 public class JobRegistration : IJobbaEntity
 {
+    private string _timeZoneId = "UTC";
+    private TimeZoneInfo _timeZoneInfo;
+
     /// <summary>
     /// The Id
     /// </summary>
@@ -78,11 +81,28 @@ public class JobRegistration : IJobbaEntity
     /// </summary>
     public bool IsInactive { get; set; }
 
+    /// <summary>
+    /// The time zone id to use for the job. Must be resolvable by <see cref="TimeZoneInfo.FindSystemTimeZoneById"/>.
+    /// </summary>
+    public string TimeZoneId
+    {
+        get => _timeZoneId;
+        set
+        {
+            _timeZoneId = value;
+            _timeZoneInfo = null;
+        }
+    }
+
+    public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC");
+
     public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
         string description = default,
         string cron = default,
         TJobParams defaultJobParams = default,
-        TJobState defaultJobState = default)
+        TJobState defaultJobState = default,
+        bool isInactive = false,
+        string timeZone = "UTC")
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
@@ -94,6 +114,8 @@ public class JobRegistration : IJobbaEntity
             CronExpression = cron,
             Description = description,
             DefaultParams = defaultJobParams,
-            DefaultState = defaultJobState
+            DefaultState = defaultJobState,
+            IsInactive = isInactive,
+            TimeZoneId = timeZone
         };
 }
