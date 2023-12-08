@@ -94,7 +94,7 @@ public class JobRegistration : IJobbaEntity
         }
     }
 
-    public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ??  "UTC");
+    public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC");
 
     public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
         string description = default,
