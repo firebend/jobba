@@ -12,6 +12,7 @@ public record JobOrchestrationRequest<TJob, TParams, TState>(string JobName,
     string Cron = default,
     TParams DefaultJobParams = default,
     TState DefaultJobState = default,
+    string TimeZone = "UTC",
     bool IsInactive = false)
     where TParams : IJobParams
     where TState : IJobState

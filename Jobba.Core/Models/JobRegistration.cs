@@ -101,7 +101,8 @@ public class JobRegistration : IJobbaEntity
         string cron = default,
         TJobParams defaultJobParams = default,
         TJobState defaultJobState = default,
-        bool isInactive = false)
+        bool isInactive = false,
+        string timeZone = "UTC")
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
@@ -114,6 +115,7 @@ public class JobRegistration : IJobbaEntity
             Description = description,
             DefaultParams = defaultJobParams,
             DefaultState = defaultJobState,
-            IsInactive = isInactive
+            IsInactive = isInactive,
+            TimeZoneId = timeZone
         };
 }

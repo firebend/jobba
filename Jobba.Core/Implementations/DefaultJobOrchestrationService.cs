@@ -30,7 +30,8 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             request.Cron,
             request.DefaultJobParams,
             request.DefaultJobState,
-            request.IsInactive);
+            request.IsInactive,
+            request.TimeZone);
 
         var created = await _jobRegistrationStore.RegisterJobAsync(registration, cancellationToken);
 
