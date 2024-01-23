@@ -17,6 +17,9 @@ jobs:
         with:
           dotnet-version: 8.0.101
 
+      - name: Install dependencies
+        run: dotnet restore jobba.sln
+
       - name: Build
         run: dotnet build jobba.sln --configuration Release --no-restore
 
