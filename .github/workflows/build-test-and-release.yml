@@ -15,10 +15,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 7.0.100
-
-      - name: Install dependencies
-        run: dotnet restore jobba.sln
+          dotnet-version: 8.0.101
 
       - name: Build
         run: dotnet build jobba.sln --configuration Release --no-restore
