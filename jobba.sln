@@ -25,7 +25,6 @@ ProjectSection(SolutionItems) = preProject
 	.github\workflows\build-test-and-release.yml = .github\workflows\build-test-and-release.yml
 	.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
 	.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
-	.config\dotnet-tools.json = .config\dotnet-tools.json
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Web.Sample", "Jobba.Web.Sample\Jobba.Web.Sample.csproj", "{6C454035-FDC7-46C1-B086-8E7326271572}"
