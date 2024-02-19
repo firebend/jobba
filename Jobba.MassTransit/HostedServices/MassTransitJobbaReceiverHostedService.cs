@@ -36,10 +36,9 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
                 {
                     var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
 
-                    var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList()
-                                    ?? new List<JobbaMassTransitConsumerInfo>();
+                    var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? [];
 
-                    if (consumers.Any())
+                    if (consumers.Count != 0)
                     {
                         RegisterJobbaEndpoints(scope, consumers);
                     }

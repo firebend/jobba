@@ -204,7 +204,5 @@ public class JobbaMongoJobStoreTests
         jobInfoBase.MaxNumberOfTries.Should().Be(jobEntity.MaxNumberOfTries);
     }
 
-    public class Foo : IJobParams, IJobState
-    {
-    }
+    public class Foo : IJobParams, IJobState;
 }

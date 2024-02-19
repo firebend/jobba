@@ -1,11 +1,5 @@
 namespace Jobba.Core.Interfaces;
 
-public interface IJobState
-{
+public interface IJobState;
 
-}
-
-public class DefaultJobState : IJobState
-{
-
-}
+public class DefaultJobState : IJobState;
