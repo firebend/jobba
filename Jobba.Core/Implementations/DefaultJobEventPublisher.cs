@@ -81,7 +81,7 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 
     public Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken)
     {
-        var _ = Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             await Task.Delay(delay, cancellationToken);
 

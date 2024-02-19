@@ -41,13 +41,9 @@ public class JobbaMongoBuilderTests
         registrations.First().JobParamsType.Should().Be<FooParams>();
     }
 
-    private class FooState : IJobState
-    {
-    }
+    private class FooState : IJobState;
 
-    private class FooParams : IJobParams
-    {
-    }
+    private class FooParams : IJobParams;
 
     private class FooJob : AbstractJobBaseClass<FooParams, FooState>
     {

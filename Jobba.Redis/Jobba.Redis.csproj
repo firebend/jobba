@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
-    <Version>7.0.0</Version>
+    <Version>7.0.1</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
   </PropertyGroup>
@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LitRedis.Core" Version="4.0.0" />
+    <PackageReference Include="LitRedis.Core" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>

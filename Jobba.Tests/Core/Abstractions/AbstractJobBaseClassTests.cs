@@ -40,9 +40,7 @@ public class AbstractJobBaseClassTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private class JerbParameters : IJobParams
-    {
-    }
+    private class JerbParameters : IJobParams;
 
     private class JerbState : IJobState
     {
