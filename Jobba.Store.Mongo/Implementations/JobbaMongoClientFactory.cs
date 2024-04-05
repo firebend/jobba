@@ -48,7 +48,7 @@ public class JobbaMongoClientFactory : IJobbaMongoClientFactory
 
         cb.Subscribe<CommandFailedEvent>(e =>
         {
-            if(_logger.IsEnabled(LogLevel.Error))
+            if (_logger.IsEnabled(LogLevel.Error))
             {
                 _logger.LogError(e.Failure, "ERROR: {CommandName}({Duration})", e.CommandName, e.Duration);
             }

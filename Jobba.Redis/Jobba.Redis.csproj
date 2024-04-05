@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LitRedis.Core" Version="4.0.1" />
+    <PackageReference Include="LitRedis.Core" Version="4.0.2" />
   </ItemGroup>
 
   <ItemGroup>
