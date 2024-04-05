@@ -30,10 +30,28 @@ public class JobbaMongoClientFactory : IJobbaMongoClientFactory
 
     private void Configurator(ClusterBuilder cb)
     {
-        cb.Subscribe<CommandStartedEvent>(e => _logger.LogDebug("MONGO: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()));
+        cb.Subscribe<CommandStartedEvent>(e =>
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("MONGO: {CommandName} - {Command}", e.CommandName, e.Command.ToJson());
+            }
+        });
 
-        cb.Subscribe<CommandSucceededEvent>(e => _logger.LogDebug("SUCCESS: {CommandName}({Duration}) - {Reply}", e.CommandName, e.Duration, e.Reply.ToJson()));
+        cb.Subscribe<CommandSucceededEvent>(e =>
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("SUCCESS: {CommandName}({Duration}) - {Reply}", e.CommandName, e.Duration, e.Reply.ToJson());
+            }
+        });
 
-        cb.Subscribe<CommandFailedEvent>(e => _logger.LogError(e.Failure, "ERROR: {CommandName}({Duration})", e.CommandName, e.Duration));
+        cb.Subscribe<CommandFailedEvent>(e =>
+        {
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(e.Failure, "ERROR: {CommandName}({Duration})", e.CommandName, e.Duration);
+            }
+        });
     }
 }
