@@ -19,10 +19,7 @@ public static class MassTransitSetup
 
             bus.UsingRabbitMq((context, configurator) =>
             {
-                configurator.Host(connectionString, h =>
-                {
-                    h.PublisherConfirmation = true;
-                });
+                configurator.Host(connectionString, h => h.PublisherConfirmation = true);
 
                 configurator.Lazy = true;
                 configurator.AutoDelete = true;

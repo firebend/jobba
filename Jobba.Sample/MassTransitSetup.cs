@@ -30,7 +30,7 @@ public static class MassTransitSetup
 
     private static void ConfigurePartition(IBusFactoryConfigurator cfg)
     {
-        string path = "fake";
+        var path = "fake";
 
         cfg.UseContextFilter(ctx =>
             Task.FromResult(
@@ -57,10 +57,7 @@ public static class MassTransitSetup
                 ConfigureSerialization(configurator);
                 ConfigurePartition(configurator);
 
-                configurator.Host(connectionString, h =>
-                {
-                    h.PublisherConfirmation = true;
-                });
+                configurator.Host(connectionString, h => h.PublisherConfirmation = true);
 
                 configurator.Lazy = true;
                 configurator.AutoDelete = true;
