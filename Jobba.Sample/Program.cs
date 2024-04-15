@@ -46,7 +46,7 @@ internal static class Program
                         .AddJob<SampleJobCancel, DefaultJobParams, DefaultJobState>(SampleJobCancel.Name)
                 )
                 .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/")
-                //.AddHostedService<SampleHostedService>()
+                .AddHostedService<SampleHostedService>()
                 ;
         })
         .UseSerilog((hostingContext, _, loggerConfiguration) => loggerConfiguration

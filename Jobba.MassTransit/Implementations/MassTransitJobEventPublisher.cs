@@ -70,14 +70,8 @@ public class MassTransitJobEventPublisher : IJobEventPublisher
     public Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
         => PublishMessageAsync(jobRestartEvent, null, cancellationToken);
 
-    private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken)
-    {
-        if (delay.HasValue)
-        {
-            var inTheFuture = DateTime.UtcNow.Add(delay.Value);
-            return _messageScheduler.SchedulePublish(inTheFuture, message, cancellationToken);
-        }
-
-        return _bus.Publish(message, cancellationToken);
-    }
+    private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken) where T : class
+        => delay.HasValue is false
+            ? _bus.Publish(message, cancellationToken)
+            : _messageScheduler.SchedulePublish(delay.Value, message, cancellationToken);
 }

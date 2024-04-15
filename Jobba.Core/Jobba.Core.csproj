@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>7.0.2</Version>
+    <Version>7.0.3</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
     <TargetFrameworks>net7.0;net8.0</TargetFrameworks>

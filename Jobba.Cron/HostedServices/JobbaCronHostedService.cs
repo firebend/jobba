@@ -30,7 +30,8 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
     {
         try
         {
-            _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}", _timerDelay);
+            _logger.LogInformation("Jobba Cron Hosted Service is starting. Checking for jobs every {Time}",
+                _timerDelay);
 
             await CenterTimerAsync(stoppingToken);
 
@@ -44,6 +45,10 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
             }
 
             _logger.LogInformation("Jobba Cron Hosted service is stopping");
+        }
+        catch (TaskCanceledException)
+        {
+            //ignore
         }
         catch (Exception e)
         {
