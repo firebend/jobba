@@ -72,12 +72,11 @@ public class MassTransitJobEventPublisher : IJobEventPublisher
 
     private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken)
     {
-        if (delay.HasValue)
+        if (delay.HasValue is false)
         {
-            var inTheFuture = DateTime.UtcNow.Add(delay.Value);
-            return _messageScheduler.SchedulePublish(inTheFuture, message, cancellationToken);
+            return _bus.Publish(message, cancellationToken);
         }
 
-        return _bus.Publish(message, cancellationToken);
+        return _messageScheduler.SchedulePublish(delay.Value, message, cancellationToken);
     }
 }
