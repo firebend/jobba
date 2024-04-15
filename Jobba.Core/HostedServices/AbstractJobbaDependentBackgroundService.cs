@@ -37,8 +37,15 @@ public abstract class AbstractJobbaDependentBackgroundService : BackgroundServic
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await WaitForJobbaAsync(stoppingToken);
-        await DoWorkAsync(stoppingToken);
+        try
+        {
+            await WaitForJobbaAsync(stoppingToken);
+            await DoWorkAsync(stoppingToken);
+        }
+        catch (TaskCanceledException)
+        {
+            //ignore
+        }
     }
 
     protected abstract Task DoWorkAsync(CancellationToken stoppingToken);

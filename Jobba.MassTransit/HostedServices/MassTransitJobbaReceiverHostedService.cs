@@ -74,11 +74,7 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
                 foreach (var consumerInfo in consumerInfos)
                 {
                     configureConsumer.MakeGenericMethod(consumerInfo.ConsumerType)
-                        .Invoke(null, new object[]
-                        {
-                            configurator,
-                            _scopeFactory
-                        });
+                        .Invoke(null, [configurator, _scopeFactory]);
                 }
             });
         }
