@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="LitRedis.Core" Version="4.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
