@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>7.0.9</Version>
+    <Version>7.0.10</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
     <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncKeyedLock" Version="7.0.0" />
+    <PackageReference Include="AsyncKeyedLock" Version="7.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
