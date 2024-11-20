@@ -7,6 +7,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.EF.DbContexts;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jobba.Store.EF.Implementations;
 
@@ -30,6 +31,7 @@ public class JobbaEfJobProgressStore(
             throw new InvalidOperationException($"Job with id {jobProgress.JobId} not found.");
         }
 
+        entity.JobRegistrationId = job.JobRegistrationId;
         dbContext.JobProgress.Add(entity);
 
         job.JobState = jobProgress.JobState;
@@ -44,5 +46,5 @@ public class JobbaEfJobProgressStore(
     }
 
     public async Task<JobProgressEntity?> GetProgressById(Guid id, CancellationToken cancellationToken)
-        => await dbContext.JobProgress.FindAsync([id], cancellationToken);
+        => await dbContext.JobProgress.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 }

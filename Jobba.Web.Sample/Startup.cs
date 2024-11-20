@@ -4,7 +4,6 @@ using Jobba.Core.Extensions;
 using Jobba.Cron.Extensions;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
-using Jobba.Store.EF.Extensions;
 using Jobba.Store.Mongo.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -43,7 +42,6 @@ public class Startup
             .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
             .AddJobba("jobba-web-sample", jobba =>
                 jobba.UsingMassTransit()
-                    // .UsingEf((_, opts) => opts.UseSqlServer("Server=localhost;Database=JobbaWebSample;Trusted_Connection=True;MultipleActiveResultSets=true"))
                     .UsingMongo("mongodb://localhost:27017/jobba-web-sample", false)
                     .UsingLitRedis("localhost:6379,defaultDatabase=0")
                     .UsingCron(cron =>

@@ -24,7 +24,7 @@ public class JobbaEfJobListStore(JobbaDbContext dbContext) : IJobListStore
     private async Task<IEnumerable<JobInfoBase>> GetJobInfoBases(Expression<Func<JobEntity, bool>> filter,
         CancellationToken cancellationToken)
     {
-        var activeJobs = await dbContext.Jobs.Where(filter).ToListAsync(cancellationToken);
+        var activeJobs = await dbContext.Jobs.Where(filter).AsNoTracking().ToListAsync(cancellationToken);
 
         if (activeJobs.Count == 0)
         {

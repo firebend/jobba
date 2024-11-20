@@ -14,19 +14,20 @@ public class JobbaEfBuilder
 {
     public JobbaBuilder Builder { get; }
 
-    public JobbaEfBuilder(JobbaBuilder jobbaBuilder,
-        Action<IServiceProvider, DbContextOptionsBuilder> dbContextOptionsBuilder, bool usePooled)
+    public JobbaEfBuilder(JobbaBuilder jobbaBuilder)
     {
         Builder = jobbaBuilder;
 
-
         RegisterJobbaRequiredStores(jobbaBuilder);
-        RegisterEfRequiredServices(jobbaBuilder, dbContextOptionsBuilder, usePooled);
     }
 
-    public void WithDbInitializer() => WithDbInitializer<DefaultJobbaDbInitializer>();
+    public JobbaEfBuilder WithDbInitializer() => WithDbInitializer<DefaultJobbaDbInitializer>();
 
-    public void WithDbInitializer<T>() where T : class, IJobbaDbInitializer => Builder.Services.TryAddScoped<IJobbaDbInitializer, T>();
+    public JobbaEfBuilder WithDbInitializer<T>() where T : class, IJobbaDbInitializer
+    {
+        // Builder.Services.AddHostedService<T>();
+        return this;
+    }
 
     private static void RegisterJobbaRequiredStores(JobbaBuilder jobbaBuilder)
     {
@@ -35,19 +36,5 @@ public class JobbaEfBuilder
         jobbaBuilder.Services.TryAddScoped<IJobStore, JobbaEfJobStore>();
         jobbaBuilder.Services.TryAddScoped<IJobCleanUpStore, JobbaEfCleanUpStore>();
         jobbaBuilder.Services.TryAddScoped<IJobRegistrationStore, JobbaEfJobRegistrationStore>();
-    }
-
-    private static void RegisterEfRequiredServices(JobbaBuilder jobbaBuilder,
-        Action<IServiceProvider, DbContextOptionsBuilder> dbContextOptionsBuilder,
-        bool usePooled)
-    {
-        if (usePooled)
-        {
-            jobbaBuilder.Services.AddPooledDbContextFactory<JobbaDbContext>(dbContextOptionsBuilder);
-        }
-        else
-        {
-            jobbaBuilder.Services.AddDbContextFactory<JobbaDbContext>(dbContextOptionsBuilder);
-        }
     }
 }

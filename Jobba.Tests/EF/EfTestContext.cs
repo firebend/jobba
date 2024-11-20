@@ -14,8 +14,8 @@ public class EfTestContext : IDisposable
         _connection = new SqliteConnection("DataSource=:memory:");
     }
 
-    public DbContextOptionsBuilder ConfigureDbContextOptions(
-        DbContextOptionsBuilder optionsBuilder, bool enableLogging = false)
+    public DbContextOptionsBuilder<JobbaDbContext> ConfigureDbContextOptions(
+        DbContextOptionsBuilder<JobbaDbContext> optionsBuilder, bool enableLogging = false)
     {
         optionsBuilder.UseSqlite(_connection);
 

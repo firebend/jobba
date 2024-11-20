@@ -22,7 +22,8 @@ public class JobbaEfJobRegistrationStore(
         CancellationToken cancellationToken)
     {
         var jobName = registration.JobName;
-        var existing = await dbContext.JobRegistrations.Where(x => x.JobName == jobName).FirstOrDefaultAsync(cancellationToken);
+        var existing = await dbContext.JobRegistrations.Where(x => x.JobName == jobName)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (existing is not null)
         {
@@ -68,13 +69,14 @@ public class JobbaEfJobRegistrationStore(
     }
 
     public async Task<JobRegistration?> GetJobRegistrationAsync(Guid registrationId,
-        CancellationToken cancellationToken) =>
-        await dbContext.JobRegistrations.FindAsync([registrationId], cancellationToken);
+        CancellationToken cancellationToken) => await dbContext.JobRegistrations.AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
 
-    private async Task<JobRegistration> GetRequiredJobRegistrationAsync(Guid registrationId,
+
+    private async Task<JobRegistration> GetTrackedJobRegistrationAsync(Guid registrationId,
         CancellationToken cancellationToken)
     {
-        var registration = await GetJobRegistrationAsync(registrationId, cancellationToken);
+        var registration = await dbContext.JobRegistrations.FindAsync([registrationId], cancellationToken);
 
         if (registration is null)
         {
@@ -88,6 +90,7 @@ public class JobbaEfJobRegistrationStore(
     public async Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
         => await dbContext.JobRegistrations
             .Where(x => x.CronExpression != null && x.CronExpression != "" && x.IsInactive != true)
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
     public async Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
@@ -100,7 +103,7 @@ public class JobbaEfJobRegistrationStore(
             nextInvocationDate,
             previousInvocationDate);
 
-        var registration = await GetRequiredJobRegistrationAsync(registrationId, cancellationToken);
+        var registration = await GetTrackedJobRegistrationAsync(registrationId, cancellationToken);
 
         registration.NextExecutionDate = nextInvocationDate;
         registration.PreviousExecutionDate = previousInvocationDate;
@@ -114,13 +117,14 @@ public class JobbaEfJobRegistrationStore(
     }
 
     public Task<JobRegistration?> GetByJobNameAsync(string name, CancellationToken cancellationToken)
-        => dbContext.JobRegistrations.Where(x => x.JobName == name).FirstOrDefaultAsync(cancellationToken);
+        => dbContext.JobRegistrations.Where(x => x.JobName == name).AsNoTracking()
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<JobRegistration?> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Removing job registration {JobId}", id);
 
-        var deleted = await GetRequiredJobRegistrationAsync(id, cancellationToken);
+        var deleted = await GetTrackedJobRegistrationAsync(id, cancellationToken);
 
         dbContext.JobRegistrations.Remove(deleted);
 
@@ -134,7 +138,7 @@ public class JobbaEfJobRegistrationStore(
     {
         logger.LogDebug("Setting job registration {JobId} to inactive {IsInactive}", registrationId, isInactive);
 
-        var registration = await GetRequiredJobRegistrationAsync(registrationId, cancellationToken);
+        var registration = await GetTrackedJobRegistrationAsync(registrationId, cancellationToken);
 
         if (registration.IsInactive != isInactive)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -6,6 +7,7 @@ using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.EF.DbContexts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Store.EF.Implementations;
@@ -49,13 +51,18 @@ public class JobbaEfJobStore(
         return info;
     }
 
-    public async Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts,
+    public async Task<JobInfo<TJobParams, TJobState>?> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
         logger.LogDebug("Setting job {JobId} attempts to {Attempts}", jobId, attempts);
-        var job = await GetJobFromDbAsync(jobId, cancellationToken);
+        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return null;
+        }
 
         job.CurrentNumberOfTries = attempts;
 
@@ -68,7 +75,12 @@ public class JobbaEfJobStore(
         CancellationToken cancellationToken)
     {
         logger.LogDebug("Setting job {JobId} status to {Status}", jobId, status);
-        var job = await GetJobFromDbAsync(jobId, cancellationToken);
+        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
 
         job.Status = status;
         job.LastProgressDate = date;
@@ -79,7 +91,12 @@ public class JobbaEfJobStore(
     public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
     {
         logger.LogDebug("Logging failure for job {JobId}", jobId);
-        var job = await GetJobFromDbAsync(jobId, cancellationToken);
+        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
 
         job.FaultedReason = ex.ToString();
         job.Status = JobStatus.Faulted;
@@ -87,29 +104,37 @@ public class JobbaEfJobStore(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
+    public async Task<JobInfoBase?> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var job = await GetJobFromDbAsync(jobId, cancellationToken);
-        return job.ToJobInfoBase();
+        var job = await GetJobFromDbAsync(jobId, true, cancellationToken);
+        return job?.ToJobInfoBase();
     }
 
-    public async Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId,
+    public async Task<JobInfo<TJobParams, TJobState>?> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        var job = await GetJobFromDbAsync(jobId, cancellationToken);
-        return job.ToJobInfo<TJobParams, TJobState>();
+        var job = await GetJobFromDbAsync(jobId, true, cancellationToken);
+        return job?.ToJobInfo<TJobParams, TJobState>();
     }
 
-    private async Task<JobEntity> GetJobFromDbAsync(Guid jobId, CancellationToken cancellationToken)
+    private async Task<JobEntity?> GetJobFromDbAsync(Guid jobId, bool asNoTracking, CancellationToken cancellationToken)
     {
-        var entity = await dbContext.Jobs.FindAsync([jobId], cancellationToken);
+        var query = dbContext.Jobs.Where(x => x.Id == jobId);
+
+        if (asNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        var entity = await query.FirstOrDefaultAsync(cancellationToken);
 
         if (entity == null)
         {
             logger.LogError("Job with id {JobId} not found.", jobId);
-            throw new InvalidOperationException($"Job with id {jobId} not found.");
+            // throw new InvalidOperationException($"Job with id {jobId} not found.");
+            return null;
         }
 
         return entity;

@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,14 @@ using Newtonsoft.Json;
 
 namespace Jobba.Store.EF.DbContexts;
 
-public class JobbaDbContext(DbContextOptions options) : DbContext(options)
+public class JobbaDbContext : DbContext
 {
     public static string JobbaSchema = "jobba";
+
+    public JobbaDbContext(DbContextOptions<JobbaDbContext> options) : base(options)
+    {
+    }
+
     public DbSet<JobEntity> Jobs { get; set; }
     public DbSet<JobRegistration> JobRegistrations { get; set; }
     public DbSet<JobProgressEntity> JobProgress { get; set; }
@@ -45,7 +51,7 @@ public class JobbaDbContext(DbContextOptions options) : DbContext(options)
         builder.HasMany<JobProgressEntity>()
             .WithOne()
             .HasForeignKey(x => x.JobRegistrationId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 
     private void ConfigureJobs(ModelBuilder modelBuilder)
@@ -63,9 +69,10 @@ public class JobbaDbContext(DbContextOptions options) : DbContext(options)
 
         MapJson(builder, x => x.JobParameters);
         MapJson(builder, x => x.JobState);
-        builder.OwnsOne(x => x.SystemInfo);
+        builder.ComplexProperty(x => x.SystemInfo, x => x.IsRequired());
 
         builder.Property(x => x.Status).HasConversion<string>();
+        builder.Property(x => x.LastProgressPercentage).HasPrecision(5, 2);
     }
 
     private void ConfigureJobProgress(ModelBuilder modelBuilder)
@@ -75,6 +82,7 @@ public class JobbaDbContext(DbContextOptions options) : DbContext(options)
 
         builder.ToTable("JobProgress", JobbaSchema);
         MapJson(builder, x => x.JobState);
+        builder.Property(x => x.Progress).HasPrecision(5, 2);
     }
 
 
@@ -94,5 +102,10 @@ public class JobbaDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(new EfJsonConverter<TProperty>(settings))
             .Metadata
             .SetValueComparer(new EfJsonComparer<TProperty>(settings));
+    }
+
+    public static async Task InitializeAsync(JobbaDbContext db)
+    {
+        await db.Database.EnsureCreatedAsync();
     }
 }
