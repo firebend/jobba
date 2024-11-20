@@ -5,8 +5,10 @@ using Jobba.Core.Interfaces;
 using Jobba.Cron.Extensions;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
+using Jobba.Store.EF.Extensions;
 using Jobba.Store.Mongo;
 using Jobba.Store.Mongo.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,7 +19,8 @@ namespace Jobba.Sample;
 
 internal static class Program
 {
-    private const string SerilogTemplate = "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}";
+    private const string SerilogTemplate =
+        "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}";
 
     private static Task Main(string[] args)
     {
@@ -39,9 +42,14 @@ internal static class Program
                 .AddLogging()
                 .AddJobba("jobba-sample", jobba =>
                     jobba.UsingMassTransit()
-                        .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
+                        .UsingEf((_, opts) =>
+                            opts.UseSqlServer(
+                                "Data Source=.;Initial Catalog=jobba-sample;Persist Security Info=False;User ID=sa;Password=Password0#@!;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=200;"))
+                        // .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
                         .UsingLitRedis("localhost:6379,defaultDatabase=0")
-                        .UsingCron(cron => cron.AddCronJob<SampleCronJob, DefaultJobParams, DefaultJobState>("* * * * *", SampleCronJob.Name))
+                        .UsingCron(cron =>
+                            cron.AddCronJob<SampleCronJob, DefaultJobParams, DefaultJobState>("* * * * *",
+                                SampleCronJob.Name))
                         .AddJob<SampleJob, SampleJobParameters, SampleJobState>(SampleJob.Name)
                         .AddJob<SampleJobCancel, DefaultJobParams, DefaultJobState>(SampleJobCancel.Name)
                 )

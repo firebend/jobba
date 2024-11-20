@@ -9,8 +9,8 @@ public static class JobbaEfBuilderExtensions
 {
     public static JobbaBuilder UsingEf(this JobbaBuilder jobbaBuilder,
         Action<IServiceProvider, DbContextOptionsBuilder> dbContextOptionsBuilder,
-        Action<JobbaEfBuilder>? configure = null,
-        bool usePooled = false)
+        bool usePooled = false,
+        Action<JobbaEfBuilder>? configure = null)
     {
 
         var builder = new JobbaEfBuilder(jobbaBuilder, dbContextOptionsBuilder, usePooled);

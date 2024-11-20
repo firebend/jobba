@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
+using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.Mongo.Implementations;
@@ -33,7 +34,8 @@ public class JobbaMongoJobListStoreTests
             .ReturnsAsync(fixture.CreateMany<JobEntity>(5).ToList);
 
         var listStore = fixture.Create<JobbaMongoJobListStore>();
-        Expression<Func<JobEntity, bool>> expectedExpression = x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
+        Expression<Func<JobEntity, bool>> expectedExpression =
+            x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
 
 
         //act
@@ -61,7 +63,6 @@ public class JobbaMongoJobListStoreTests
             .ReturnsAsync(fixture.CreateMany<JobEntity>(5).ToList);
 
         var listStore = fixture.Create<JobbaMongoJobListStore>();
-        Expression<Func<JobEntity, bool>> expectedExpression = x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
 
 
         //act
@@ -71,7 +72,8 @@ public class JobbaMongoJobListStoreTests
         activeJobs.Count().Should().Be(5);
 
         mockRepo.Verify(x => x.GetAllAsync(
-            It.Is<Expression<Func<JobEntity, bool>>>(exp => Lambda.ExpressionsEqual(exp, expectedExpression)),
+            It.Is<Expression<Func<JobEntity, bool>>>(exp =>
+                Lambda.ExpressionsEqual(exp, RepositoryExpressions.JobRetryExpression)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }

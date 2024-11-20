@@ -3,8 +3,6 @@ using System.Linq;
 using FluentAssertions;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
-using Jobba.Store.EF.DbContexts;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -13,36 +11,32 @@ namespace Jobba.Tests.EF;
 [TestClass]
 public class JobbaDbContextTests
 {
-    private SqliteConnection _connection;
-    private JobbaDbContext _dbContext;
+    private EfTestContext _testContext;
 
     [TestInitialize]
     public void TestSetup()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-        _dbContext = new JobbaDbContext(new DbContextOptionsBuilder<JobbaDbContext>()
-            .UseSqlite(_connection)
-            // .LogTo(Console.WriteLine)
-            .Options);
-        _dbContext.Database.EnsureCreated();
+        _testContext = new EfTestContext();
     }
 
     [TestCleanup]
     public void TestCleanup()
     {
-        _connection.Close();
-        _dbContext.Dispose();
+        _testContext.Dispose();
     }
 
     [TestMethod]
-    public void Jobba_Db_Context_Should_Create_Context() =>
-        _dbContext.Database.IsSqlite().Should().BeTrue();
+    public void Jobba_Db_Context_Should_Create_Context()
+    {
+        using var dbContext = _testContext.CreateContext();
+        dbContext.Database.IsSqlite().Should().BeTrue();
+    }
 
     [TestMethod]
     public void Jobba_Db_Context_Should_Configure_Entities()
     {
         //arrange
+        using var dbContext = _testContext.CreateContext();
         var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
             "Test",
             "Test",
@@ -53,7 +47,7 @@ public class JobbaDbContextTests
             null);
         jobRegistration.Id = Guid.NewGuid();
 
-        _dbContext.JobRegistrations.Add(jobRegistration);
+        dbContext.JobRegistrations.Add(jobRegistration);
 
         var jobEntity = new JobEntity
         {
@@ -68,7 +62,7 @@ public class JobbaDbContextTests
             Status = JobStatus.InProgress
         };
 
-        _dbContext.Jobs.Add(jobEntity);
+        dbContext.Jobs.Add(jobEntity);
 
         var jobProgress = new JobProgressEntity
         {
@@ -81,17 +75,17 @@ public class JobbaDbContextTests
             Date = DateTimeOffset.UtcNow
         };
 
-        _dbContext.JobProgress.Add(jobProgress);
+        dbContext.JobProgress.Add(jobProgress);
 
         //act
-        _dbContext.SaveChanges();
+        dbContext.SaveChanges();
 
         //assert
-        _dbContext.JobRegistrations.Count().Should().Be(1);
-        _dbContext.Jobs.Count().Should().Be(1);
-        _dbContext.JobProgress.Count().Should().Be(1);
+        dbContext.JobRegistrations.Count().Should().Be(1);
+        dbContext.Jobs.Count().Should().Be(1);
+        dbContext.JobProgress.Count().Should().Be(1);
 
-        var registration = _dbContext.JobRegistrations.FirstOrDefault();
+        var registration = dbContext.JobRegistrations.FirstOrDefault();
         registration.Should().NotBeNull();
         registration!.Id.Should().Be(jobRegistration.Id);
         registration.JobName.Should().Be(jobRegistration.JobName);
@@ -100,7 +94,7 @@ public class JobbaDbContextTests
         registration.DefaultState.Should().BeEquivalentTo(jobRegistration.DefaultState);
 
 
-        var job = _dbContext.Jobs.FirstOrDefault();
+        var job = dbContext.Jobs.FirstOrDefault();
         job.Should().NotBeNull();
         job!.Id.Should().Be(jobEntity.Id);
         job.JobName.Should().Be(jobEntity.JobName);
@@ -108,7 +102,7 @@ public class JobbaDbContextTests
         job.JobParameters.Should().BeEquivalentTo(jobEntity.JobParameters);
         job.JobState.Should().BeEquivalentTo(jobEntity.JobState);
 
-        var progress = _dbContext.JobProgress.FirstOrDefault();
+        var progress = dbContext.JobProgress.FirstOrDefault();
         progress.Should().NotBeNull();
         progress!.Id.Should().Be(jobProgress.Id);
         progress.JobId.Should().Be(jobProgress.JobId);
@@ -117,5 +111,13 @@ public class JobbaDbContextTests
         progress.Progress.Should().Be(jobProgress.Progress);
         progress.Message.Should().Be(jobProgress.Message);
         progress.Date.Should().Be(jobProgress.Date);
+
+        dbContext.JobRegistrations.Remove(registration);
+
+        dbContext.SaveChanges();
+
+        dbContext.JobRegistrations.Count().Should().Be(0);
+        dbContext.Jobs.Count().Should().Be(0);
+        dbContext.JobProgress.Count().Should().Be(0);
     }
 }
