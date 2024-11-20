@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.IntegrationTests", "J
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Cron", "Jobba.Cron\Jobba.Cron.csproj", "{541F4B12-0B77-413D-8E8A-B901B500DE7C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jobba.Store.EF", "Jobba.Store.EF\Jobba.Store.EF.csproj", "{B2520DA6-771C-496E-B5E1-6CB22D800DFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -154,5 +156,17 @@ Global
 		{541F4B12-0B77-413D-8E8A-B901B500DE7C}.Release|x64.Build.0 = Release|Any CPU
 		{541F4B12-0B77-413D-8E8A-B901B500DE7C}.Release|x86.ActiveCfg = Release|Any CPU
 		{541F4B12-0B77-413D-8E8A-B901B500DE7C}.Release|x86.Build.0 = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|x64.Build.0 = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Debug|x86.Build.0 = Debug|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|x64.ActiveCfg = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|x64.Build.0 = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|x86.ActiveCfg = Release|Any CPU
+		{B2520DA6-771C-496E-B5E1-6CB22D800DFE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

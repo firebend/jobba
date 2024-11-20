@@ -24,6 +24,8 @@
     </PackageReference>
     <PackageReference Include="Neleus.LambdaCompare" Version="1.0.3" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +33,7 @@
     <ProjectReference Include="..\Jobba.Cron\Jobba.Cron.csproj" />
     <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
     <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF\Jobba.Store.EF.csproj" />
     <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
   </ItemGroup>
 
