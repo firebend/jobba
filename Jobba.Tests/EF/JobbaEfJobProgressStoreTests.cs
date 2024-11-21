@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
@@ -14,7 +13,6 @@ using Jobba.Store.EF.DbContexts;
 using Jobba.Store.EF.Implementations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MongoDB.Driver.Linq;
 using Moq;
 
 namespace Jobba.Tests.EF;

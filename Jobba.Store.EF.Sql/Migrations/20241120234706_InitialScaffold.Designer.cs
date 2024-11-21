@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Jobba.Store.EF.SqlMigrations.Migrations
+namespace Jobba.Store.EF.Sql.Migrations
 {
     [DbContext(typeof(JobbaDbContext))]
     [Migration("20241120234706_InitialScaffold")]

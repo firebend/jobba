@@ -1,10 +1,12 @@
+#nullable enable
+using System;
 using Jobba.Core.Builders;
 using Jobba.Store.EF.Builders;
 using Jobba.Store.EF.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jobba.Store.EF.SqlMigrations.Extensions;
+namespace Jobba.Store.EF.Sql.Extensions;
 
 public static class JobbaEfBuilderExtensions
 {

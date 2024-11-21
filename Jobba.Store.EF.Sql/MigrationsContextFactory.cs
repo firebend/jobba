@@ -1,9 +1,9 @@
 using Jobba.Store.EF.DbContexts;
-using Jobba.Store.EF.SqlMigrations.Extensions;
+using Jobba.Store.EF.Sql.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Jobba.Store.EF.SqlMigrations;
+namespace Jobba.Store.EF.Sql;
 
 public class MigrationsContextFactory : IDesignTimeDbContextFactory<JobbaDbContext>
 {

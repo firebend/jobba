@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jobba.Store.EF.SqlMigrations.Migrations
+namespace Jobba.Store.EF.Sql.Migrations
 {
     /// <inheritdoc />
     public partial class InitialScaffold : Migration
