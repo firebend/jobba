@@ -13,7 +13,13 @@ namespace Jobba.Store.EF.DbContexts;
 
 public class JobbaDbContext : DbContext, IJobbaDbContext
 {
-    public static string JobbaSchema = "jobba";
+    /// <summary>
+    /// Schema for the jobba tables.
+    /// This can be changed prior to registering the DbContext.
+    /// Default is "jobba".
+    /// </summary>
+    // ReSharper disable once MemberCanBePrivate.Global
+    public static string JobbaSchema { get; set; } = "jobba";
 
     public JobbaDbContext()
     {
@@ -110,10 +116,5 @@ public class JobbaDbContext : DbContext, IJobbaDbContext
             .HasConversion(new EfJsonConverter<TProperty>(settings))
             .Metadata
             .SetValueComparer(new EfJsonComparer<TProperty>(settings));
-    }
-
-    public static async Task InitializeAsync(JobbaDbContext db)
-    {
-        await db.Database.EnsureCreatedAsync();
     }
 }

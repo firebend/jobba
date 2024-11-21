@@ -6,15 +6,15 @@ public record JobSystemInfo
     {
     }
 
-    public JobSystemInfo(string SystemMoniker,
-        string ComputerName,
-        string User,
-        string OperatingSystem)
+    public JobSystemInfo(string systemMoniker,
+        string computerName,
+        string user,
+        string operatingSystem)
     {
-        this.SystemMoniker = SystemMoniker;
-        this.ComputerName = ComputerName;
-        this.User = User;
-        this.OperatingSystem = OperatingSystem;
+        SystemMoniker = systemMoniker;
+        ComputerName = computerName;
+        User = user;
+        OperatingSystem = operatingSystem;
     }
 
     public string SystemMoniker { get; init; }
@@ -24,14 +24,6 @@ public record JobSystemInfo
 
     public override string ToString()
         => $"System Moniker: {SystemMoniker} Computer Name: {ComputerName} User: {User} Operation System: {OperatingSystem}";
-
-    public void Deconstruct(out string SystemMoniker, out string ComputerName, out string User, out string OperatingSystem)
-    {
-        SystemMoniker = this.SystemMoniker;
-        ComputerName = this.ComputerName;
-        User = this.User;
-        OperatingSystem = this.OperatingSystem;
-    }
 }
 
 public interface IJobSystemInfoProvider
