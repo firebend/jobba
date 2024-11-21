@@ -8,19 +8,27 @@ namespace Jobba.Store.EF.SqlMigrations.Extensions;
 
 public static class JobbaEfBuilderExtensions
 {
+    public static DbContextOptionsBuilder UsingSqlServer(this DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureOptions = null)
+    {
+        optionsBuilder.UseSqlServer(
+            connectionString,
+            x => x.MigrationsAssembly(typeof(MigrationsContextFactory).Assembly.GetName().Name!)
+        );
+
+        configureOptions?.Invoke(optionsBuilder);
+
+        return optionsBuilder;
+    }
+
     public static JobbaBuilder UsingSqlServer(this JobbaBuilder jobbaBuilder,
         string connectionString,
         Action<DbContextOptionsBuilder>? configureOptions = null,
         Action<JobbaEfBuilder>? configure = null)
     {
-        jobbaBuilder.Services.AddDbContextFactory<JobbaDbContext>(options =>
-        {
-            options.UseSqlServer(
-                connectionString,
-                x => x.MigrationsAssembly(typeof(Marker).Assembly.GetName().Name!)
-            );
-            configureOptions?.Invoke(options);
-        }, ServiceLifetime.Transient);
+        jobbaBuilder.Services.AddDbContextFactory<JobbaDbContext>(
+            options => options.UsingSqlServer(connectionString, configureOptions), ServiceLifetime.Transient);
 
         var builder = new JobbaEfBuilder(jobbaBuilder);
         configure?.Invoke(builder);

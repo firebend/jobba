@@ -7,13 +7,10 @@ using Jobba.Core.Interfaces;
 using Jobba.Cron.Extensions;
 using Jobba.MassTransit.Extensions;
 using Jobba.Redis;
-using Jobba.Store.EF.DbContexts;
-using Jobba.Store.EF.Sqlite;
 using Jobba.Store.EF.Sqlite.Extensions;
 using Jobba.Store.EF.SqlMigrations.Extensions;
 using Jobba.Store.Mongo;
 using Jobba.Store.Mongo.Extensions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,10 +27,6 @@ internal static class Program
     private static async Task Main(string[] args)
     {
         var app = CreateHostBuilder(args).Build();
-        using (var scope = app.Services.CreateScope()) {
-            var db = scope.ServiceProvider.GetRequiredService<JobbaDbContext>();
-            await JobbaDbContext.InitializeAsync(db);
-        }
         await app.RunAsync();
     }
 
@@ -70,7 +63,7 @@ internal static class Program
 
     private static void ResolveStore(IConfiguration config, JobbaBuilder jobba)
     {
-        var provider = config.GetValue("provider", StoreProviders.SqlServer);
+        var provider = config.GetValue("provider", StoreProviders.Sqlite);
         Console.WriteLine("Using provider: " + provider);
         switch (provider)
         {
@@ -78,23 +71,23 @@ internal static class Program
                 jobba.UsingInMemory();
                 break;
             case StoreProviders.Sqlite:
-                jobba.UsingSqlite("DataSource=:memory:", options =>
+                jobba.UsingSqlite(config.GetConnectionString("Sqlite")!, options =>
                 {
                     options.EnableSensitiveDataLogging();
                     options.EnableDetailedErrors();
                 });
                 break;
             case StoreProviders.SqlServer:
-                jobba.UsingSqlServer("Data Source=.;Initial Catalog=jobba-sample;Persist Security Info=False;User ID=sa;Password=Password0#@!;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=200;",
+                jobba.UsingSqlServer(config.GetConnectionString("SqlServer")!,
                     options =>
                     {
-                        // options.EnableSensitiveDataLogging();
-                        // options.EnableDetailedErrors();
+                        options.EnableSensitiveDataLogging();
+                        options.EnableDetailedErrors();
                     });
                 break;
             case StoreProviders.MongoDb:
                 JobbaMongoDbConfigurator.Configure();
-                jobba.UsingMongo("mongodb://localhost:27017/jobba-sample", false);
+                jobba.UsingMongo(config.GetConnectionString("MongoDb"), false);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

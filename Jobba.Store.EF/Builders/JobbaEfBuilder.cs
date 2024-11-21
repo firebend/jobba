@@ -1,11 +1,7 @@
-using System;
 using Jobba.Core.Builders;
 using Jobba.Core.Interfaces.Repositories;
-using Jobba.Store.EF.DbContexts;
 using Jobba.Store.EF.Implementations;
 using Jobba.Store.EF.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.Store.EF.Builders;

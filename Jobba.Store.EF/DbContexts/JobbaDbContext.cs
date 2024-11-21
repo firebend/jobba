@@ -13,6 +13,10 @@ public class JobbaDbContext : DbContext
 {
     public static string JobbaSchema = "jobba";
 
+    public JobbaDbContext()
+    {
+    }
+
     public JobbaDbContext(DbContextOptions<JobbaDbContext> options) : base(options)
     {
     }
