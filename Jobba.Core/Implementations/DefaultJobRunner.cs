@@ -18,9 +18,9 @@ public class DefaultJobRunner(
     public async Task RunJobAsync<TJobParams, TJobState>(
         IJob<TJobParams, TJobState> job,
         JobStartContext<TJobParams, TJobState> context,
-        CancellationToken jobCancellationToken,
         CancellationToken cancellationToken) where TJobParams : IJobParams where TJobState : IJobState
     {
+        var jobCancellationToken = jobCancellationTokenStore.CreateJobCancellationToken(context.JobId, cancellationToken);
         await jobStore.SetJobStatusAsync(context.JobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
 
         try

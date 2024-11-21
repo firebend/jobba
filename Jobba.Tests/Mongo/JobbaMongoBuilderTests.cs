@@ -28,7 +28,7 @@ public class JobbaMongoBuilderTests
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert
-        serviceCollection.Count.Should().Be(37);
+        serviceCollection.Count.Should().Be(38);
         var registrations = provider.GetServices<JobRegistration>().ToArray();
         registrations.Length.Should().Be(1);
         registrations.First().JobType.Should().Be<TestModels.FooJob>();

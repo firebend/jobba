@@ -135,10 +135,9 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
 
         var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
         await _jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
-        var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
         await WatchJobAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, request.JobWatchInterval, cancellationToken);
         var context = GetJobStartContext(request, jobInfo, jobRegistration);
-        _ = RunJobAsync(jobRegistration, request.JobType, context, token, cancellationToken);
+        _ = RunJobAsync(jobRegistration, request.JobType, context, cancellationToken);
         await NotifyJobStartedAsync(jobId, jobRegistration.Id, cancellationToken);
 
         return jobInfo;
@@ -274,7 +273,6 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     private async Task RunJobAsync<TJobParams, TJobState>(JobRegistration registration,
         Type jobType,
         JobStartContext<TJobParams, TJobState> context,
-        CancellationToken jobCancellationToken,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState
@@ -291,7 +289,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             var jobRunner = scope.ServiceProvider.GetRequiredService<IJobRunner>();
             await Task.Run(async () =>
             {
-                await jobRunner.RunJobAsync(job, context, jobCancellationToken, cancellationToken);
+                await jobRunner.RunJobAsync(job, context, cancellationToken);
                 scope.Dispose();
             }, cancellationToken);
         }

@@ -9,6 +9,5 @@ public interface IJobRunner
     Task RunJobAsync<TJobParams, TJobState>(
         IJob<TJobParams, TJobState> job,
         JobStartContext<TJobParams, TJobState> context,
-        CancellationToken jobCancellationToken,
         CancellationToken cancellationToken) where TJobParams : IJobParams where TJobState : IJobState;
 }
