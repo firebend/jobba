@@ -19,8 +19,13 @@ public class DefaultJobbaDbInitializer(ILogger<DefaultJobbaDbInitializer> logger
         }
         try
         {
+            logger.LogInformation("Migrating Jobba database.");
+
             _migrationTask = context.MigrateAsync(cancellationToken);
+
             await _migrationTask;
+
+            logger.LogInformation("Jobba database migration complete.");
         }
         catch (Exception e)
         {

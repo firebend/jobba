@@ -69,9 +69,8 @@ To use the SqlServer provider, install the `Jobba.Store.EFCore.Sql` package
 dotnet add package Jobba.Store.EFCore.Sql
 ```
 
-Then add the following to your `JobbaBuilder` configuration, providing the connection string, an optional action to provide
-additional configuration of the `DbContextOptionsBuilder`, and an optional action to provide additional configuration of
-the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, and optional actions to provide
+additional configuration of the `DbContextOptionsBuilder`, `SqlServerDbContextOptionsBuilder`. and the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
 
 ```csharp
 var jobba = new JobbaBuilder(serviceCollection, "sample")
@@ -80,7 +79,7 @@ var jobba = new JobbaBuilder(serviceCollection, "sample")
                     {
                         options.EnableSensitiveDataLogging();
                         options.EnableDetailedErrors();
-                    }, jb => jb.WithDbInitializer());
+                    }, configureBuilder: jb => jb.WithDbInitializer());
 ```
 
 #### Sqlite
@@ -91,9 +90,8 @@ To use the Sqlite provider, install the `Jobba.Store.EFCore.Sqlite` package
 dotnet add package Jobba.Store.EFCore.Sqlite
 ```
 
-Then add the following to your `JobbaBuilder` configuration, providing the connection string, an optional action to provide
-additional configuration of the `DbContextOptionsBuilder`, and an optional action to provide additional configuration of
-the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, and optional actions to provide
+additional configuration of the `DbContextOptionsBuilder`, `SqliteDbContextOptionsBuilder`, and the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
 
 ```csharp
 var jobba = new JobbaBuilder(serviceCollection, "sample")
@@ -102,7 +100,7 @@ var jobba = new JobbaBuilder(serviceCollection, "sample")
                  {
                      options.EnableSensitiveDataLogging();
                      options.EnableDetailedErrors();
-                 }, jb => jb.WithDbInitializer());
+                 }, configureBuilder: jb => jb.WithDbInitializer());
 ```
 
 #### Other providers

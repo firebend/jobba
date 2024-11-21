@@ -138,8 +138,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         var token = _jobCancellationTokenStore.CreateJobCancellationToken(jobId, cancellationToken);
         await WatchJobAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, request.JobWatchInterval, cancellationToken);
         var context = GetJobStartContext(request, jobInfo, jobRegistration);
-        _ = RunJobAsync(jobRegistration, jobId, request.JobType, context, token, cancellationToken);
-        await NotifyJobStartedAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, cancellationToken);
+        _ = RunJobAsync(jobRegistration, request.JobType, context, token, cancellationToken);
+        await NotifyJobStartedAsync(jobId, jobRegistration.Id, cancellationToken);
 
         return jobInfo;
     }
@@ -201,7 +201,7 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         return request.JobId;
     }
 
-    private Task NotifyJobStartedAsync<TJobParams, TJobState>(Guid jobId, Guid jobRegistrationId, CancellationToken token)
+    private Task NotifyJobStartedAsync(Guid jobId, Guid jobRegistrationId, CancellationToken token)
         => _publisher.PublishJobStartedEvent(
             new JobStartedEvent(jobId, jobRegistrationId),
             token);
@@ -247,8 +247,8 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     /// <summary>
     ///     Runs the requested job as a task, publishes messages, and updates initial state
     /// </summary>
-    /// <param name="jobId">
-    ///     The ID of the job to run
+    /// <param name="registration">
+    ///    The job registration
     /// </param>
     /// <param name="jobType">
     ///     The job type to resolve from the IoC container
@@ -272,7 +272,6 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
     ///     Throws an exception if the job cannot be resolved from the IoC container.
     /// </exception>
     private async Task RunJobAsync<TJobParams, TJobState>(JobRegistration registration,
-        Guid jobId,
         Type jobType,
         JobStartContext<TJobParams, TJobState> context,
         CancellationToken jobCancellationToken,
@@ -289,39 +288,11 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
                 return;
             }
 
+            var jobRunner = scope.ServiceProvider.GetRequiredService<IJobRunner>();
             await Task.Run(async () =>
             {
-                await _jobStore.SetJobStatusAsync(jobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
-
-                try
-                {
-                    await job.StartAsync(context, jobCancellationToken);
-
-                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
-                    {
-                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
-                    }
-                    else
-                    {
-                        await OnJobCompletedAsync(jobId, registration.Id, job.JobName, default);
-                        _jobCancellationTokenStore.RemoveCompletedJob(jobId);
-                    }
-                }
-                catch (TaskCanceledException)
-                {
-                    if (jobCancellationToken.IsCancellationRequested || cancellationToken.IsCancellationRequested)
-                    {
-                        await OnJobCancelledAsync(jobId, cancellationToken.IsCancellationRequested, default);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await OnJobFaulted<TJobParams, TJobState>(jobId, registration.Id, ex);
-                }
-                finally
-                {
-                    scope.Dispose();
-                }
+                await jobRunner.RunJobAsync(job, context, jobCancellationToken, cancellationToken);
+                scope.Dispose();
             }, cancellationToken);
         }
     }
@@ -348,35 +319,6 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
         }
 
         return job;
-    }
-
-    private async Task OnJobFaulted<TJobParams, TJobState>(Guid jobId, Guid jobRegistrationId, Exception ex)
-    {
-        _logger.LogDebug("Job Faulted. JobId: {JobId}. Message: {ExceptionMessage}", jobId, ex.Message);
-
-        await _jobStore.LogFailureAsync(jobId, ex, default);
-
-        await _publisher.PublishJobFaultedEventAsync(
-            new JobFaultedEvent(jobId, jobRegistrationId),
-            default);
-    }
-
-    private Task OnJobCancelledAsync(Guid jobId, bool wasForced, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Job Cancelled. JobId: {JobId} WasForced: {WasForced}", jobId, wasForced);
-
-        return _jobStore.SetJobStatusAsync(jobId, wasForced ? JobStatus.ForceCancelled : JobStatus.Cancelled, DateTimeOffset.UtcNow, cancellationToken);
-    }
-
-    private async Task OnJobCompletedAsync(Guid jobId, Guid jobRegistrationId, string jobName, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Job Completed. Id: {JobId} Name: {Name}", jobId, jobName);
-
-        await _jobStore.SetJobStatusAsync(jobId, JobStatus.Completed, DateTimeOffset.UtcNow, cancellationToken);
-
-        await _publisher.PublishJobCompletedEventAsync(
-            new JobCompletedEvent(jobId, jobRegistrationId),
-            cancellationToken);
     }
 
     private static JobStartContext<TJobParams, TJobState> GetJobStartContext<TJobParams, TJobState>(

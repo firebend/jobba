@@ -40,8 +40,8 @@ public class JobbaBuilder
         Services.TryAddScoped<IJobCancellationTokenStore, DefaultJobCancellationTokenStore>();
         Services.TryAddTransient<IJobEventPublisher, DefaultJobEventPublisher>();
         Services.TryAddScoped<IJobLockService, DefaultJobLockService>();
-        Services.TryAddScoped<IJobReScheduler, DefaultJobReScheduler>();
         Services.TryAddScoped<IJobScheduler, DefaultJobScheduler>();
+        Services.TryAddScoped<IJobRunner, DefaultJobRunner>();
         Services.TryAddScoped<IJobReScheduler, DefaultJobReScheduler>();
         Services.TryAddScoped<IOnJobCancelSubscriber, DefaultOnJobCancelSubscriber>();
         Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();

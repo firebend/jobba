@@ -77,6 +77,7 @@ public class JobbaEfJobStore(
         CancellationToken cancellationToken)
     {
         logger.LogDebug("Setting job {JobId} status to {Status}", jobId, status);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
 
         if (job == null)
@@ -87,7 +88,6 @@ public class JobbaEfJobStore(
         job.Status = status;
         job.LastProgressDate = date;
 
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

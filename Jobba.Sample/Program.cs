@@ -75,7 +75,7 @@ internal static class Program
                 {
                     options.EnableSensitiveDataLogging();
                     options.EnableDetailedErrors();
-                }, jb => jb.WithDbInitializer());
+                }, configureBuilder: jb => jb.WithDbInitializer());
                 break;
             case StoreProviders.SqlServer:
                 jobba.UsingSqlServer(config.GetConnectionString("SqlServer")!,
@@ -83,7 +83,7 @@ internal static class Program
                     {
                         options.EnableSensitiveDataLogging();
                         options.EnableDetailedErrors();
-                    }, jb => jb.WithDbInitializer());
+                    }, configureBuilder: jb => jb.WithDbInitializer());
                 break;
             case StoreProviders.MongoDb:
                 JobbaMongoDbConfigurator.Configure();
