@@ -152,7 +152,9 @@ public class DefaultJobSchedulerTests
         store.Setup(x => x.SetJobAttempts<DefaultJobParams, DefaultJobState>(jobId, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobInfo<DefaultJobParams, DefaultJobState>
             {
-                Id = jobId, CurrentNumberOfTries = 2, MaxNumberOfTries = 5
+                Id = jobId,
+                CurrentNumberOfTries = 2,
+                MaxNumberOfTries = 5
             });
 
         var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
