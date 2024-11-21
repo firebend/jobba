@@ -42,11 +42,13 @@ To use the Mongo store, install the `Jobba.Store.Mongo` package
 dotnet add package Jobba.Store.Mongo
 ```
 
-Then add the following to your `JobbaBuilder` configuration, providing the connection string and a boolean to enable or disable command logging. There is also an optional third parameter to allow for additional configuration of the Mongo store.
+Then add the following to your `JobbaBuilder` configuration, providing the connection string and a boolean to enable or 
+disable command logging. There is also an optional third parameter to allow for additional configuration of the Mongo 
+store using the [JobbaMongoBuilder.cs](Jobba.Store.Mongo%2FBuilders%2FJobbaMongoBuilder.cs).
 
 ```csharp
 var jobba = new JobbaBuilder(serviceCollection, "sample")
-    .UsingMongo("<your-connection-string-here>", false);
+    .UsingMongo(config.GetConnectionString("MongoDb"), false);
 ```
 
 ### EFCore
@@ -57,12 +59,56 @@ To use the EFCore store, install the `Jobba.Store.EFCore` package
 dotnet add package Jobba.Store.EFCore
 ```
 
-Then add the following to your `JobbaBuilder` configuration, providing the entity framework db context options and a boolean to enable db context pooling. There is also an optional third parameter to allow for additional configuration of the EFCore store.
+There are currently 2 supported EF providers maintained by this library.
+
+#### SqlServer
+
+To use the SqlServer provider, install the `Jobba.Store.EFCore.Sql` package
+
+```bash
+dotnet add package Jobba.Store.EFCore.Sql
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, an optional action to provide
+additional configuration of the `DbContextOptionsBuilder`, and an optional action to provide additional configuration of
+the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
 
 ```csharp
 var jobba = new JobbaBuilder(serviceCollection, "sample")
-    .UsingEFCore(options => options.UseSqlServer("<your-connection-string-here>"), false);
+    .UsingSqlServer(config.GetConnectionString("SqlServer"),
+                    options =>
+                    {
+                        options.EnableSensitiveDataLogging();
+                        options.EnableDetailedErrors();
+                    }, jb => jb.WithDbInitializer());
 ```
+
+#### Sqlite
+
+To use the Sqlite provider, install the `Jobba.Store.EFCore.Sqlite` package
+
+```bash
+dotnet add package Jobba.Store.EFCore.Sqlite
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, an optional action to provide
+additional configuration of the `DbContextOptionsBuilder`, and an optional action to provide additional configuration of
+the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingSqlite(config.GetConnectionString("Sqlite"),
+                 options =>
+                 {
+                     options.EnableSensitiveDataLogging();
+                     options.EnableDetailedErrors();
+                 }, jb => jb.WithDbInitializer());
+```
+
+#### Other providers
+
+To use a different EF provider, you will need to manage the configuration and migrations yourself. You can refer to the
+SqlServer and Sqlite implementations for guidance. [JobbaEfBuilderExtensions.cs](Jobba.Store.EF.Sql%2Fextensions%2FJobbaEfBuilderExtensions.cs)
 
 ### Custom
 
@@ -77,23 +123,72 @@ You can refer to the [InMemory implementation](Jobba.Core%2FBuilders%2FJobbaInMe
 
 ## Locks
 
-TODO - add documentation for distributed locks
+Locking ensures that only one instance of a job is running at a time.
 
 ### InMemory
+
+The in-memory lock is useful for testing and development. It is registered by default when using the `JobbaBuilder`.
+Only use in production if you have a single instance of your application.
 
 ### Redis
 
+This will use the [lit-redis](https://github.com/firebend/lit-redis) library which will allow for distributed locking 
+across multiple instances of your application.
+
+To use the Redis lock, install the `Jobba.Redis` package
+
+```bash
+dotnet add package Jobba.Redis
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing your connection string.
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingLitRedis(config.GetConnectionString("Redis"));
+```
+
 ### Custom
+
+The following interface must be registered in the DI container for your custom lock:
+
+- [IJobLockService.cs](Jobba.Core%2FInterfaces%2FIJobLockService.cs)
+
+You can refer to the [InMemory implementation](Jobba.Core%2FImplementations%2FDefaultJobLockService.cs) for an example of how to implement this interface.
 
 ## Event Publishers
 
-TODO - add documentation for event publishers
+Jobba publishes various events to allow for monitoring and logging of job progress.
+
+The events published are:
+- [CancelJobEvent.cs](Jobba.Core%2FEvents%2FCancelJobEvent.cs)
+- [JobWatchEvent.cs](Jobba.Core%2FEvents%2FJobWatchEvent.cs)
+- [JobCancelledEvent.cs](Jobba.Core%2FEvents%2FJobCancelledEvent.cs)
+- [JobCompletedEvent.cs](Jobba.Core%2FEvents%2FJobCompletedEvent.cs)
+- [JobFaultedEvent.cs](Jobba.Core%2FEvents%2FJobFaultedEvent.cs)
+- [JobProgressEvent.cs](Jobba.Core%2FEvents%2FJobProgressEvent.cs)
+- [JobRestartEvent.cs](Jobba.Core%2FEvents%2FJobRestartEvent.cs)
+- [JobStartedEvent.cs](Jobba.Core%2FEvents%2FJobStartedEvent.cs)
 
 ### InMemory
 
+The in-memory event publisher is useful for testing and development. It is registered by default when using the `JobbaBuilder`.
+Only use in production if you have a single instance of your application.
+
 ### MassTransit
 
+This will use the [MassTransit](https://github.com/MassTransit/MassTransit) library to facilitate event publishing.
+By using MassTransit, you can publish events to a message broker such as RabbitMQ or Azure Service Bus allowing for distributed
+event handling.
+
 ### Custom
+
+The following interface must be registered in the DI container for your custom event publisher:
+
+- [IJobEventPublisher.cs](Jobba.Core%2FInterfaces%2FIJobEventPublisher.cs)
+
+You must also register consumers for each event published by Jobba. You can refer to the 
+[JobbaMassTransitBuilderExtensions.cs](Jobba.MassTransit%2Fextensions%2FJobbaMassTransitBuilderExtensions.cs) for an example of how to implement this interface.
 
 ## Setup
 
