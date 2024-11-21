@@ -83,7 +83,7 @@ public class JobbaEfJobProgressStoreTests
         {
             JobId = _job.Id,
             JobRegistrationId = _job.JobRegistrationId,
-            JobState = new TestModels.FooState{ Bar = "bar" },
+            JobState = new TestModels.FooState { Bar = "bar" },
             Date = DateTimeOffset.UtcNow,
             Progress = (decimal)0.5
         };

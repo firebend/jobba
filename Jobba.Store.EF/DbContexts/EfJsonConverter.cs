@@ -19,19 +19,9 @@ public class EfJsonConverter<T> : ValueConverter<T, string>
     public static T FromJson(string json)
     {
         var jObject = JObject.Parse(json);
-        var typeStr = jObject.GetValue("$type")?.Value<string>();
+        var typeStr = jObject.GetValue("$type")?.Value<string>() ?? throw new InvalidOperationException("Invalid JSON format.");
 
-        if (typeStr == null)
-        {
-            throw new InvalidOperationException("Invalid JSON format.");
-        }
-
-        var type = Type.GetType(typeStr);
-
-        if (type == null)
-        {
-            throw new InvalidOperationException("Invalid type.");
-        }
+        var type = Type.GetType(typeStr) ?? throw new InvalidOperationException("Invalid type.");
 
         return (T)JsonConvert.DeserializeObject(json, type)!;
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -35,10 +35,7 @@ namespace Jobba.Store.EF.Sqlite.Migrations
                     IsInactive = table.Column<bool>(type: "INTEGER", nullable: false),
                     TimeZoneId = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_JobRegistrations", x => x.Id);
-                });
+                constraints: table => table.PrimaryKey("PK_JobRegistrations", x => x.Id));
 
             migrationBuilder.CreateTable(
                 name: "Jobs",

@@ -25,12 +25,7 @@ public class JobbaEfJobProgressStore(
         entity.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
 
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
-        var job = await dbContext.Jobs.FindAsync([jobProgress.JobId], cancellationToken);
-
-        if (job == null)
-        {
-            throw new InvalidOperationException($"Job with id {jobProgress.JobId} not found.");
-        }
+        var job = await dbContext.Jobs.FindAsync([jobProgress.JobId], cancellationToken) ?? throw new InvalidOperationException($"Job with id {jobProgress.JobId} not found.");
 
         entity.JobRegistrationId = job.JobRegistrationId;
         dbContext.JobProgress.Add(entity);
