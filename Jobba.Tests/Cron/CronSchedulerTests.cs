@@ -54,7 +54,7 @@ public class CronSchedulerTests
     {
         var host = await WatchForTestJobToRunAsync(useInMemory);
 
-        var store = host.Services.GetService<IJobRegistrationStore>();
+        var store = host.Services.CreateScope().ServiceProvider.GetService<IJobRegistrationStore>();
         var job = await store.GetByJobNameAsync(CronSchedulerTestsJob.Name, default);
 
         const string everySecondMinute = "*/2 * * * *";

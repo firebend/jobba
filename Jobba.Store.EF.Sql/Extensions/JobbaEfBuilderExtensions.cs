@@ -27,7 +27,7 @@ public static class JobbaEfBuilderExtensions
         Action<DbContextOptionsBuilder>? configureOptions = null,
         Action<JobbaEfBuilder>? configure = null)
     {
-        jobbaBuilder.Services.AddDbContextFactory<JobbaDbContext>(
+        jobbaBuilder.Services.AddDbContext<JobbaDbContext>(
             options => options.UsingSqlServer(connectionString, configureOptions), ServiceLifetime.Transient);
 
         var builder = new JobbaEfBuilder(jobbaBuilder);

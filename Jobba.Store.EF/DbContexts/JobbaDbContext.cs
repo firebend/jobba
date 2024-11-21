@@ -1,15 +1,17 @@
 using System;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Newtonsoft.Json;
 
 namespace Jobba.Store.EF.DbContexts;
 
-public class JobbaDbContext : DbContext
+public class JobbaDbContext : DbContext, IJobbaDbContext
 {
     public static string JobbaSchema = "jobba";
 
@@ -24,6 +26,8 @@ public class JobbaDbContext : DbContext
     public DbSet<JobEntity> Jobs { get; set; }
     public DbSet<JobRegistration> JobRegistrations { get; set; }
     public DbSet<JobProgressEntity> JobProgress { get; set; }
+
+    public Task MigrateAsync(CancellationToken cancellationToken) => Database.MigrateAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

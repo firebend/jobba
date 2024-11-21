@@ -27,8 +27,7 @@ public class JobbaEfJobRegistrationStoreTests
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
         _testContext = new EfTestContext();
-        _dbContext = _testContext.CreateContext();
-        _fixture.Inject(_dbContext);
+        _dbContext = _testContext.CreateContext(_fixture);
 
         _fixture.Freeze<Mock<IJobbaGuidGenerator>>().Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid);

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.HostedServices;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Microsoft.Extensions.Hosting;
@@ -18,6 +19,8 @@ public class SampleHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        JobbaHostedService.HasRegisteredJobsCancellationToken.WaitHandle.WaitOne();
+
         var request = new JobRequest<SampleJobParameters, SampleJobState>
         {
             Description = "A Sample Job",

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Jobba.Core.Extensions;
 using Jobba.Core.Models;
 using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Sqlite.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,7 +25,7 @@ public class JobbaEfBuilderTests
         serviceCollection.AddJobba("fake", builder =>
         {
             builder.AddJob<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>("fake");
-            // builder.UsingEfS((_, opt) => testContext.ConfigureDbContextOptions(opt));
+            builder.UsingSqlite("DataSource=:memory:");
         });
 
         var provider = serviceCollection.BuildServiceProvider();

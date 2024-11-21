@@ -8,12 +8,12 @@ using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
-using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobba.Store.EF.Implementations;
 
-public class JobbaEfJobListStore(JobbaDbContext dbContext) : IJobListStore
+public class JobbaEfJobListStore(IDbContextProvider dbContextProvider) : IJobListStore
 {
     public Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken)
         => GetJobInfoBases(RepositoryExpressions.JobsInProgressExpression, cancellationToken);
@@ -24,6 +24,7 @@ public class JobbaEfJobListStore(JobbaDbContext dbContext) : IJobListStore
     private async Task<IEnumerable<JobInfoBase>> GetJobInfoBases(Expression<Func<JobEntity, bool>> filter,
         CancellationToken cancellationToken)
     {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var activeJobs = await dbContext.Jobs.Where(filter).AsNoTracking().ToListAsync(cancellationToken);
 
         if (activeJobs.Count == 0)

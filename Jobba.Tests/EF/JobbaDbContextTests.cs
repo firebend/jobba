@@ -1,10 +1,16 @@
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
+using Jobba.Store.EF.Implementations;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Jobba.Tests.EF;
 
@@ -119,5 +125,30 @@ public class JobbaDbContextTests
         dbContext.JobRegistrations.Count().Should().Be(0);
         dbContext.Jobs.Count().Should().Be(0);
         dbContext.JobProgress.Count().Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task DefaultJobbaDbInitializer_Should_Only_Run_Migrations_Once()
+    {
+        //arrange
+        var mockDbContext = new Mock<IJobbaDbContext>();
+        mockDbContext.Setup(x => x.MigrateAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.Delay(5));
+        var mockLogger = new Mock<ILogger<DefaultJobbaDbInitializer>>();
+        var initializer = new DefaultJobbaDbInitializer(mockLogger.Object);
+
+        //act
+        var tasks = new[]
+        {
+            initializer.InitializeAsync(mockDbContext.Object, default),
+            initializer.InitializeAsync(mockDbContext.Object, default),
+            initializer.InitializeAsync(mockDbContext.Object, default)
+        };
+        await Task.WhenAll(tasks);
+
+        await initializer.InitializeAsync(mockDbContext.Object, default);
+
+        //assert
+        mockDbContext.Verify(x => x.MigrateAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

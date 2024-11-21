@@ -11,7 +11,7 @@ public class DefaultDbContextProvider(JobbaDbContext context, IJobbaDbInitialize
     {
         if (jobbaDbInitializer != null)
         {
-            await jobbaDbInitializer.InitializeAsync(cancellationToken);
+            await jobbaDbInitializer.InitializeAsync(context, cancellationToken);
         }
         return context;
     }

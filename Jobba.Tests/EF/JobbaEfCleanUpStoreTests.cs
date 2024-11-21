@@ -37,8 +37,7 @@ public class JobbaEfCleanUpStoreTests
     public async Task Jobba_Ef_Clean_Up_Store_Should_Remove_Completed_Jobs()
     {
         //arrange
-        await using var dbContext = _testContext.CreateContext();
-        _fixture.Inject(dbContext);
+        await using var dbContext = _testContext.CreateContext(_fixture);
 
         var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
             "Test",

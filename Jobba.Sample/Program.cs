@@ -63,7 +63,7 @@ internal static class Program
 
     private static void ResolveStore(IConfiguration config, JobbaBuilder jobba)
     {
-        var provider = config.GetValue("provider", StoreProviders.Sqlite);
+        var provider = config.GetValue("provider", StoreProviders.SqlServer);
         Console.WriteLine("Using provider: " + provider);
         switch (provider)
         {
@@ -75,7 +75,7 @@ internal static class Program
                 {
                     options.EnableSensitiveDataLogging();
                     options.EnableDetailedErrors();
-                });
+                }, jb => jb.WithDbInitializer());
                 break;
             case StoreProviders.SqlServer:
                 jobba.UsingSqlServer(config.GetConnectionString("SqlServer")!,
@@ -83,7 +83,7 @@ internal static class Program
                     {
                         options.EnableSensitiveDataLogging();
                         options.EnableDetailedErrors();
-                    });
+                    }, jb => jb.WithDbInitializer());
                 break;
             case StoreProviders.MongoDb:
                 JobbaMongoDbConfigurator.Configure();

@@ -80,7 +80,7 @@ public class JobEntity : IJobbaEntity
     /// <summary>
     /// Information about the system that the job is running on.
     /// </summary>
-    public JobSystemInfo SystemInfo { get; set; }
+    public JobSystemInfo SystemInfo { get; set; } = new();
 
     public static JobEntity FromRequest<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
         Guid jobRegistrationId,

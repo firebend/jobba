@@ -6,14 +6,14 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
-using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Store.EF.Implementations;
 
 public class JobbaEfJobStore(
-    JobbaDbContext dbContext,
+    IDbContextProvider dbContextProvider,
     IJobRegistrationStore jobRegistrationStore,
     IJobbaGuidGenerator guidGenerator,
     IJobSystemInfoProvider systemInfoProvider,
@@ -42,6 +42,7 @@ public class JobbaEfJobStore(
             job.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
         }
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         dbContext.Jobs.Add(job);
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -66,6 +67,7 @@ public class JobbaEfJobStore(
 
         job.CurrentNumberOfTries = attempts;
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return job.ToJobInfo<TJobParams, TJobState>();
@@ -85,6 +87,7 @@ public class JobbaEfJobStore(
         job.Status = status;
         job.LastProgressDate = date;
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -101,6 +104,7 @@ public class JobbaEfJobStore(
         job.FaultedReason = ex.ToString();
         job.Status = JobStatus.Faulted;
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -121,6 +125,7 @@ public class JobbaEfJobStore(
 
     private async Task<JobEntity?> GetJobFromDbAsync(Guid jobId, bool asNoTracking, CancellationToken cancellationToken)
     {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var query = dbContext.Jobs.Where(x => x.Id == jobId);
 
         if (asNoTracking)
@@ -132,8 +137,7 @@ public class JobbaEfJobStore(
 
         if (entity == null)
         {
-            logger.LogError("Job with id {JobId} not found.", jobId);
-            // throw new InvalidOperationException($"Job with id {jobId} not found.");
+            logger.LogDebug("Job with id {JobId} not found.", jobId);
             return null;
         }
 

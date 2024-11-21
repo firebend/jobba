@@ -29,6 +29,7 @@ public static class JobbaEfBuilderExtensions
         Action<DbContextOptionsBuilder>? configureOptions = null,
         Action<JobbaEfBuilder>? configure = null)
     {
+        Console.WriteLine("UsingSqlite with connectionString: {0}", connectionString);
         jobbaBuilder.Services.AddDbContext<JobbaDbContext>(
             options => options.UsingSqlite(connectionString, configureOptions), ServiceLifetime.Transient);
 

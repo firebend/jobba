@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
-using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Store.EF.Implementations;
 
 public class JobbaEfJobRegistrationStore(
-    JobbaDbContext dbContext,
+    IDbContextProvider dbContextProvider,
     IJobbaGuidGenerator guidGenerator,
     ILogger<JobbaEfJobRegistrationStore> logger)
     : IJobRegistrationStore
@@ -22,6 +22,7 @@ public class JobbaEfJobRegistrationStore(
         CancellationToken cancellationToken)
     {
         var jobName = registration.JobName;
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var existing = await dbContext.JobRegistrations.Where(x => x.JobName == jobName)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -69,13 +70,18 @@ public class JobbaEfJobRegistrationStore(
     }
 
     public async Task<JobRegistration?> GetJobRegistrationAsync(Guid registrationId,
-        CancellationToken cancellationToken) => await dbContext.JobRegistrations.AsNoTracking()
-        .FirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        return await dbContext.JobRegistrations.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
+    }
 
 
     private async Task<JobRegistration> GetTrackedJobRegistrationAsync(Guid registrationId,
         CancellationToken cancellationToken)
     {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var registration = await dbContext.JobRegistrations.FindAsync([registrationId], cancellationToken);
 
         if (registration is null)
@@ -88,10 +94,13 @@ public class JobbaEfJobRegistrationStore(
     }
 
     public async Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
-        => await dbContext.JobRegistrations
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        return await dbContext.JobRegistrations
             .Where(x => x.CronExpression != null && x.CronExpression != "" && x.IsInactive != true)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    }
 
     public async Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
         DateTimeOffset? nextInvocationDate,
@@ -108,6 +117,7 @@ public class JobbaEfJobRegistrationStore(
         registration.NextExecutionDate = nextInvocationDate;
         registration.PreviousExecutionDate = previousInvocationDate;
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogDebug("Updated next and previous invocation dates for job {JobId} {Next} {Previous}",
@@ -116,9 +126,12 @@ public class JobbaEfJobRegistrationStore(
             previousInvocationDate);
     }
 
-    public Task<JobRegistration?> GetByJobNameAsync(string name, CancellationToken cancellationToken)
-        => dbContext.JobRegistrations.Where(x => x.JobName == name).AsNoTracking()
+    public async Task<JobRegistration?> GetByJobNameAsync(string name, CancellationToken cancellationToken)
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        return await dbContext.JobRegistrations.Where(x => x.JobName == name).AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
+    }
 
     public async Task<JobRegistration?> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -126,6 +139,7 @@ public class JobbaEfJobRegistrationStore(
 
         var deleted = await GetTrackedJobRegistrationAsync(id, cancellationToken);
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         dbContext.JobRegistrations.Remove(deleted);
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -143,6 +157,7 @@ public class JobbaEfJobRegistrationStore(
         if (registration.IsInactive != isInactive)
         {
             registration.IsInactive = isInactive;
+            var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 

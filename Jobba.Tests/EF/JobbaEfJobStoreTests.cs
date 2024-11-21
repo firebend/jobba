@@ -30,9 +30,8 @@ public class JobbaEfJobStoreTests
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
         _testContext = new EfTestContext();
-        _dbContext = _testContext.CreateContext();
+        _dbContext = _testContext.CreateContext(_fixture);
         _jobRegistration = AddRegistration();
-        _fixture.Inject(_dbContext);
     }
 
     [TestCleanup]

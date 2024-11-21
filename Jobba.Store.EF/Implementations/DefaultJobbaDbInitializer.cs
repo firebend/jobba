@@ -1,17 +1,31 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Store.EF.DbContexts;
 using Jobba.Store.EF.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.Store.EF.Implementations;
 
-public class DefaultJobbaDbInitializer(JobbaDbContext context) : IJobbaDbInitializer
+public class DefaultJobbaDbInitializer(ILogger<DefaultJobbaDbInitializer> logger) : IJobbaDbInitializer
 {
-    private static bool _initialized;
+    private static Task? _migrationTask;
 
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    public async Task InitializeAsync(IJobbaDbContext context, CancellationToken cancellationToken)
     {
-        await context.Database.MigrateAsync(cancellationToken);
+        if (_migrationTask is not null)
+        {
+            await _migrationTask;
+            return;
+        }
+        try
+        {
+            _migrationTask = context.MigrateAsync(cancellationToken);
+            await _migrationTask;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error migrating Jobba database.");
+            throw;
+        }
     }
 }

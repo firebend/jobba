@@ -21,16 +21,17 @@ public class JobbaEfBuilder
 
     public JobbaEfBuilder WithDbInitializer<T>() where T : class, IJobbaDbInitializer
     {
-        // Builder.Services.AddHostedService<T>();
+        Builder.Services.TryAddSingleton<IJobbaDbInitializer, T>();
         return this;
     }
 
     private static void RegisterJobbaRequiredStores(JobbaBuilder jobbaBuilder)
     {
-        jobbaBuilder.Services.TryAddScoped<IJobListStore, JobbaEfJobListStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobProgressStore, JobbaEfJobProgressStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobStore, JobbaEfJobStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobCleanUpStore, JobbaEfCleanUpStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobRegistrationStore, JobbaEfJobRegistrationStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobListStore, JobbaEfJobListStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobProgressStore, JobbaEfJobProgressStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobStore, JobbaEfJobStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobCleanUpStore, JobbaEfCleanUpStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobRegistrationStore, JobbaEfJobRegistrationStore>();
+        jobbaBuilder.Services.TryAddTransient<IDbContextProvider, DefaultDbContextProvider>();
     }
 }

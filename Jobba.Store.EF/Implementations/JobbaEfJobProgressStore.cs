@@ -6,13 +6,13 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
-using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobba.Store.EF.Implementations;
 
 public class JobbaEfJobProgressStore(
-    JobbaDbContext dbContext,
+    IDbContextProvider dbContextProvider,
     IJobEventPublisher jobEventPublisher,
     IJobbaGuidGenerator guidGenerator)
     : IJobProgressStore
@@ -24,6 +24,7 @@ public class JobbaEfJobProgressStore(
         var entity = JobProgressEntity.FromJobProgress(jobProgress);
         entity.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
 
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var job = await dbContext.Jobs.FindAsync([jobProgress.JobId], cancellationToken);
 
         if (job == null)
@@ -46,5 +47,8 @@ public class JobbaEfJobProgressStore(
     }
 
     public async Task<JobProgressEntity?> GetProgressById(Guid id, CancellationToken cancellationToken)
-        => await dbContext.JobProgress.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        return await dbContext.JobProgress.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 }
