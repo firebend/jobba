@@ -78,10 +78,9 @@ public class JobbaEfJobRegistrationStore(
     }
 
 
-    private async Task<JobRegistration> GetTrackedJobRegistrationAsync(Guid registrationId,
+    private async Task<JobRegistration> GetTrackedJobRegistrationAsync(IJobbaDbContext dbContext, Guid registrationId,
         CancellationToken cancellationToken)
     {
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var registration = await dbContext.JobRegistrations.FindAsync([registrationId], cancellationToken);
 
         if (registration is null)
@@ -112,12 +111,11 @@ public class JobbaEfJobRegistrationStore(
             nextInvocationDate,
             previousInvocationDate);
 
-        var registration = await GetTrackedJobRegistrationAsync(registrationId, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var registration = await GetTrackedJobRegistrationAsync(dbContext, registrationId, cancellationToken);
 
         registration.NextExecutionDate = nextInvocationDate;
         registration.PreviousExecutionDate = previousInvocationDate;
-
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogDebug("Updated next and previous invocation dates for job {JobId} {Next} {Previous}",
@@ -137,9 +135,9 @@ public class JobbaEfJobRegistrationStore(
     {
         logger.LogDebug("Removing job registration {JobId}", id);
 
-        var deleted = await GetTrackedJobRegistrationAsync(id, cancellationToken);
-
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var deleted = await GetTrackedJobRegistrationAsync(dbContext, id, cancellationToken);
+
         dbContext.JobRegistrations.Remove(deleted);
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -152,12 +150,12 @@ public class JobbaEfJobRegistrationStore(
     {
         logger.LogDebug("Setting job registration {JobId} to inactive {IsInactive}", registrationId, isInactive);
 
-        var registration = await GetTrackedJobRegistrationAsync(registrationId, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var registration = await GetTrackedJobRegistrationAsync(dbContext, registrationId, cancellationToken);
 
         if (registration.IsInactive != isInactive)
         {
             registration.IsInactive = isInactive;
-            var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 

@@ -37,6 +37,11 @@ public class JobbaEfJobStore(
         var systemInfo = systemInfoProvider.GetSystemInfo();
         var job = JobEntity.FromRequest(jobRequest, jobRegistration.Id, systemInfo);
 
+        if (job.JobType == null)
+        {
+            job.JobType = jobRegistration.JobType.AssemblyQualifiedName;
+        }
+
         if (job.Id == Guid.Empty)
         {
             job.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
@@ -58,7 +63,8 @@ public class JobbaEfJobStore(
         where TJobState : IJobState
     {
         logger.LogDebug("Setting job {JobId} attempts to {Attempts}", jobId, attempts);
-        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
 
         if (job == null)
         {
@@ -67,7 +73,6 @@ public class JobbaEfJobStore(
 
         job.CurrentNumberOfTries = attempts;
 
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return job.ToJobInfo<TJobParams, TJobState>();
@@ -78,7 +83,7 @@ public class JobbaEfJobStore(
     {
         logger.LogDebug("Setting job {JobId} status to {Status}", jobId, status);
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
-        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
 
         if (job == null)
         {
@@ -94,7 +99,8 @@ public class JobbaEfJobStore(
     public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
     {
         logger.LogDebug("Logging failure for job {JobId}", jobId);
-        var job = await GetJobFromDbAsync(jobId, false, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
 
         if (job == null)
         {
@@ -104,13 +110,13 @@ public class JobbaEfJobStore(
         job.FaultedReason = ex.ToString();
         job.Status = JobStatus.Faulted;
 
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<JobInfoBase?> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var job = await GetJobFromDbAsync(jobId, true, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, true, cancellationToken);
         return job?.ToJobInfoBase();
     }
 
@@ -119,13 +125,14 @@ public class JobbaEfJobStore(
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        var job = await GetJobFromDbAsync(jobId, true, cancellationToken);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, true, cancellationToken);
         return job?.ToJobInfo<TJobParams, TJobState>();
     }
 
-    private async Task<JobEntity?> GetJobFromDbAsync(Guid jobId, bool asNoTracking, CancellationToken cancellationToken)
+    private async Task<JobEntity?> GetJobFromDbAsync(IJobbaDbContext dbContext, Guid jobId, bool asNoTracking,
+        CancellationToken cancellationToken)
     {
-        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var query = dbContext.Jobs.Where(x => x.Id == jobId);
 
         if (asNoTracking)
