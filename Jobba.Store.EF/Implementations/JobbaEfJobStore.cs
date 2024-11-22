@@ -37,10 +37,7 @@ public class JobbaEfJobStore(
         var systemInfo = systemInfoProvider.GetSystemInfo();
         var job = JobEntity.FromRequest(jobRequest, jobRegistration.Id, systemInfo);
 
-        if (job.JobType == null)
-        {
-            job.JobType = jobRegistration.JobType.AssemblyQualifiedName;
-        }
+        job.JobType ??= jobRegistration.JobType.AssemblyQualifiedName;
 
         if (job.Id == Guid.Empty)
         {

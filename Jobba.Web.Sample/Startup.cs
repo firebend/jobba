@@ -50,23 +50,23 @@ public class Startup
                 jobba.UsingMassTransit();
 
                 ResolveStore(Configuration, jobba);
-                    jobba.UsingLitRedis("localhost:6379,defaultDatabase=0")
-                    .UsingCron(cron =>
-                    {
-                        ///schedule a sample job running every 1 minute with default job parameters and state
-                        cron.AddCronJob<SampleCronJob, CronParameters, CronState>("* * * * *",
-                            "Sample Cron Job",
-                            "A Cron Job",
-                            TimeZoneInfo.Local,
-                            p =>
-                            {
-                                p.DefaultParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
-                                p.DefaultState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
-                            });
-                    })
-                    .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>("sample-job")
-                    .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>(
-                        "sample-faulted-job");
+                jobba.UsingLitRedis("localhost:6379,defaultDatabase=0")
+                .UsingCron(cron =>
+                {
+                    ///schedule a sample job running every 1 minute with default job parameters and state
+                    cron.AddCronJob<SampleCronJob, CronParameters, CronState>("* * * * *",
+                        "Sample Cron Job",
+                        "A Cron Job",
+                        TimeZoneInfo.Local,
+                        p =>
+                        {
+                            p.DefaultParams = new CronParameters { StartDate = DateTimeOffset.UtcNow };
+                            p.DefaultState = new CronState { Phrase = $"Hi {Guid.NewGuid()}" };
+                        });
+                })
+                .AddJob<SampleWebJob, SampleWebJobParameters, SampleWebJobState>("sample-job")
+                .AddJob<SampleFaultWebJob, SampleFaultWebJobParameters, SampleFaultWebJobState>(
+                    "sample-faulted-job");
             })
             .AddJobbaSampleMassTransit("rabbitmq://guest:guest@localhost/");
     }
