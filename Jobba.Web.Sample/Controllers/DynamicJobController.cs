@@ -25,7 +25,8 @@ public class DynamicJobController : ControllerBase
             "A dynamic job",
             null,
             new() { Greeting = $"Hello {Guid.NewGuid()}" },
-            new() { Tries = 1 });
+            new() { Tries = 1 },
+            TimeZoneInfo.Local.Id);
 
         var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 

@@ -25,7 +25,8 @@ public class DynamicCronJobController : ControllerBase
             "A dynamic cron job",
             "* * * * *",
             new() { StartDate = DateTimeOffset.UtcNow },
-            new() { Phrase = $"I Like Turtles {Guid.NewGuid()}" });
+            new() { Phrase = $"I Like Turtles {Guid.NewGuid()}" },
+            TimeZoneInfo.Local.Id);
 
         var result = await _jobOrchestrationService.OrchestrateJobAsync(request, cancellationToken);
 

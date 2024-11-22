@@ -39,6 +39,7 @@
     <None Update="appsettings.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Remove="jobba-sample.db" />
   </ItemGroup>
 
 </Project>
