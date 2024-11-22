@@ -5,6 +5,7 @@ using Jobba.Store.EF.Implementations;
 using Jobba.Store.EF.Interfaces;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace Jobba.Tests.EF;
 
@@ -36,7 +37,9 @@ public class EfTestContext : IDisposable
     {
         var context = CreateContext(enableLogging);
 
-        var provider = new DefaultDbContextProvider(context);
+        var serviceProvider = fixture.Freeze<Mock<IServiceProvider>>();
+        serviceProvider.Setup(x => x.GetService(typeof(JobbaDbContext))).Returns(context);
+        var provider = new DefaultDbContextProvider(serviceProvider.Object);
         fixture.Inject<IDbContextProvider>(provider);
 
         return context;
