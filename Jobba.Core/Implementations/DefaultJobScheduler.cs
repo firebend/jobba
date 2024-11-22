@@ -160,6 +160,15 @@ public class DefaultJobScheduler : IJobScheduler, IDisposable
             return false;
         }
 
+        if (registration.JobType is null)
+        {
+            _logger.LogCritical("Job type is null. Job Registration Id {JobRegistrationId} Job Name {JobName}",
+                registration.Id,
+                registration.JobName);
+
+            return false;
+        }
+
         if (registration.JobType != jobType)
         {
             _logger.LogCritical("Job type mismatch. Job Registration Id {JobRegistrationId}. Expected {RegistrationJobType}. Actual {JobType}",

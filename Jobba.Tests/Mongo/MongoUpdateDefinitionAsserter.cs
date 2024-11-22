@@ -21,9 +21,10 @@ public class MongoUpdateDefinitionAsserter<T>
     private string _json;
     private BsonDocument _setDoc;
 
-    public string Json => _json ??= _updateDefinition.Render(
-            BsonSerializer.SerializerRegistry.GetSerializer<T>(),
-            BsonSerializer.SerializerRegistry)
+    public string Json => _json ??= _updateDefinition.Render(new RenderArgs<T>(
+                BsonSerializer.SerializerRegistry.GetSerializer<T>(),
+                BsonSerializer.SerializerRegistry)
+        )
         .ToBsonDocument()
         .ToString();
 
