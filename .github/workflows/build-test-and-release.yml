@@ -39,13 +39,13 @@ jobs:
         run: dotnet pack **/Jobba.Store.Mongo.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
-        run: dotnet pack **/Jobba.EF.csproj --configuration Release --output out/pack --no-build
+        run: dotnet pack **/Jobba.Store.EF.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
-        run: dotnet pack **/Jobba.EF.Sql.csproj --configuration Release --output out/pack --no-build
+        run: dotnet pack **/Jobba.Store.EF.Sql.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
-        run: dotnet pack **/Jobba.EF.Sqlite.csproj --configuration Release --output out/pack --no-build
+        run: dotnet pack **/Jobba.Store.EF.Sqlite.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
         run: dotnet pack **/Jobba.Cron.csproj --configuration Release --output out/pack --no-build
