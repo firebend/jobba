@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-    <PackageReference Include="MassTransit.Newtonsoft" Version="8.2.5" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.1" />
+    <PackageReference Include="MassTransit.Newtonsoft" Version="8.3.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,7 +15,14 @@
     <ProjectReference Include="..\Jobba.Cron\Jobba.Cron.csproj" />
     <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
     <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF.Sqlite\Jobba.Store.EF.Sqlite.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF.Sql\Jobba.Store.EF.Sql.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF\Jobba.Store.EF.csproj" />
     <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="jobba-sample.db" />
   </ItemGroup>
 
 </Project>

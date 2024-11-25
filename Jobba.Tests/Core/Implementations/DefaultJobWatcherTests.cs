@@ -28,8 +28,8 @@ public class DefaultJobWatcherTests
         fixture.Customize(new AutoMoqCustomization());
 
         var mockJobStore = fixture.Freeze<Mock<IJobStore>>();
-        mockJobStore.Setup(x => x.GetJobByIdAsync<FooParams, FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<FooParams, FooState>
+        mockJobStore.Setup(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>
             {
                 JobWatchInterval = timeSpan,
                 Id = jobId,
@@ -40,18 +40,18 @@ public class DefaultJobWatcherTests
         mockPublisher.Setup(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var watcher = fixture.Create<DefaultJobWatcher<FooParams, FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
 
         //assert
-        mockJobStore.Verify(x => x.GetJobByIdAsync<FooParams, FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
+        mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
 
         mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.Is<JobWatchEvent>(e =>
                 e.JobId == jobId &&
-                e.ParamsTypeName == typeof(FooParams).AssemblyQualifiedName &&
-                e.StateTypeName == typeof(FooState).AssemblyQualifiedName),
+                e.ParamsTypeName == typeof(TestModels.FooParams).AssemblyQualifiedName &&
+                e.StateTypeName == typeof(TestModels.FooState).AssemblyQualifiedName),
             It.Is<TimeSpan>(t => t == timeSpan),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -66,8 +66,8 @@ public class DefaultJobWatcherTests
         fixture.Customize(new AutoMoqCustomization());
 
         var mockJobStore = fixture.Freeze<Mock<IJobStore>>();
-        mockJobStore.Setup(x => x.GetJobByIdAsync<FooParams, FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<FooParams, FooState>
+        mockJobStore.Setup(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>
             {
                 JobWatchInterval = timeSpan,
                 Id = jobId,
@@ -78,13 +78,13 @@ public class DefaultJobWatcherTests
         mockPublisher.Setup(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var watcher = fixture.Create<DefaultJobWatcher<FooParams, FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
 
         //assert
-        mockJobStore.Verify(x => x.GetJobByIdAsync<FooParams, FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
+        mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
         mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -99,8 +99,8 @@ public class DefaultJobWatcherTests
         fixture.Customize(new AutoMoqCustomization());
 
         var mockJobStore = fixture.Freeze<Mock<IJobStore>>();
-        mockJobStore.Setup(x => x.GetJobByIdAsync<FooParams, FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<FooParams, FooState>
+        mockJobStore.Setup(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>
             {
                 JobWatchInterval = timeSpan,
                 Id = jobId,
@@ -109,8 +109,8 @@ public class DefaultJobWatcherTests
                 MaxNumberOfTries = 3,
                 JobType = typeof(object).AssemblyQualifiedName,
                 Description = "Fake",
-                CurrentState = new FooState { Foo = "fake state" },
-                JobParameters = new FooParams { Foo = "fake params" }
+                CurrentState = new TestModels.FooState { Bar = "fake state" },
+                JobParameters = new TestModels.FooParams { Baz = "fake params" }
             });
 
         var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
@@ -118,8 +118,8 @@ public class DefaultJobWatcherTests
             .Returns(Task.CompletedTask);
 
         var mockJobScheduler = fixture.Freeze<Mock<IJobScheduler>>();
-        mockJobScheduler.Setup(x => x.ScheduleJobAsync(It.IsAny<JobRequest<FooParams, FooState>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobInfo<FooParams, FooState>
+        mockJobScheduler.Setup(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>
             {
                 JobWatchInterval = timeSpan,
                 Id = jobId,
@@ -128,41 +128,31 @@ public class DefaultJobWatcherTests
                 MaxNumberOfTries = 3,
                 JobType = typeof(object).FullName,
                 Description = "Fake",
-                CurrentState = new FooState { Foo = "fake state" },
-                JobParameters = new FooParams { Foo = "fake params" }
+                CurrentState = new TestModels.FooState { Bar = "fake state" },
+                JobParameters = new TestModels.FooParams { Baz = "fake params" }
             });
 
-        var watcher = fixture.Create<DefaultJobWatcher<FooParams, FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
 
         //assert
-        mockJobStore.Verify(x => x.GetJobByIdAsync<FooParams, FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
+        mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
         mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
             Times.Never);
         mockJobScheduler.Verify(x => x.ScheduleJobAsync(
-                It.Is<JobRequest<FooParams, FooState>>(request =>
+                It.Is<JobRequest<TestModels.FooParams, TestModels.FooState>>(request =>
                     request.JobId == jobId &&
                     request.IsRestart &&
                     request.JobType == typeof(object) &&
                     request.Description == "Fake" &&
                     request.JobWatchInterval == TimeSpan.FromSeconds(10) &&
                     request.NumberOfTries == 2 &&
-                    request.JobParameters.Foo == "fake params" &&
-                    request.InitialJobState.Foo == "fake state"
+                    request.JobParameters.Baz == "fake params" &&
+                    request.InitialJobState.Bar == "fake state"
                 ),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-    }
-
-    public class FooParams : IJobParams
-    {
-        public string Foo { get; set; }
-    }
-
-    public class FooState : IJobState
-    {
-        public string Foo { get; set; }
     }
 }

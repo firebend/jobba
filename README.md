@@ -1,14 +1,197 @@
-- [jobba](#jobba)
-- [Setup](#setup)
-- [Usage](#usage)
-    - [ScheduleJobAsync](#schedulejobasync)
-    - [CancelJobAsync](#canceljobasync)
+<!-- TOC -->
+* [jobba](#jobba)
+  * [Stores](#stores)
+    * [InMemory](#inmemory)
+    * [Mongo](#mongo)
+    * [EFCore](#efcore)
+      * [SqlServer](#sqlserver)
+      * [Sqlite](#sqlite)
+      * [Other providers](#other-providers)
+    * [Custom](#custom)
+  * [Locks](#locks)
+    * [InMemory](#inmemory-1)
+    * [Redis](#redis)
+    * [Custom](#custom-1)
+  * [Event Publishers](#event-publishers)
+    * [InMemory](#inmemory-2)
+    * [MassTransit](#masstransit)
+    * [Custom](#custom-2)
+  * [Setup](#setup)
+* [Usage](#usage)
+  * [ScheduleJobAsync](#schedulejobasync)
+  * [CancelJobAsync](#canceljobasync)
+<!-- TOC -->
 
 # jobba
 
 A durable job scheduling platform for dotnet
 
-# Setup
+## Stores
+
+### InMemory
+
+The in-memory store is useful for testing and development. It is not recommended for production use.
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingInMemory();
+```
+
+### Mongo
+
+To use the Mongo store, install the `Jobba.Store.Mongo` package
+
+```bash
+dotnet add package Jobba.Store.Mongo
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing the connection string and a boolean to enable or 
+disable command logging. There is also an optional third parameter to allow for additional configuration of the Mongo 
+store using the [JobbaMongoBuilder.cs](Jobba.Store.Mongo%2FBuilders%2FJobbaMongoBuilder.cs).
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingMongo(config.GetConnectionString("MongoDb"), false);
+```
+
+### EFCore
+
+To use the EFCore store, install the `Jobba.Store.EFCore` package
+
+```bash
+dotnet add package Jobba.Store.EFCore
+```
+
+There are currently 2 supported EF providers maintained by this library.
+
+#### SqlServer
+
+To use the SqlServer provider, install the `Jobba.Store.EFCore.Sql` package
+
+```bash
+dotnet add package Jobba.Store.EFCore.Sql
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, and optional actions to provide
+additional configuration of the `DbContextOptionsBuilder`, `SqlServerDbContextOptionsBuilder`. and the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingSqlServer(config.GetConnectionString("SqlServer"),
+                    options =>
+                    {
+                        options.EnableSensitiveDataLogging();
+                        options.EnableDetailedErrors();
+                    }, configureBuilder: jb => jb.WithDbInitializer());
+```
+
+#### Sqlite
+
+To use the Sqlite provider, install the `Jobba.Store.EFCore.Sqlite` package
+
+```bash
+dotnet add package Jobba.Store.EFCore.Sqlite
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing the connection string, and optional actions to provide
+additional configuration of the `DbContextOptionsBuilder`, `SqliteDbContextOptionsBuilder`, and the [JobbaEfBuilder.cs](Jobba.Store.EF%2FBuilders%2FJobbaEfBuilder.cs).
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingSqlite(config.GetConnectionString("Sqlite"),
+                 options =>
+                 {
+                     options.EnableSensitiveDataLogging();
+                     options.EnableDetailedErrors();
+                 }, configureBuilder: jb => jb.WithDbInitializer());
+```
+
+#### Other providers
+
+To use a different EF provider, you will need to manage the configuration and migrations yourself. You can refer to the
+SqlServer and Sqlite implementations for guidance. [JobbaEfBuilderExtensions.cs](Jobba.Store.EF.Sql%2Fextensions%2FJobbaEfBuilderExtensions.cs)
+
+### Custom
+
+The following interfaces must be registered in the DI container for your custom store:
+- [IJobListStore.cs](Jobba.Core%2FInterfaces%2FRepositories%2FIJobListStore.cs)
+- [IJobProgressStore.cs](Jobba.Core%2FInterfaces%2FRepositories%2FIJobProgressStore.cs)
+- [IJobProgressStore.cs](Jobba.Core%2FInterfaces%2FRepositories%2FIJobProgressStore.cs)
+- [IJobProgressStore.cs](Jobba.Core%2FInterfaces%2FRepositories%2FIJobProgressStore.cs)
+- [IJobProgressStore.cs](Jobba.Core%2FInterfaces%2FRepositories%2FIJobProgressStore.cs)
+
+You can refer to the [InMemory implementation](Jobba.Core%2FBuilders%2FJobbaInMemoryBuilder.cs) for an example of how to implement these interfaces.
+
+## Locks
+
+Locking ensures that only one instance of a job is running at a time.
+
+### InMemory
+
+The in-memory lock is useful for testing and development. It is registered by default when using the `JobbaBuilder`.
+Only use in production if you have a single instance of your application.
+
+### Redis
+
+This will use the [lit-redis](https://github.com/firebend/lit-redis) library which will allow for distributed locking 
+across multiple instances of your application.
+
+To use the Redis lock, install the `Jobba.Redis` package
+
+```bash
+dotnet add package Jobba.Redis
+```
+
+Then add the following to your `JobbaBuilder` configuration, providing your connection string.
+
+```csharp
+var jobba = new JobbaBuilder(serviceCollection, "sample")
+    .UsingLitRedis(config.GetConnectionString("Redis"));
+```
+
+### Custom
+
+The following interface must be registered in the DI container for your custom lock:
+
+- [IJobLockService.cs](Jobba.Core%2FInterfaces%2FIJobLockService.cs)
+
+You can refer to the [InMemory implementation](Jobba.Core%2FImplementations%2FDefaultJobLockService.cs) for an example of how to implement this interface.
+
+## Event Publishers
+
+Jobba publishes various events to allow for monitoring and logging of job progress.
+
+The events published are:
+- [CancelJobEvent.cs](Jobba.Core%2FEvents%2FCancelJobEvent.cs)
+- [JobWatchEvent.cs](Jobba.Core%2FEvents%2FJobWatchEvent.cs)
+- [JobCancelledEvent.cs](Jobba.Core%2FEvents%2FJobCancelledEvent.cs)
+- [JobCompletedEvent.cs](Jobba.Core%2FEvents%2FJobCompletedEvent.cs)
+- [JobFaultedEvent.cs](Jobba.Core%2FEvents%2FJobFaultedEvent.cs)
+- [JobProgressEvent.cs](Jobba.Core%2FEvents%2FJobProgressEvent.cs)
+- [JobRestartEvent.cs](Jobba.Core%2FEvents%2FJobRestartEvent.cs)
+- [JobStartedEvent.cs](Jobba.Core%2FEvents%2FJobStartedEvent.cs)
+
+### InMemory
+
+The in-memory event publisher is useful for testing and development. It is registered by default when using the `JobbaBuilder`.
+Only use in production if you have a single instance of your application.
+
+### MassTransit
+
+This will use the [MassTransit](https://github.com/MassTransit/MassTransit) library to facilitate event publishing.
+By using MassTransit, you can publish events to a message broker such as RabbitMQ or Azure Service Bus allowing for distributed
+event handling.
+
+### Custom
+
+The following interface must be registered in the DI container for your custom event publisher:
+
+- [IJobEventPublisher.cs](Jobba.Core%2FInterfaces%2FIJobEventPublisher.cs)
+
+You must also register consumers for each event published by Jobba. You can refer to the 
+[JobbaMassTransitBuilderExtensions.cs](Jobba.MassTransit%2Fextensions%2FJobbaMassTransitBuilderExtensions.cs) for an example of how to implement this interface.
+
+## Setup
 
 Check out the [Sample project](https://github.com/firebend/jobba/tree/main/Jobba.Sample) for a working example.
 
@@ -92,7 +275,7 @@ namespace Jobba.Sample
       .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
       .AddJobba(jobba =>
         jobba.UsingMassTransit() // use MassTransit as an event bus
-          .UsingMongo("mongodb://localhost:27017/jobba-sample", false) // Mongo currently is the only supported data store
+          .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
           .UsingLitRedis("localhost:6379,defaultDatabase=0") // Use LitRedis for distributed locking
           .AddJob<SampleJob, SampleJobParameters, SampleJobState>() // `AddJob<SampleJob, object, object>` if not using state or parameters
         )
@@ -197,3 +380,4 @@ Use the job's ID and the provided cancellation token to cancel a scheduled or ru
       await _jobScheduler.CancelJobAsync(request.Id, stoppingToken);
    }
 ```
+

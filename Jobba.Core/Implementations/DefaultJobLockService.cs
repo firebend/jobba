@@ -30,8 +30,8 @@ public class DefaultJobLockService : IJobLockService
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public async Task<SystemLockResult> LockSystemAsync(string systemMoniker, TimeSpan span, CancellationToken cancellationToken)
     {
-        var result = await AsyncKeyedSystemLocker.LockAsync(systemMoniker, span, cancellationToken);
+        var result = await AsyncKeyedSystemLocker.LockOrNullAsync(systemMoniker, span, cancellationToken);
 
-        return new(result.EnteredSemaphore, result);
+        return new SystemLockResult(result is not null, result);
     }
 }

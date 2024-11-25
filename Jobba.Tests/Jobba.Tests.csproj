@@ -7,23 +7,25 @@
 
   <ItemGroup>
     <PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
-    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+    <PackageReference Include="FluentAssertions" Version="6.12.2" />
     <PackageReference Include="GitHubActionsTestLogger" Version="2.4.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.6.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Neleus.LambdaCompare" Version="1.0.3" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +33,8 @@
     <ProjectReference Include="..\Jobba.Cron\Jobba.Cron.csproj" />
     <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
     <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF.Sqlite\Jobba.Store.EF.Sqlite.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF\Jobba.Store.EF.csproj" />
     <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
   </ItemGroup>
 

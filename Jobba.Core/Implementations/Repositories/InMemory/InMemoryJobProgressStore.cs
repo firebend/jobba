@@ -22,6 +22,16 @@ public class InMemoryJobProgressStore : IJobProgressStore
         var entity = JobProgressEntity.FromJobProgress(jobProgress);
         entity.Id = entity.Id.Coalesce();
         InMemoryJobProgressStoreCache.Progress.GetOrAdd(entity.Id, entity);
+
+        if (!InMemoryJobStoreCache.Jobs.TryGetValue(entity.JobId, out var job))
+        {
+            throw new InvalidOperationException($"Job with id {entity.JobId} not found.");
+        }
+
+        job.JobState = jobProgress.JobState;
+        job.LastProgressDate = jobProgress.Date;
+        job.LastProgressPercentage = jobProgress.Progress;
+
         return Task.CompletedTask;
     }
 

@@ -6,12 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-    <PackageReference Include="MassTransit.Newtonsoft" Version="8.2.5" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.1" />
+    <PackageReference Include="MassTransit.Newtonsoft" Version="8.3.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
 
   </ItemGroup>
@@ -21,6 +26,9 @@
     <ProjectReference Include="..\Jobba.Cron\Jobba.Cron.csproj" />
     <ProjectReference Include="..\Jobba.MassTransit\Jobba.MassTransit.csproj" />
     <ProjectReference Include="..\Jobba.Redis\Jobba.Redis.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF\Jobba.Store.EF.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF.Sqlite\Jobba.Store.EF.Sqlite.csproj" />
+    <ProjectReference Include="..\Jobba.Store.EF.Sql\Jobba.Store.EF.Sql.csproj" />
     <ProjectReference Include="..\Jobba.Store.Mongo\Jobba.Store.Mongo.csproj" />
   </ItemGroup>
 
@@ -31,6 +39,7 @@
     <None Update="appsettings.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Remove="jobba-sample.db" />
   </ItemGroup>
 
 </Project>

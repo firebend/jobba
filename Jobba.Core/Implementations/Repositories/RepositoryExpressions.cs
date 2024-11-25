@@ -8,7 +8,8 @@ namespace Jobba.Core.Implementations.Repositories;
 public static class RepositoryExpressions
 {
     public static readonly Expression<Func<JobEntity, bool>> JobRetryExpression =
-        x => x.Status != JobStatus.Completed && x.Status != JobStatus.Cancelled && !x.IsOutOfRetry;
+        x => (x.Status == JobStatus.Faulted || x.Status == JobStatus.ForceCancelled || x.Status == JobStatus.Unknown) &&
+             !x.IsOutOfRetry;
 
     public static readonly Expression<Func<JobEntity, bool>> JobsInProgressExpression =
         x => x.Status == JobStatus.InProgress || x.Status == JobStatus.Enqueued;
@@ -18,7 +19,7 @@ public static class RepositoryExpressions
         Expression<Func<JobEntity, bool>> filter =
             x => x.Status != JobStatus.Enqueued &&
                  x.Status != JobStatus.InProgress &&
-                 x.LastProgressDate <= date;
+                 date.CompareTo(x.LastProgressDate) > 0;
 
         return filter;
     }
