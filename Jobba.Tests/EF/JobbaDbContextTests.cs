@@ -46,6 +46,7 @@ public class JobbaDbContextTests
         var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
             "Test",
             "Test",
+            "Test",
             "0 0 0 1 1 ? 2099",
             new TestModels.FooParams { Baz = "baz" },
             new TestModels.FooState { Bar = "bar" },

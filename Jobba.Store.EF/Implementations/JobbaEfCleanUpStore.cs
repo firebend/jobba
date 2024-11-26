@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Implementations.Repositories;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Store.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace Jobba.Store.EF.Implementations;
 
 public class JobbaEfCleanUpStore(
     IDbContextProvider dbContextProvider,
+    IJobSystemInfoProvider systemInfoProvider,
     ILogger<JobbaEfCleanUpStore> logger)
     : IJobCleanUpStore
 {
@@ -21,7 +23,7 @@ public class JobbaEfCleanUpStore(
 
         logger.LogDebug("Cleaning up jobs that have a last progress data <= {Date}", date);
 
-        var filter = RepositoryExpressions.GetCleanUpExpression(date);
+        var filter = RepositoryExpressions.GetCleanUpExpression(systemInfoProvider.GetSystemInfo(), date);
 
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         var jobsToDelete = await dbContext.Jobs.Where(filter).ToListAsync(cancellationToken);

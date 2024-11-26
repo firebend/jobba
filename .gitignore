@@ -357,3 +357,5 @@ MigrationBackup/
 .idea/*
 
 dist/
+**/*/jobba-sample.db
+**/*/jobba-sample.db-*

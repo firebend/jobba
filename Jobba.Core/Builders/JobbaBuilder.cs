@@ -73,7 +73,8 @@ public class JobbaBuilder
             Description = description,
             JobType = typeof(TJob),
             JobParamsType = typeof(TJobParams),
-            JobStateType = typeof(TJobState)
+            JobStateType = typeof(TJobState),
+            SystemMoniker = _systemMoniker
         };
 
         configureRegistration?.Invoke(registration);
