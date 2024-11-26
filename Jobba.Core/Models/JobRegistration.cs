@@ -19,7 +19,7 @@ public class JobRegistration : IJobbaEntity
     /// <summary>
     /// The Job's Name
     /// </summary>
-    public string JobName { get; set; }
+    public required string JobName { get; set; }
 
     /// <summary>
     /// The type of job to register
@@ -82,6 +82,11 @@ public class JobRegistration : IJobbaEntity
     public bool IsInactive { get; set; }
 
     /// <summary>
+    /// The system moniker the job is associated with.
+    /// </summary>
+    public required string SystemMoniker { get; set; }
+
+    /// <summary>
     /// The time zone id to use for the job. Must be resolvable by <see cref="TimeZoneInfo.FindSystemTimeZoneById"/>.
     /// </summary>
     public string TimeZoneId
@@ -96,7 +101,9 @@ public class JobRegistration : IJobbaEntity
 
     public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC");
 
-    public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(string name,
+    public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(
+        string systemMoniker,
+        string name,
         string description = default,
         string cron = default,
         TJobParams defaultJobParams = default,
@@ -107,6 +114,7 @@ public class JobRegistration : IJobbaEntity
         where TJobParams : IJobParams
         where TJobState : IJobState => new()
         {
+            SystemMoniker = systemMoniker,
             JobName = name,
             JobType = typeof(TJob),
             JobParamsType = typeof(TJobParams),

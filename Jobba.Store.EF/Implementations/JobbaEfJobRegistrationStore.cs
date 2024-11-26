@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -15,9 +16,12 @@ namespace Jobba.Store.EF.Implementations;
 public class JobbaEfJobRegistrationStore(
     IDbContextProvider dbContextProvider,
     IJobbaGuidGenerator guidGenerator,
+    IJobSystemInfoProvider systemInfoProvider,
     ILogger<JobbaEfJobRegistrationStore> logger)
     : IJobRegistrationStore
 {
+    private readonly JobSystemInfo _systemInfo = systemInfoProvider.GetSystemInfo();
+
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration,
         CancellationToken cancellationToken)
     {
@@ -40,6 +44,7 @@ public class JobbaEfJobRegistrationStore(
             existing.DefaultParams = registration.DefaultParams;
             existing.Description = registration.Description;
             existing.TimeZoneId = registration.TimeZoneId;
+            existing.SystemMoniker = registration.SystemMoniker;
 
             if (registration.CronExpression is not null && registration.CronExpression != existing.CronExpression)
             {
@@ -96,7 +101,7 @@ public class JobbaEfJobRegistrationStore(
     {
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
         return await dbContext.JobRegistrations
-            .Where(x => x.CronExpression != null && x.CronExpression != "" && x.IsInactive != true)
+            .Where(RepositoryExpressions.GetCronJobRegistrationsExpression(_systemInfo))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -127,7 +132,8 @@ public class JobbaEfJobRegistrationStore(
     public async Task<JobRegistration?> GetByJobNameAsync(string name, CancellationToken cancellationToken)
     {
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
-        return await dbContext.JobRegistrations.Where(x => x.JobName == name).AsNoTracking()
+        return await dbContext.JobRegistrations.Where(RepositoryExpressions.GetJobByNameExpression(_systemInfo, name))
+            .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
     }
 

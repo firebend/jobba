@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 
 namespace Jobba.Core.Implementations.Repositories.InMemory;
 
-public class InMemoryJobCleanUpStore : IJobCleanUpStore
+public class InMemoryJobCleanUpStore(IJobSystemInfoProvider systemInfoProvider) : IJobCleanUpStore
 {
     public Task CleanUpJobsAsync(TimeSpan duration, CancellationToken cancellationToken)
     {
         var date = DateTimeOffset.UtcNow.Subtract(duration);
-        var filter = RepositoryExpressions.GetCleanUpExpression(date);
+        var filter = RepositoryExpressions.GetCleanUpExpression(systemInfoProvider.GetSystemInfo(), date);
 
         var jobIds = InMemoryJobStoreCache.Jobs.Values
             .Where(filter.Compile())
