@@ -182,12 +182,15 @@ namespace Jobba.Store.EF.Sqlite.Migrations
                     b.Property<DateTimeOffset?>("PreviousExecutionDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SystemMoniker")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("TimeZoneId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("JobName")
+                    b.HasIndex("JobName", "SystemMoniker")
                         .IsUnique();
 
                     b.ToTable("JobRegistrations", "jobba");

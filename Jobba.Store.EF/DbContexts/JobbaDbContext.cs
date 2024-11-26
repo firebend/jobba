@@ -49,7 +49,7 @@ public class JobbaDbContext : DbContext, IJobbaDbContext
         var builder = modelBuilder.Entity<JobRegistration>();
         builder.ToTable("JobRegistrations", JobbaSchema);
 
-        builder.HasIndex(x => x.JobName).IsUnique();
+        builder.HasIndex(x => new { x.JobName, x.SystemMoniker }).IsUnique();
 
         builder.Property(x => x.JobType).HasConversion<EfTypeConverter>();
         builder.Property(x => x.JobParamsType).HasConversion<EfTypeConverter>();

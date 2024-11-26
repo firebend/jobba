@@ -42,7 +42,7 @@ public static class RepositoryExpressions
         JobSystemInfo systemInfo, string jobName)
     {
         Expression<Func<JobRegistration, bool>> filter =
-            x => x.SystemMoniker == systemInfo.SystemMoniker &&
+            x => (x.SystemMoniker == systemInfo.SystemMoniker || x.SystemMoniker == null) &&
                  x.JobName == jobName;
 
         return filter;
