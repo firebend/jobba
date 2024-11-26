@@ -6,7 +6,7 @@ using Jobba.Core.Models.Entities;
 
 namespace Jobba.Tests;
 
-public static  class TestExtensions
+public static class TestExtensions
 {
     public static IPostprocessComposer<JobRegistration> JobRegistrationBuilder(this IFixture fixture)
     {
