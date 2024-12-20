@@ -21,6 +21,7 @@ public static class JobbaEfBuilderExtensions
             x =>
             {
                 x.MigrationsAssembly(typeof(MigrationsContextFactory).Assembly.GetName().Name!);
+                x.MigrationsHistoryTable("__EFMigrationsHistory", JobbaDbContext.JobbaSchema);
                 configureSqlite?.Invoke(x);
             });
 
