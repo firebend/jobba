@@ -73,6 +73,7 @@ public class Startup
 
     private static void ResolveStore(IConfiguration config, JobbaBuilder jobba)
     {
+        // dotnet run -- --provider=<provider>
         var provider = config.GetValue("provider", StoreProviders.SqlServer);
         Console.WriteLine("Using provider: " + provider);
         switch (provider)
