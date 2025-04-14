@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.6" />
-    <PackageReference Include="MassTransit.Newtonsoft" Version="8.3.6" />
+    <PackageReference Include="MassTransit.Newtonsoft" Version="8.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.0" />
   </ItemGroup>
 
