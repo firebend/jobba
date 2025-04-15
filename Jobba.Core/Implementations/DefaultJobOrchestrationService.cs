@@ -7,17 +7,9 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultJobOrchestrationService : IJobOrchestrationService
+public class DefaultJobOrchestrationService(IJobSystemInfoProvider systemInfoProvider, IJobRegistrationStore jobRegistrationStore, IJobScheduler jobScheduler)
+    : IJobOrchestrationService
 {
-    private readonly IJobRegistrationStore _jobRegistrationStore;
-    private readonly IJobScheduler _jobScheduler;
-
-    public DefaultJobOrchestrationService(IJobRegistrationStore jobRegistrationStore, IJobScheduler jobScheduler)
-    {
-        _jobRegistrationStore = jobRegistrationStore;
-        _jobScheduler = jobScheduler;
-    }
-
     public async Task<JobOrchestrationResult> OrchestrateJobAsync<TJob, TParams, TState>(JobOrchestrationRequest<TJob, TParams, TState> request,
         CancellationToken cancellationToken)
         where TJob : IJob<TParams, TState>
@@ -25,6 +17,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
         where TState : IJobState
     {
         var registration = JobRegistration.FromTypes<TJob, TParams, TState>(
+            systemInfoProvider.GetSystemInfo().SystemMoniker,
             request.JobName,
             request.Description,
             request.Cron,
@@ -33,7 +26,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             request.IsInactive,
             request.TimeZone);
 
-        var created = await _jobRegistrationStore.RegisterJobAsync(registration, cancellationToken);
+        var created = await jobRegistrationStore.RegisterJobAsync(registration, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(request.Cron) is false)
         {
@@ -56,7 +49,7 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
             return new(created, null);
         }
 
-        var jobInfo = await _jobScheduler.ScheduleJobAsync(
+        var jobInfo = await jobScheduler.ScheduleJobAsync(
             created.Id,
             request.DefaultJobParams,
             request.DefaultJobState,
@@ -66,8 +59,8 @@ public class DefaultJobOrchestrationService : IJobOrchestrationService
     }
 
     public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken)
-        => _jobRegistrationStore.RemoveByIdAsync(jobRegistrationId, cancellationToken);
+        => jobRegistrationStore.RemoveByIdAsync(jobRegistrationId, cancellationToken);
 
     public Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken)
-        => _jobRegistrationStore.SetIsInactiveAsync(jobRegistrationId, isInactive, cancellationToken);
+        => jobRegistrationStore.SetIsInactiveAsync(jobRegistrationId, isInactive, cancellationToken);
 }

@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 using Jobba.Store.EF.Implementations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Jobba.Tests.EF;
 
@@ -23,6 +25,8 @@ public class JobbaEfCleanUpStoreTests
     {
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
+        _fixture.Freeze<Mock<IJobSystemInfoProvider>>().Setup(x => x.GetSystemInfo())
+            .Returns(TestModels.TestSystemInfo);
 
         _testContext = new EfTestContext();
     }
@@ -39,21 +43,12 @@ public class JobbaEfCleanUpStoreTests
         //arrange
         await using var dbContext = _testContext.CreateContext(_fixture);
 
-        var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
-            "Test",
-            "Test",
-            "0 0 0 1 1 ? 2099",
-            new TestModels.FooParams { Baz = "baz" },
-            new TestModels.FooState { Bar = "bar" },
-            false,
-            null);
-        jobRegistration.Id = Guid.NewGuid();
+        var jobRegistration = _fixture.JobRegistrationBuilder()
+            .With(x => x.Id, Guid.NewGuid).Create();
+
         dbContext.JobRegistrations.Add(jobRegistration);
 
-        var jobEntities = _fixture.Build<JobEntity>()
-            .With(x => x.JobRegistrationId, jobRegistration.Id)
-            .With(x => x.JobParameters, new TestModels.FooParams { Baz = "baz" })
-            .With(x => x.JobState, new TestModels.FooState { Bar = "bar" })
+        var jobEntities = _fixture.JobBuilder(jobRegistration.Id)
             .CreateMany(5)
             .ToList();
 

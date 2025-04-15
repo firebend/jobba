@@ -15,14 +15,10 @@ public static class DefaultJobRegistrationStoreCache
     public static ConcurrentDictionary<Guid, JobRegistration> Registrations { get; } = new();
 }
 
-public class InMemoryJobRegistrationStore : IJobRegistrationStore
+public class InMemoryJobRegistrationStore(IJobbaGuidGenerator guidGenerator, IJobSystemInfoProvider systemInfoProvider)
+    : IJobRegistrationStore
 {
-    private readonly IJobbaGuidGenerator _guidGenerator;
-
-    public InMemoryJobRegistrationStore(IJobbaGuidGenerator guidGenerator)
-    {
-        _guidGenerator = guidGenerator;
-    }
+    private readonly JobSystemInfo _systemInfo = systemInfoProvider.GetSystemInfo();
 
     private static Task<JobRegistration> Update(Guid id, Action<JobRegistration> update)
     {
@@ -38,7 +34,8 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         return Task.FromResult(registration);
     }
 
-    public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
+    public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration,
+        CancellationToken cancellationToken)
     {
         var existing = DefaultJobRegistrationStoreCache.Registrations
             .FirstOrDefault(x => x.Value.JobName == registration.JobName)
@@ -64,7 +61,7 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
         {
             if (registration.Id == Guid.Empty)
             {
-                registration.Id = await _guidGenerator.GenerateGuidAsync(cancellationToken);
+                registration.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
             }
         }
 
@@ -80,10 +77,8 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
     public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
         => Task.FromResult(
-            DefaultJobRegistrationStoreCache.Registrations
-                .Where(x => string.IsNullOrWhiteSpace(x.Value.CronExpression) is false)
-                .Where(x => x.Value.IsInactive is false)
-                .Select(x => x.Value)
+            DefaultJobRegistrationStoreCache.Registrations.Values
+                .Where(RepositoryExpressions.GetCronJobRegistrationsExpression(_systemInfo).Compile())
                 .ToArray()
                 .AsEnumerable());
 
@@ -99,16 +94,18 @@ public class InMemoryJobRegistrationStore : IJobRegistrationStore
 
     public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken)
     {
-        var registration = DefaultJobRegistrationStoreCache.Registrations
-            .FirstOrDefault(x => x.Value.JobName == name)
-            .Value;
+        var registration = DefaultJobRegistrationStoreCache.Registrations.Values
+            .FirstOrDefault(RepositoryExpressions.GetJobByNameExpression(_systemInfo, name).Compile());
 
         return Task.FromResult(registration);
     }
 
     public Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
-        => Task.FromResult(DefaultJobRegistrationStoreCache.Registrations.TryRemove(id, out var registration) ? registration : null);
+        => Task.FromResult(DefaultJobRegistrationStoreCache.Registrations.TryRemove(id, out var registration)
+            ? registration
+            : null);
 
-    public Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken)
+    public Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive,
+        CancellationToken cancellationToken)
         => Update(registrationId, registration => registration.IsInactive = isInactive);
 }

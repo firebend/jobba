@@ -31,7 +31,8 @@ public class ServiceProviderCustomization : ICustomization
                     JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
                     JobParamsType = typeof(DefaultJobParams),
                     JobStateType = typeof(DefaultJobState),
-                    JobName = "fake job"
+                    JobName = "fake job",
+                    SystemMoniker = "fake system"
                 }
             });
         }

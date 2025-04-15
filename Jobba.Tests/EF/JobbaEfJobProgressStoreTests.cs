@@ -46,15 +46,9 @@ public class JobbaEfJobProgressStoreTests
 
     private JobRegistration AddRegistration()
     {
-        var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
-            "Test",
-            "Test",
-            "0 0 0 1 1 ? 2099",
-            new TestModels.FooParams { Baz = "baz" },
-            new TestModels.FooState { Bar = "bar" },
-            false,
-            null);
-        jobRegistration.Id = Guid.NewGuid();
+        var jobRegistration = _fixture.JobRegistrationBuilder()
+            .With(x => x.Id, Guid.NewGuid)
+            .Create();
         _dbContext.JobRegistrations.Add(jobRegistration);
         _dbContext.SaveChanges();
         return jobRegistration;
@@ -62,10 +56,7 @@ public class JobbaEfJobProgressStoreTests
 
     private JobEntity AddJob()
     {
-        var job = _fixture.Build<JobEntity>()
-            .With(x => x.JobRegistrationId, _jobRegistration.Id)
-            .With(x => x.JobParameters, new TestModels.FooParams { Baz = "baz" })
-            .With(x => x.JobState, new TestModels.FooState { Bar = "bar" })
+        var job = _fixture.JobBuilder(_jobRegistration.Id)
             .With(x => x.Status, JobStatus.InProgress)
             .With(x => x.IsOutOfRetry, false)
             .Create();
@@ -77,7 +68,7 @@ public class JobbaEfJobProgressStoreTests
     }
 
     private JobProgress<TestModels.FooState> CreateProgress() =>
-        new JobProgress<TestModels.FooState>
+        new()
         {
             JobId = _job.Id,
             JobRegistrationId = _job.JobRegistrationId,

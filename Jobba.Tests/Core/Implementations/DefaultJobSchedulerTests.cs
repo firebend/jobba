@@ -46,12 +46,14 @@ public class DefaultJobSchedulerTests
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
         registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobRegistration
+            .ReturnsAsync((string jobName, CancellationToken _) => new JobRegistration
             {
                 Id = Guid.NewGuid(),
                 JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
                 JobParamsType = typeof(object),
-                JobStateType = typeof(object)
+                JobStateType = typeof(object),
+                SystemMoniker = "Test",
+                JobName = jobName
             });
 
         var request = fixture.Create<JobRequest<DefaultJobParams, DefaultJobState>>();
@@ -121,12 +123,14 @@ public class DefaultJobSchedulerTests
 
         var registrationStore = fixture.Freeze<Mock<IJobRegistrationStore>>();
         registrationStore.Setup(x => x.GetByJobNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobRegistration
+            .ReturnsAsync((string jobName, CancellationToken _) => new JobRegistration
             {
                 Id = Guid.NewGuid(),
                 JobType = typeof(IJob<DefaultJobParams, DefaultJobState>),
                 JobParamsType = typeof(object),
-                JobStateType = typeof(object)
+                JobStateType = typeof(object),
+                SystemMoniker = "Test",
+                JobName = jobName
             });
 
         var jobRunner = fixture.Freeze<Mock<IJobRunner>>();

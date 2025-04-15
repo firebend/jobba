@@ -11,7 +11,7 @@ public class MigrationsContextFactory : IDesignTimeDbContextFactory<JobbaDbConte
     {
         var optionsBuilder = new DbContextOptionsBuilder<JobbaDbContext>();
         optionsBuilder.UsingSqlServer(
-            "Data Source=.;Initial Catalog=jobba-sample;Persist Security Info=False;User ID=sa;Password=;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=200;");
+            "Data Source=.;Initial Catalog=jobba-sample;Persist Security Info=False;User ID=sa;Password=Password0#@!;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=200;");
         return new JobbaDbContext(optionsBuilder.Options);
     }
 }

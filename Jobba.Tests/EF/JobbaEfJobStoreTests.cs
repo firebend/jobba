@@ -42,15 +42,9 @@ public class JobbaEfJobStoreTests
 
     private JobRegistration AddRegistration()
     {
-        var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
-            "Test",
-            "Test",
-            "0 0 0 1 1 ? 2099",
-            new TestModels.FooParams { Baz = "baz" },
-            new TestModels.FooState { Bar = "bar" },
-            false,
-            null);
-        jobRegistration.Id = Guid.NewGuid();
+        var jobRegistration = _fixture.JobRegistrationBuilder()
+            .With(x => x.Id, Guid.NewGuid)
+            .Create();
         _dbContext.JobRegistrations.Add(jobRegistration);
         _dbContext.SaveChanges();
         return jobRegistration;
@@ -58,10 +52,7 @@ public class JobbaEfJobStoreTests
 
     private JobEntity AddJob()
     {
-        var job = _fixture.Build<JobEntity>()
-            .With(x => x.JobRegistrationId, _jobRegistration.Id)
-            .With(x => x.JobParameters, new TestModels.FooParams { Baz = "baz" })
-            .With(x => x.JobState, new TestModels.FooState { Bar = "bar" })
+        var job = _fixture.JobBuilder(_jobRegistration.Id)
             .With(x => x.Status, JobStatus.InProgress)
             .With(x => x.IsOutOfRetry, false)
             .Create();
@@ -138,7 +129,7 @@ public class JobbaEfJobStoreTests
 
         //assert
         jobInfo.Should().NotBeNull();
-        jobInfo.CurrentNumberOfTries.Should().Be(2);
+        jobInfo!.CurrentNumberOfTries.Should().Be(2);
     }
 
     [TestMethod]
@@ -191,7 +182,7 @@ public class JobbaEfJobStoreTests
 
         //assert
         jobInfoBase.Should().NotBeNull();
-        jobInfoBase.Id.Should().Be(job.Id);
+        jobInfoBase!.Id.Should().Be(job.Id);
         jobInfoBase.Description.Should().Be(job.Description);
         jobInfoBase.Status.Should().Be(job.Status);
         jobInfoBase.FaultedReason.Should().Be(job.FaultedReason);

@@ -9,6 +9,8 @@ namespace Jobba.Tests;
 
 public class TestModels
 {
+    public static readonly JobSystemInfo TestSystemInfo =
+        new JobSystemInfo("TestMoniker", "TestComputerName", "TestUser", "TestOperationSystem");
 
     public class FooState : IJobState
     {
@@ -28,7 +30,8 @@ public class TestModels
 
         public override string JobName => "Jerb";
 
-        protected override Task OnStartAsync(JobStartContext<FooParams, FooState> jobStartContext, CancellationToken cancellationToken)
+        protected override Task OnStartAsync(JobStartContext<FooParams, FooState> jobStartContext,
+            CancellationToken cancellationToken)
             => Task.CompletedTask;
     }
 }

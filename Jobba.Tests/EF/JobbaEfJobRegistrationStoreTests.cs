@@ -31,6 +31,8 @@ public class JobbaEfJobRegistrationStoreTests
 
         _fixture.Freeze<Mock<IJobbaGuidGenerator>>().Setup(x => x.GenerateGuidAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid);
+        _fixture.Freeze<Mock<IJobSystemInfoProvider>>().Setup(x => x.GetSystemInfo())
+            .Returns(TestModels.TestSystemInfo);
     }
 
     [TestCleanup]
@@ -40,24 +42,11 @@ public class JobbaEfJobRegistrationStoreTests
         _testContext.Dispose();
     }
 
-    private JobRegistration CreateRegistration(string name = "Test", string cron = "0 0 0 1 1 ? 2099")
-    {
-        var jobRegistration = JobRegistration.FromTypes<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
-            name,
-            name,
-            cron,
-            new TestModels.FooParams { Baz = "baz" },
-            new TestModels.FooState { Bar = "bar" },
-            false,
-            null);
-        return jobRegistration;
-    }
-
     [TestMethod]
     public async Task Should_Register_NewJob()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
@@ -72,7 +61,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Update_ExistingJob()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         registration.NextExecutionDate = DateTimeOffset.UtcNow.AddDays(1);
         registration.PreviousExecutionDate = DateTimeOffset.UtcNow.AddDays(-1);
 
@@ -81,7 +70,7 @@ public class JobbaEfJobRegistrationStoreTests
         //act
         var result = await store.RegisterJobAsync(registration, default);
 
-        var duplicateRegistration = CreateRegistration();
+        var duplicateRegistration = _fixture.JobCronRegistrationBuilder().Create();
         duplicateRegistration.DefaultParams = new TestModels.FooParams { Baz = "baz2" };
 
         var updated = await store.RegisterJobAsync(duplicateRegistration, default);
@@ -100,7 +89,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Update_ExistingJob_And_ExecutionDates_When_CronExpressionChanged()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         registration.NextExecutionDate = DateTimeOffset.UtcNow.AddDays(1);
         registration.PreviousExecutionDate = DateTimeOffset.UtcNow.AddDays(-1);
 
@@ -109,7 +98,7 @@ public class JobbaEfJobRegistrationStoreTests
         //act
         var result = await store.RegisterJobAsync(registration, default);
 
-        var duplicateRegistration = CreateRegistration();
+        var duplicateRegistration = _fixture.JobCronRegistrationBuilder().Create();
         duplicateRegistration.CronExpression = "0 0 0 1 1 ? 2024";
 
         var updated = await store.RegisterJobAsync(duplicateRegistration, default);
@@ -127,7 +116,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Get_Job_Registration()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
@@ -143,7 +132,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Get_Job_Registration_By_JobName()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
@@ -159,13 +148,16 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Get_Jobs_With_Cron_Expressions()
     {
         //arrange
-        var registrationWithCron = CreateRegistration();
-        var registrationWithoutCron = CreateRegistration("Test2", string.Empty);
+        var registrationWithCron = _fixture.JobCronRegistrationBuilder().Create();
+        var registrationWithoutCron = _fixture.JobRegistrationBuilder().With(x => x.JobName, "TestJob2").Create();
+        var registrationDiffMoniker = _fixture.JobCronRegistrationBuilder()
+            .With(x => x.JobName, "TestJob2").With(x => x.SystemMoniker, "AnotherOne").Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
         var resultWithCron = await store.RegisterJobAsync(registrationWithCron, default);
         await store.RegisterJobAsync(registrationWithoutCron, default);
+        await store.RegisterJobAsync(registrationDiffMoniker, default);
         var jobRegistrations = (await store.GetJobsWithCronExpressionsAsync(default)).ToList();
 
         //assert
@@ -178,7 +170,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Update_Next_And_Previous_Invocation_Dates()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
         var next = DateTimeOffset.UtcNow.AddDays(1);
         var previous = DateTimeOffset.UtcNow.AddDays(-1);
@@ -198,7 +190,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Remove_Job_Registration()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
@@ -214,7 +206,7 @@ public class JobbaEfJobRegistrationStoreTests
     public async Task Should_Set_Job_Registration_Inactive()
     {
         //arrange
-        var registration = CreateRegistration();
+        var registration = _fixture.JobCronRegistrationBuilder().Create();
         var store = _fixture.Create<JobbaEfJobRegistrationStore>();
 
         //act
