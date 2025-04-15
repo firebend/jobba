@@ -85,7 +85,7 @@ public class CronSchedulerTests
                 }
                 else
                 {
-                    j.UsingMongo("mongodb://localhost:27017/jobba-unit-tests", true);
+                    j.UsingMongo("mongodb://localhost:27017/jobba-unit-tests/?directConnection=true&appName=jobba-sample", true);
                 }
 
                 j.UsingCron(cron => cron.AddCronJob<CronSchedulerTestsJob, DefaultJobParams, DefaultJobState>("* * * * *", CronSchedulerTestsJob.Name));
