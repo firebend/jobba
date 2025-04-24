@@ -22,7 +22,7 @@ public class JobbaMongoBuilderTests
         serviceCollection.AddJobba("fake", builder =>
         {
             builder.AddJob<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>("fake");
-            builder.UsingMongo("mongodb://localhost:27017/jobba", true);
+            builder.UsingMongo("mongodb://localhost:27017/jobba/?directConnection=true&appName=jobba-sample", true);
         });
 
         var provider = serviceCollection.BuildServiceProvider();

@@ -275,7 +275,7 @@ namespace Jobba.Sample
       .AddLogging(o => o.AddSimpleConsole(c => c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] "))
       .AddJobba(jobba =>
         jobba.UsingMassTransit() // use MassTransit as an event bus
-          .UsingMongo("mongodb://localhost:27017/jobba-sample", false)
+          .UsingMongo("mongodb://localhost:27017/jobba-sample/?directConnection=true", false)
           .UsingLitRedis("localhost:6379,defaultDatabase=0") // Use LitRedis for distributed locking
           .AddJob<SampleJob, SampleJobParameters, SampleJobState>() // `AddJob<SampleJob, object, object>` if not using state or parameters
         )
