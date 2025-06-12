@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="8.0.3"></a>
+## [8.0.3](https://www.github.com/firebend/jobba/releases/tag/v8.0.3) (2025-06-12)
+
+### Other
+
+* Bump Microsoft.EntityFrameworkCore and 12 others ([#180](https://www.github.com/firebend/jobba/issues/180)) ([02be68c](https://www.github.com/firebend/jobba/commit/02be68c7a6dd3ce4c695f8b901a4339e2a32cae3))
+
 <a name="8.0.2"></a>
 ## [8.0.2](https://www.github.com/firebend/jobba/releases/tag/v8.0.2) (2025-06-12)
 
