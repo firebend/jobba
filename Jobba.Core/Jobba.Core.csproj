@@ -5,6 +5,7 @@
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
     <TargetFramework>net8.0</TargetFramework>
+    <Bumper>1</Bumper>
   </PropertyGroup>
 
   <PropertyGroup>
