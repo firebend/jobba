@@ -10,45 +10,90 @@ jobs:
     name: Build, test, and release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Git
+        uses: actions/checkout@v3
+        with:
+          token : ${{ secrets.FIREBEND_GIT_PUSH_PAT}}
+          fetch-depth: 0
+
+      - name: Install Versionize
+        run: dotnet tool install --global Versionize
+
+      - name: Setup git
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Versionize Release
+        id: versionize
+        run: versionize --exit-insignificant-commits
+        continue-on-error: true
+
+      - name: No release required
+        if: steps.versionize.outcome != 'success'
+        run: echo "Skipping publishing. No release required."
 
       - name: Setup .NET Core
+        if: steps.versionize.outcome == 'success'
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 8.0.101
 
       - name: Install dependencies
+        if: steps.versionize.outcome == 'success'
         run: dotnet restore jobba.sln
 
       - name: Build
+        if: steps.versionize.outcome == 'success'
         run: dotnet build jobba.sln --configuration Release --no-restore
 
       - name: Test
+        if: steps.versionize.outcome == 'success'
         run: dotnet test jobba.sln --logger GitHubActions --no-restore --verbosity normal --filter FullyQualifiedName\!~IntegrationTests
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Core.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.MassTransit.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Redis.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Store.Mongo.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Store.EF.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Store.EF.Sql.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Store.EF.Sqlite.csproj --configuration Release --output out/pack --no-build
 
       - name: Pack
+        if: steps.versionize.outcome == 'success'
         run: dotnet pack **/Jobba.Cron.csproj --configuration Release --output out/pack --no-build
 
       - name: Publish
         run: dotnet nuget push ./out/pack/*.nupkg --api-key  ${{secrets.FIREBEND_NUGET_KEY}} --skip-duplicate --source https://api.nuget.org/v3/index.json
+
+
+      - name: Push version changes
+        if: steps.versionize.outcome == 'success'
+        uses: CasperWA/push-protected@v2
+        with:
+          token: ${{ secrets.FIREBEND_GIT_PUSH_PAT }}
+          branch: main
+          tags: true
+          force: true
+          unprotect_reviews: true
+          sleep: 5
