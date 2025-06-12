@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="8.0.2"></a>
+## [8.0.2](https://www.github.com/firebend/jobba/releases/tag/v8.0.2) (2025-06-12)
+
+### Other
+
+* add conditional check for publishing NuGet packages based on versionize outcome ([#179](https://www.github.com/firebend/jobba/issues/179)) ([6403c2e](https://www.github.com/firebend/jobba/commit/6403c2e8977a8cc6a55ebf3681dac46a45920c59))
+
 <a name="8.0.1"></a>
 ## [8.0.1](https://www.github.com/firebend/jobba/releases/tag/v8.0.1) (2025-06-12)
 
