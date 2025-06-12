@@ -84,6 +84,7 @@ jobs:
         run: dotnet pack **/Jobba.Cron.csproj --configuration Release --output out/pack --no-build
 
       - name: Publish
+        if: steps.versionize.outcome == 'success'
         run: dotnet nuget push ./out/pack/*.nupkg --api-key  ${{secrets.FIREBEND_NUGET_KEY}} --skip-duplicate --source https://api.nuget.org/v3/index.json
 
 
