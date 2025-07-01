@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="8.0.4"></a>
+## [8.0.4](https://www.github.com/firebend/jobba/releases/tag/v8.0.4) (2025-07-01)
+
+### Other
+
+* Bump FluentAssertions and 7 others ([#181](https://www.github.com/firebend/jobba/issues/181)) ([75c909b](https://www.github.com/firebend/jobba/commit/75c909b5353213238f2f295627fc7c938099aae8))
+
 <a name="8.0.3"></a>
 ## [8.0.3](https://www.github.com/firebend/jobba/releases/tag/v8.0.3) (2025-06-12)
 

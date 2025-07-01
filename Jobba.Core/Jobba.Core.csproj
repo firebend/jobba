@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>8.0.3</Version>
+    <Version>8.0.4</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
     <TargetFramework>net8.0</TargetFramework>
