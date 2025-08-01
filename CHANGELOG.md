@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="8.0.5"></a>
+## [8.0.5](https://www.github.com/firebend/jobba/releases/tag/v8.0.5) (2025-08-01)
+
+### Other
+
+* Bump dotnet-ef and 20 others ([#182](https://www.github.com/firebend/jobba/issues/182)) ([e000cbc](https://www.github.com/firebend/jobba/commit/e000cbccbd9c03db8bebb175064f55c4facf2cb2))
+
 <a name="8.0.4"></a>
 ## [8.0.4](https://www.github.com/firebend/jobba/releases/tag/v8.0.4) (2025-07-01)
 
