@@ -21,9 +21,9 @@
 
   <ItemGroup>
     <PackageReference Include="AsyncKeyedLock" Version="7.1.6" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
   </ItemGroup>
 
 
