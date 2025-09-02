@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="8.0.6"></a>
+## [8.0.6](https://www.github.com/firebend/jobba/releases/tag/v8.0.6) (2025-09-02)
+
+### Other
+
+* pacakge updates ([#188](https://www.github.com/firebend/jobba/issues/188)) ([8d3345c](https://www.github.com/firebend/jobba/commit/8d3345c946322c7aedda090290b4dd03f54e3230))
+
 <a name="8.0.5"></a>
 ## [8.0.5](https://www.github.com/firebend/jobba/releases/tag/v8.0.5) (2025-08-01)
 
