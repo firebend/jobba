@@ -26,7 +26,7 @@ public interface IJobStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, CancellationToken cancellationToken)
+    public Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest, CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState;
 
@@ -49,7 +49,7 @@ public interface IJobStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
+    public Task<JobInfo<TJobParams, TJobState>> SetJobAttempts<TJobParams, TJobState>(Guid jobId, int attempts, CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState;
 
@@ -69,7 +69,7 @@ public interface IJobStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken);
+    public Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken);
 
     /// <summary>
     /// Logs a failure for a given job id.
@@ -84,7 +84,7 @@ public interface IJobStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken);
+    public Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets a job by id.
@@ -96,7 +96,7 @@ public interface IJobStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken);
+    public Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets a job by id.
@@ -108,7 +108,7 @@ public interface IJobStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
+    public Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState;
 }

@@ -5,5 +5,5 @@ namespace Jobba.MassTransit.Interfaces;
 
 public interface IJobbaMassTransitConsumerInfoProvider
 {
-    IEnumerable<JobbaMassTransitConsumerInfo> GetConsumerInfos();
+    public IEnumerable<JobbaMassTransitConsumerInfo> GetConsumerInfos();
 }

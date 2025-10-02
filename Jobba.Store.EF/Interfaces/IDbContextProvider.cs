@@ -6,5 +6,5 @@ namespace Jobba.Store.EF.Interfaces;
 
 public interface IDbContextProvider
 {
-    Task<JobbaDbContext> GetDbContextAsync(CancellationToken cancellationToken);
+    public Task<JobbaDbContext> GetDbContextAsync(CancellationToken cancellationToken);
 }

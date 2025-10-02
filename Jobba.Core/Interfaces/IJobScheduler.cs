@@ -26,7 +26,7 @@ public interface IJobScheduler
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
+    public Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> request,
         CancellationToken cancellationToken)
         where TJobParams : IJobParams
@@ -54,7 +54,7 @@ public interface IJobScheduler
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId,
+    public Task<JobInfo<TJobParams, TJobState>> ScheduleJobAsync<TJobParams, TJobState>(Guid registrationId,
         TJobParams parameters,
         TJobState state,
         CancellationToken cancellationToken)
@@ -71,5 +71,5 @@ public interface IJobScheduler
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken);
+    public Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken);
 }

@@ -5,5 +5,5 @@ namespace Jobba.Store.Mongo.Interfaces;
 
 public interface IJobbaMongoRetryService
 {
-    Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries);
+    public Task<TReturn> RetryErrorAsync<TReturn>(Func<Task<TReturn>> method, int maxTries);
 }

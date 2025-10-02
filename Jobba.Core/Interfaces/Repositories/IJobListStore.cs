@@ -15,12 +15,12 @@ public interface IJobListStore
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken);
+    public Task<IEnumerable<JobInfoBase>> GetActiveJobs(CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets jobs that should be retried.
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken);
+    public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken);
 }

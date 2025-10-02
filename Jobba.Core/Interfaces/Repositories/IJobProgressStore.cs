@@ -22,7 +22,7 @@ public interface IJobProgressStore
     /// The type of job state.
     /// </typeparam>
     /// <returns></returns>
-    Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
+    public Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
         where TJobState : IJobState;
 
     /// <summary>
@@ -33,5 +33,5 @@ public interface IJobProgressStore
     /// </param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken);
+    public Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken);
 }

@@ -18,7 +18,7 @@ public interface IJobCancellationTokenStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    CancellationToken CreateJobCancellationToken(Guid jobId, CancellationToken cancellationToken);
+    public CancellationToken CreateJobCancellationToken(Guid jobId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Cancels a job by id.
@@ -27,12 +27,12 @@ public interface IJobCancellationTokenStore
     /// The id of the job.
     /// </param>
     /// <returns></returns>
-    bool CancelJob(Guid id);
+    public bool CancelJob(Guid id);
 
     /// <summary>
     /// Cancels all jobs.
     /// </summary>
-    void CancelAllJobs();
+    public void CancelAllJobs();
 
     /// <summary>
     /// Removes a completed job so that it's token will not need to be cancelled later.
@@ -41,5 +41,5 @@ public interface IJobCancellationTokenStore
     /// The id of the job.
     /// </param>
     /// <returns></returns>
-    bool RemoveCompletedJob(Guid id);
+    public bool RemoveCompletedJob(Guid id);
 }

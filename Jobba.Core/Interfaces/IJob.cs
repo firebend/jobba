@@ -9,7 +9,7 @@ namespace Jobba.Core.Interfaces;
 /// </summary>
 public interface IJob
 {
-    string JobName { get; }
+    public string JobName { get; }
 }
 
 /// <summary>
@@ -25,5 +25,5 @@ public interface IJob<TJobParams, TJobState> : IJob
     where TJobParams : IJobParams
     where TJobState : IJobState
 {
-    Task StartAsync(JobStartContext<TJobParams, TJobState> jobStartContext, CancellationToken cancellationToken);
+    public Task StartAsync(JobStartContext<TJobParams, TJobState> jobStartContext, CancellationToken cancellationToken);
 }

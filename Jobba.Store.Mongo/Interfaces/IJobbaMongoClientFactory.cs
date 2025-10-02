@@ -4,5 +4,5 @@ namespace Jobba.Store.Mongo.Interfaces;
 
 public interface IJobbaMongoClientFactory
 {
-    IMongoClient CreateClient(string connectionString, bool enableLogging);
+    public IMongoClient CreateClient(string connectionString, bool enableLogging);
 }

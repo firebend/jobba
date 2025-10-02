@@ -21,7 +21,7 @@ public interface IJobRegistrationStore
     ///     The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken);
+    public Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken);
 
     /// <summary>
     /// Resolves a job registration by id.
@@ -33,7 +33,7 @@ public interface IJobRegistrationStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken);
+    public Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Returns all jobs that have a cron expression configured.
@@ -42,7 +42,7 @@ public interface IJobRegistrationStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken);
+    public Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Updates a registration's next and previous invocation dates.
@@ -59,7 +59,7 @@ public interface IJobRegistrationStore
     /// <param name="cancellationToken"></param>
     /// The cancellation token.
     /// <returns></returns>
-    Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
+    public Task UpdateNextAndPreviousInvocationDatesAsync(Guid registrationId,
         DateTimeOffset? nextInvocationDate,
         DateTimeOffset? previousInvocationDate,
         CancellationToken cancellationToken);
@@ -74,7 +74,7 @@ public interface IJobRegistrationStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken);
+    public Task<JobRegistration> GetByJobNameAsync(string name, CancellationToken cancellationToken);
 
     /// <summary>
     /// Removes a Job Registration by id.
@@ -88,7 +88,7 @@ public interface IJobRegistrationStore
     /// <returns>
     /// The removed Job Registration.
     /// </returns>
-    Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken);
+    public Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Sets the IsInactive flag on a Job Registration
@@ -103,5 +103,5 @@ public interface IJobRegistrationStore
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken);
+    public Task<JobRegistration> SetIsInactiveAsync(Guid registrationId, bool isInactive, CancellationToken cancellationToken);
 }
