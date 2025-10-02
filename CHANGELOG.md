@@ -1,4 +1,15 @@
 Lit Redis Changelog
+<a name="9.0.0"></a>
+## [9.0.0](https://www.github.com/firebend/jobba/releases/tag/v9.0.0) (2025-10-02)
+
+### ✨ Features
+
+* upgrade project to .NET 9.0 and update package references ([#202](https://www.github.com/firebend/jobba/issues/202)) ([2411d94](https://www.github.com/firebend/jobba/commit/2411d9401424438175672ad64c989545a28480bf))
+
+### Breaking Changes
+
+* upgrade project to .NET 9.0 and update package references ([#202](https://www.github.com/firebend/jobba/issues/202)) ([2411d94](https://www.github.com/firebend/jobba/commit/2411d9401424438175672ad64c989545a28480bf))
+
 <a name="8.0.7"></a>
 ## [8.0.7](https://www.github.com/firebend/jobba/releases/tag/v8.0.7) (2025-09-02)
 
