@@ -9,5 +9,5 @@ namespace Jobba.Core.Interfaces;
 /// </summary>
 public interface IJobbaGuidGenerator
 {
-    Task<Guid> GenerateGuidAsync(CancellationToken cancellationToken);
+    public Task<Guid> GenerateGuidAsync(CancellationToken cancellationToken);
 }

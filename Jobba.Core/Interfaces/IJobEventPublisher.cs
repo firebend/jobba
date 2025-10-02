@@ -10,12 +10,12 @@ namespace Jobba.Core.Interfaces;
 /// </summary>
 public interface IJobEventPublisher
 {
-    Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken);
-    Task PublishJobCancelledEventAsync(JobCancelledEvent jobCancelledEvent, CancellationToken cancellationToken);
-    Task PublishJobCompletedEventAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken);
-    Task PublishJobFaultedEventAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken);
-    Task PublishJobProgressEventAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken);
-    Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken);
-    Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken);
-    Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken);
+    public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken);
+    public Task PublishJobCancelledEventAsync(JobCancelledEvent jobCancelledEvent, CancellationToken cancellationToken);
+    public Task PublishJobCompletedEventAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken);
+    public Task PublishJobFaultedEventAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken);
+    public Task PublishJobProgressEventAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken);
+    public Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken);
+    public Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken);
+    public Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken);
 }

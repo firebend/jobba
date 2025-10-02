@@ -27,5 +27,5 @@ public interface ICronScheduler
     /// <returns>
     /// A task
     /// </returns>
-    Task EnqueueJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken);
+    public Task EnqueueJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken);
 }

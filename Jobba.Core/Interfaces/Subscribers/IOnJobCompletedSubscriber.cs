@@ -6,5 +6,5 @@ namespace Jobba.Core.Interfaces.Subscribers;
 
 public interface IOnJobCompletedSubscriber
 {
-    Task OnJobCompletedAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken);
+    public Task OnJobCompletedAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken);
 }

@@ -20,14 +20,14 @@ public record JobOrchestrationRequest<TJob, TParams, TState>(string JobName,
 
 public interface IJobOrchestrationService
 {
-    Task<JobOrchestrationResult> OrchestrateJobAsync<TJob, TParams, TState>(
+    public Task<JobOrchestrationResult> OrchestrateJobAsync<TJob, TParams, TState>(
         JobOrchestrationRequest<TJob, TParams, TState> request,
         CancellationToken cancellationToken)
         where TParams : IJobParams
         where TState : IJobState
         where TJob : IJob<TParams, TState>;
 
-    Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken);
+    public Task<JobRegistration> DeleteJobRegistrationAsync(Guid jobRegistrationId, CancellationToken cancellationToken);
 
-    Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken);
+    public Task<JobRegistration> SetJobRegistrationInactiveAsync(Guid jobRegistrationId, bool isInactive, CancellationToken cancellationToken);
 }

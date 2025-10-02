@@ -28,5 +28,5 @@ public record JobSystemInfo
 
 public interface IJobSystemInfoProvider
 {
-    JobSystemInfo GetSystemInfo();
+    public JobSystemInfo GetSystemInfo();
 }

@@ -16,7 +16,7 @@ public interface ICronService
     /// <returns>
     /// The date
     /// </returns>
-    DateTimeOffset? GetNextExecutionDate(string expression, TimeZoneInfo timeZone);
+    public DateTimeOffset? GetNextExecutionDate(string expression, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets the next time the expression should execute given a specific start date
@@ -33,7 +33,7 @@ public interface ICronService
     /// <returns>
     /// The date
     /// </returns>
-    DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start, TimeZoneInfo timeZone);
+    public DateTimeOffset? GetNextExecutionDate(string expression, DateTimeOffset start, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets a value indicating if the job will occur in the given <see cref="DateTimeOffset"/> window
@@ -52,7 +52,7 @@ public interface ICronService
     /// <returns>
     /// True if the cron will execute; otherwise, false.
     /// </returns>
-    bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
+    public bool WillExecuteInWindow(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
 
     /// <summary>
     /// Gets a value indicating all the of occurrences for a cron expression in the given <see cref="DateTimeOffset"/> window.
@@ -71,5 +71,5 @@ public interface ICronService
     /// <returns>
     /// An array of all the execution dates.
     /// </returns>
-    DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
+    public DateTimeOffset[] GetSchedule(string expression, DateTimeOffset start, DateTimeOffset end, TimeZoneInfo timeZone);
 }

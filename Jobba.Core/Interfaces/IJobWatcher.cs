@@ -27,5 +27,5 @@ public interface IJobWatcher<TJobParams, TJobState>
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task WatchJobAsync(Guid jobId, CancellationToken cancellationToken);
+    public Task WatchJobAsync(Guid jobId, CancellationToken cancellationToken);
 }

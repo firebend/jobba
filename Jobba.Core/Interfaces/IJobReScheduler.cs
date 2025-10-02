@@ -15,5 +15,5 @@ public interface IJobReScheduler
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task RestartFaultedJobsAsync(CancellationToken cancellationToken);
+    public Task RestartFaultedJobsAsync(CancellationToken cancellationToken);
 }

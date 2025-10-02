@@ -8,8 +8,8 @@ namespace Jobba.Store.EF.Interfaces;
 
 public interface IJobbaDbContext
 {
-    DbSet<JobEntity> Jobs { get; set; }
-    DbSet<JobRegistration> JobRegistrations { get; set; }
-    DbSet<JobProgressEntity> JobProgress { get; set; }
-    Task MigrateAsync(CancellationToken cancellationToken);
+    public DbSet<JobEntity> Jobs { get; set; }
+    public DbSet<JobRegistration> JobRegistrations { get; set; }
+    public DbSet<JobProgressEntity> JobProgress { get; set; }
+    public Task MigrateAsync(CancellationToken cancellationToken);
 }

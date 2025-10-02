@@ -6,5 +6,5 @@ namespace Jobba.Core.Interfaces.Subscribers;
 
 public interface IOnJobProgressSubscriber
 {
-    Task OnJobProgressAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken);
+    public Task OnJobProgressAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken);
 }

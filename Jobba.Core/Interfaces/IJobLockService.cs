@@ -20,7 +20,7 @@ public interface IJobLockService
     /// The cancellation token.
     /// </param>
     /// <returns></returns>
-    ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken);
+    public ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Locks on the provided system moniker so that no other concurrently running system can do an action.
@@ -35,5 +35,5 @@ public interface IJobLockService
     ///     The cancellation token.
     /// </param>
     /// <returns></returns>
-    Task<SystemLockResult> LockSystemAsync(string systemMoniker, TimeSpan span, CancellationToken cancellationToken);
+    public Task<SystemLockResult> LockSystemAsync(string systemMoniker, TimeSpan span, CancellationToken cancellationToken);
 }

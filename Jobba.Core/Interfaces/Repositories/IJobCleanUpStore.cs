@@ -19,5 +19,5 @@ public interface IJobCleanUpStore
     /// The cancellation token
     /// </param>
     /// <returns></returns>
-    Task CleanUpJobsAsync(TimeSpan duration, CancellationToken cancellationToken);
+    public Task CleanUpJobsAsync(TimeSpan duration, CancellationToken cancellationToken);
 }
