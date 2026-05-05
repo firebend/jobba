@@ -23,11 +23,15 @@ public class JobbaMongoCleanUpStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
+        var jobs = fixture.CreateMany<JobEntity>(5).ToList();
+
         var mockJobRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
-        mockJobRepo.Setup(x => x.DeleteManyAsync(
+        mockJobRepo.SetupSequence(x => x.DeleteManyAsync(
                 It.IsAny<Expression<Func<JobEntity, bool>>>(),
+                It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(fixture.CreateMany<JobEntity>(5).ToList);
+            .ReturnsAsync(jobs)
+            .ReturnsAsync([]);
 
         var mockJobProgressRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
         mockJobProgressRepo.Setup(x => x.DeleteManyAsync(
@@ -38,12 +42,13 @@ public class JobbaMongoCleanUpStoreTests
         var sut = fixture.Create<JobbaMongoCleanUpStore>();
 
         //act
-        await sut.CleanUpJobsAsync(TimeSpan.FromDays(60), default);
+        await sut.CleanUpJobsAsync(TimeSpan.FromDays(60), 50, default);
 
         //assert
         mockJobRepo.Verify(x => x.DeleteManyAsync(
             It.IsAny<Expression<Func<JobEntity, bool>>>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
 
         mockJobProgressRepo.Verify(x => x.DeleteManyAsync(
             It.IsAny<Expression<Func<JobProgressEntity, bool>>>(),

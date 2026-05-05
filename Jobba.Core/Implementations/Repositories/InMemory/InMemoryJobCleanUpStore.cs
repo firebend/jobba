@@ -10,30 +10,35 @@ namespace Jobba.Core.Implementations.Repositories.InMemory;
 
 public class InMemoryJobCleanUpStore(IJobSystemInfoProvider systemInfoProvider) : IJobCleanUpStore
 {
-    public Task CleanUpJobsAsync(TimeSpan duration, CancellationToken cancellationToken)
+    public Task CleanUpJobsAsync(TimeSpan duration, int cleanUpBatchSize, CancellationToken cancellationToken)
     {
         var date = DateTimeOffset.UtcNow.Subtract(duration);
         var filter = RepositoryExpressions.GetCleanUpExpression(systemInfoProvider.GetSystemInfo(), date);
+        var filterFunc = filter.Compile();
 
         var jobIds = InMemoryJobStoreCache.Jobs.Values
-            .Where(filter.Compile())
+            .Where(filterFunc)
             .Select(x => x.Id)
             .Distinct()
-            .ToArray();
+            .ToArray()
+            .Chunk(cleanUpBatchSize);
 
-        foreach (var jobId in jobIds)
+        foreach (var chunk in jobIds)
         {
-            InMemoryJobStoreCache.Jobs.Remove(jobId, out _);
-
-            var progressIds = InMemoryJobProgressStoreCache.Progress.Values
-                .Where(x => x.JobId == jobId)
-                .Select(x => x.Id)
-                .Distinct()
-                .ToArray();
-
-            foreach (var progressId in progressIds)
+            foreach (var jobId in chunk)
             {
-                InMemoryJobProgressStoreCache.Progress.Remove(progressId, out _);
+                InMemoryJobStoreCache.Jobs.Remove(jobId, out _);
+
+                var progressIds = InMemoryJobProgressStoreCache.Progress.Values
+                    .Where(x => x.JobId == jobId)
+                    .Select(x => x.Id)
+                    .Distinct()
+                    .ToArray();
+
+                foreach (var progressId in progressIds)
+                {
+                    InMemoryJobProgressStoreCache.Progress.Remove(progressId, out _);
+                }
             }
         }
 

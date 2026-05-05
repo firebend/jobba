@@ -81,7 +81,7 @@ public class JobbaEfCleanUpStoreTests
         var sut = _fixture.Create<JobbaEfCleanUpStore>();
 
         //act
-        await sut.CleanUpJobsAsync(TimeSpan.FromDays(5), default);
+        await sut.CleanUpJobsAsync(TimeSpan.FromDays(5), 50, default);
 
         //assert
 

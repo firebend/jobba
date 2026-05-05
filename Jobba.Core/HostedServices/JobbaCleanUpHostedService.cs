@@ -10,11 +10,15 @@ namespace Jobba.Core.HostedServices;
 public class JobbaCleanUpHostedService : AbstractJobbaDependentBackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    // ReSharper disable once InconsistentNaming
-    // ReSharper disable once MemberCanBePrivate.Global
+    // ReSharper disable InconsistentNaming
+    // ReSharper disable MemberCanBePrivate.Global
 #pragma warning disable CA2211
 #pragma warning disable IDE1006
     public static TimeSpan CleanUpDuration = TimeSpan.FromDays(30);
+    public static int CleanUpBatchSize = 25;
+    // ReSharper restore InconsistentNaming
+    // ReSharper restore MemberCanBePrivate.Global
+#pragma warning restore CA2211
 #pragma warning restore IDE1006
 #pragma warning restore CA2211
 
@@ -40,6 +44,6 @@ public class JobbaCleanUpHostedService : AbstractJobbaDependentBackgroundService
     {
         var scope = _scopeFactory.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IJobCleanUpStore>();
-        await service.CleanUpJobsAsync(CleanUpDuration, cancellationToken);
+        await service.CleanUpJobsAsync(CleanUpDuration, CleanUpBatchSize, cancellationToken);
     }
 }

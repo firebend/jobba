@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,14 +65,28 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
         return entity;
     }
 
-    public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
-    {
-        var found = await GetAllAsync(filter, cancellationToken);
+    public Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken)
+        => DeleteManyAsync(filter, 0, cancellationToken);
 
-        foreach (var entity in found)
+    public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, int limit,
+        CancellationToken cancellationToken)
+    {
+        var found = await RetryErrorAsync(() => GetCollection()
+            .Find(filter)
+            .Limit(limit)
+            .ToListAsync(cancellationToken)) ?? [];
+
+        if (found.Count == 0)
         {
-            await RetryErrorAsync(() => GetCollection().DeleteOneAsync(x => x.Id == entity.Id, cancellationToken));
+            return [];
         }
+
+        var ids = found.Select(x => x.Id).ToArray();
+
+        await RetryErrorAsync(() =>  GetCollection()
+            .DeleteManyAsync(
+                Builders<TEntity>.Filter.In(x => x.Id, ids),
+                cancellationToken));
 
         return found;
     }

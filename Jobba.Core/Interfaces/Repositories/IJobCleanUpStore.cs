@@ -13,11 +13,12 @@ public interface IJobCleanUpStore
     /// Removes jobs given a duration.
     /// </summary>
     /// <param name="duration">
-    /// How long the job should be kept before being removed.
+    ///     How long the job should be kept before being removed.
     /// </param>
+    /// <param name="cleanUpBatchSize"></param>
     /// <param name="cancellationToken">
-    /// The cancellation token
+    ///     The cancellation token
     /// </param>
     /// <returns></returns>
-    public Task CleanUpJobsAsync(TimeSpan duration, CancellationToken cancellationToken);
+    public Task CleanUpJobsAsync(TimeSpan duration, int cleanUpBatchSize, CancellationToken cancellationToken);
 }
