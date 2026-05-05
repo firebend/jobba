@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="9.1.0"></a>
+## [9.1.0](https://www.github.com/firebend/jobba/releases/tag/v9.1.0) (2026-05-05)
+
+### ✨ Features
+
+* implement batch deletion for job cleanup stores ([cc7ed9c](https://www.github.com/firebend/jobba/commit/cc7ed9c3041339c9c3fc8b331df15cdc2640edb6))
+
 <a name="9.0.0"></a>
 ## [9.0.0](https://www.github.com/firebend/jobba/releases/tag/v9.0.0) (2025-10-02)
 
