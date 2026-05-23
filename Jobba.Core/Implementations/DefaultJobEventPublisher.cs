@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,51 +30,46 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 
     public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobCancelSubscriber, CancelJobEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelSubscriber, CancelJobEvent>(
             cancelJobEvent,
             (subscriber, @event, ct) => subscriber.OnJobCancellationRequestAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
     public Task PublishJobCancelledEventAsync(JobCancelledEvent jobCancelledEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobCancelledSubscriber, JobCancelledEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelledSubscriber, JobCancelledEvent>(
             jobCancelledEvent,
             (subscriber, @event, ct) => subscriber.OnJobCancelledAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
     public Task PublishJobCompletedEventAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobCompletedSubscriber, JobCompletedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCompletedSubscriber, JobCompletedEvent>(
             jobCompletedEvent,
             (subscriber, @event, ct) => subscriber.OnJobCompletedAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
     public Task PublishJobFaultedEventAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobFaultedSubscriber, JobFaultedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobFaultedSubscriber, JobFaultedEvent>(
             jobFaultedEvent,
             (subscriber, @event, ct) => subscriber.OnJobFaultedAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
     public Task PublishJobProgressEventAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobProgressSubscriber, JobProgressEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobProgressSubscriber, JobProgressEvent>(
             jobProgressEvent,
             (subscriber, @event, ct) => subscriber.OnJobProgressAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
@@ -84,8 +78,7 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
         _ = Task.Run(async () =>
         {
             await Task.Delay(delay, cancellationToken);
-
-            ResolveAndInvokeSubscribers<IOnJobWatchSubscriber, JobWatchEvent>(
+            await ResolveAndInvokeSubscribersAsync<IOnJobWatchSubscriber, JobWatchEvent>(
                 jobWatchEvent,
                 (subscriber, @event, ct) => subscriber.WatchJobAsync(@event, ct),
                 cancellationToken);
@@ -96,66 +89,46 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 
     public Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobStartedSubscriber, JobStartedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobStartedSubscriber, JobStartedEvent>(
             jobStartedEvent,
             (subscriber, @event, ct) => subscriber.OnJobStartedAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
     public Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
     {
-        ResolveAndInvokeSubscribers<IOnJobRestartSubscriber, JobRestartEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobRestartSubscriber, JobRestartEvent>(
             jobRestartEvent,
             (subscriber, @event, ct) => subscriber.OnJobRestartAsync(@event, ct),
             cancellationToken);
-
         return Task.CompletedTask;
     }
 
-    private TSubscriber[] GetSubscribers<TSubscriber>()
-    {
-        try
-        {
-            if (!_scopeFactory.TryCreateScope(out var scope))
-            {
-                return Array.Empty<TSubscriber>();
-            }
-
-            using (scope)
-            {
-                var subscribers = scope.ServiceProvider.GetServices<TSubscriber>();
-                var subscribersArray = subscribers.ToArray();
-                return subscribersArray;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical(ex, "Error getting subscribers");
-            throw;
-        }
-    }
-
-    private static void InvokeSubscribers<TSubscriber, TEvent>(IEnumerable<TSubscriber> subscribers,
+    private Task ResolveAndInvokeSubscribersAsync<TSubscriber, TEvent>(
         TEvent @event,
         Func<TSubscriber, TEvent, CancellationToken, Task> func,
         CancellationToken cancellationToken)
     {
-        _ = Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            var tasks = subscribers.Select(x => func(x, @event, cancellationToken));
-            await Task.WhenAll(tasks);
+            try
+            {
+                if (!_scopeFactory.TryCreateScope(out var scope))
+                {
+                    return;
+                }
+
+                using (scope)
+                {
+                    var subscribers = scope.ServiceProvider.GetServices<TSubscriber>().ToArray();
+                    await Task.WhenAll(subscribers.Select(s => func(s, @event, cancellationToken)));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Error invoking subscribers");
+            }
         }, cancellationToken);
-    }
-
-
-    private void ResolveAndInvokeSubscribers<TSubscriber, TEvent>(
-        TEvent @event,
-        Func<TSubscriber, TEvent, CancellationToken, Task> func,
-        CancellationToken cancellationToken)
-    {
-        var subscribers = GetSubscribers<TSubscriber>();
-        InvokeSubscribers(subscribers, @event, func, cancellationToken);
     }
 }
