@@ -134,7 +134,6 @@ public class JobbaMongoJobStore : IJobStore
 
         foreach (var job in staleJobs)
         {
-            var originalHeartbeat = job.LastHeartbeatTime;
             var jobId = job.Id;
 
             var update = Builders<JobEntity>
@@ -142,13 +141,8 @@ public class JobbaMongoJobStore : IJobStore
                 .Set(x => x.FaultedReason, JobbaCoreOptions.OrphanedJobFaultedReason)
                 .Set(x => x.Status, JobStatus.Faulted);
 
-            // Atomic guarded update: only flip if the row is still InProgress with the same heartbeat we snapshot.
-            // FindOneAndUpdate returns null when the filter doesn't match, meaning the job moved on (completed or
-            // sent a fresh heartbeat). We do NOT count those as reclaimed.
             var updated = await _repository.UpdateAsync(
-                x => x.Id == jobId
-                     && x.Status == JobStatus.InProgress
-                     && x.LastHeartbeatTime == originalHeartbeat,
+                x => x.Id == jobId,
                 update,
                 cancellationToken);
 

@@ -143,9 +143,7 @@ public class InMemoryJobStore : IJobStore
             {
                 // Re-check status and heartbeat inside lock to ensure the job wasn't completed or refreshed
                 // by another thread between snapshot and mutation.
-                if (InMemoryJobStoreCache.Jobs.TryGetValue(id, out var currentJob)
-                    && currentJob.Status == JobStatus.InProgress
-                    && currentJob.LastHeartbeatTime == originalHeartbeat)
+                if (InMemoryJobStoreCache.Jobs.TryGetValue(id, out var currentJob))
                 {
                     currentJob.Status = JobStatus.Faulted;
                     currentJob.FaultedReason = JobbaCoreOptions.OrphanedJobFaultedReason;
