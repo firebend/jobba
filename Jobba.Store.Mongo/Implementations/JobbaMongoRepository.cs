@@ -92,7 +92,7 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
 
         var ids = found.Select(x => x.Id).ToArray();
 
-        await RetryErrorAsync(() =>  GetCollection()
+        await RetryErrorAsync(() => GetCollection()
             .DeleteManyAsync(
                 Builders<TEntity>.Filter.In(x => x.Id, ids),
                 cancellationToken));
