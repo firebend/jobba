@@ -125,11 +125,8 @@ public class InMemoryJobStore : IJobStore
         var now = DateTimeOffset.UtcNow;
         var systemInfo = _jobSystemInfoProvider.GetSystemInfo();
 
-        // Lock to prevent race conditions where two threads reclaim the same job
         lock (InMemoryJobStoreCache.ReclaimLock)
         {
-            // Snapshot candidates. LastHeartbeatTime == null means the job pre-dates heartbeat support
-            // (or never wrote its first heartbeat) and must NOT be reclaimed — we have no way to know if it is healthy.
             var candidates = InMemoryJobStoreCache.Jobs.Values
                 .Where(x => x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker)
                 .Where(x => x.Status == JobStatus.InProgress)
@@ -141,8 +138,6 @@ public class InMemoryJobStore : IJobStore
             var reclaimed = 0;
             foreach (var (id, originalHeartbeat) in candidates)
             {
-                // Re-check status and heartbeat inside lock to ensure the job wasn't completed or refreshed
-                // by another thread between snapshot and mutation.
                 if (InMemoryJobStoreCache.Jobs.TryGetValue(id, out var currentJob))
                 {
                     currentJob.Status = JobStatus.Faulted;
