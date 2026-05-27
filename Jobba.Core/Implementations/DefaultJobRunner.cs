@@ -29,7 +29,7 @@ public class DefaultJobRunner(
 
         using var heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(jobCancellationToken, cancellationToken);
         var heartbeatInterval = context.JobWatchInterval;
-        var heartbeatTask = RunHeartbeatAsync(context.JobId, heartbeatInterval, heartbeatCts.Token);
+        var heartbeatTask = Task.Run(async () => await RunHeartbeatAsync(context.JobId, heartbeatInterval, heartbeatCts.Token));
 
         try
         {
@@ -96,11 +96,16 @@ public class DefaultJobRunner(
 
     private async Task RunHeartbeatAsync(Guid jobId, TimeSpan interval, CancellationToken cancellationToken)
     {
+        logger.LogDebug("Starting heartbeat loop for job {JobId} with interval {Interval}", jobId, interval);
+
         if (interval <= TimeSpan.Zero)
         {
             logger.LogWarning("Heartbeat interval must be greater than zero for job {JobId}. Heartbeat disabled.", jobId);
             return;
         }
+
+        using var scope = serviceScopeFactory.CreateScope();
+        var scopedStore = scope.ServiceProvider.GetRequiredService<IJobStore>();
 
         try
         {
@@ -110,8 +115,6 @@ public class DefaultJobRunner(
             {
                 try
                 {
-                    using var scope = serviceScopeFactory.CreateScope();
-                    var scopedStore = scope.ServiceProvider.GetRequiredService<IJobStore>();
                     await scopedStore.SetHeartbeatAsync(jobId, DateTimeOffset.UtcNow, cancellationToken);
                 }
                 catch (OperationCanceledException)

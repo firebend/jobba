@@ -49,6 +49,12 @@ public class DefaultJobRunnerTests
         _store.Setup(x => x.SetHeartbeatAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        // Ensure the mocked IServiceProvider used by tests will resolve IJobStore to this mock
+        _fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IJobStore), _store.Object }
+        }));
+
         _publisher = _fixture.Freeze<Mock<IJobEventPublisher>>();
     }
 
@@ -157,7 +163,7 @@ public class DefaultJobRunnerTests
 
         _job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(async () => await Task.Delay(TimeSpan.FromMilliseconds(200)));
+            .Returns(async () => await Task.Delay(TimeSpan.FromMilliseconds(1000)));
 
         //act
         var runner = _fixture.Create<DefaultJobRunner>();
@@ -165,7 +171,7 @@ public class DefaultJobRunnerTests
 
         //assert
         _store.Verify(x => x.SetHeartbeatAsync(context.JobId, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
-            Times.AtLeastOnce);
+            Times.AtLeast(10));
     }
 
     [TestMethod]

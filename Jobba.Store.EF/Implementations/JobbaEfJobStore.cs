@@ -162,6 +162,21 @@ public class JobbaEfJobStore(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task ModifyJobAsync(Guid jobId, Action<JobEntity> action, CancellationToken cancellationToken)
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
+
+        action(job);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
@@ -169,10 +184,6 @@ public class JobbaEfJobStore(
 
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
 
-        // Fetch candidates AsNoTracking so the change tracker isn't polluted; staleness math
-        // (TimeSpan multiplication) cannot be translated to SQL so we filter in memory.
-        // Jobs with a null LastHeartbeatTime are intentionally skipped — those rows either pre-date heartbeat
-        // support or have not yet emitted a first heartbeat, and we cannot tell whether they are healthy.
         var candidates = await dbContext.Jobs
             .AsNoTracking()
             .Where(x => x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker
@@ -185,26 +196,16 @@ public class JobbaEfJobStore(
             .Where(x => x.LastHeartbeatTime!.Value.Add(x.JobWatchInterval * staleMultiplier) < now)
             .ToList();
 
-        var reclaimed = 0;
-
         foreach (var job in staleJobs)
         {
-            // Atomic guarded UPDATE: only flip to Faulted if the row is still InProgress AND the heartbeat
-            // hasn't moved since we read it. Prevents clobbering a concurrent completion or a fresh heartbeat
-            // arriving from the still-alive job runner.
-            var originalHeartbeat = job.LastHeartbeatTime;
-            var rows = await dbContext.Jobs
-                .Where(x => x.Id == job.Id
-                            && x.Status == JobStatus.InProgress
-                            && x.LastHeartbeatTime == originalHeartbeat)
-                .ExecuteUpdateAsync(s => s
-                        .SetProperty(p => p.Status, JobStatus.Faulted)
-                        .SetProperty(p => p.FaultedReason, JobbaCoreOptions.OrphanedJobFaultedReason),
-                    cancellationToken);
-
-            reclaimed += rows;
+            await ModifyJobAsync(job.Id,
+                x =>
+                {
+                    x.Status = JobStatus.Faulted;
+                    x.FaultedReason = JobbaCoreOptions.OrphanedJobFaultedReason;
+                }, cancellationToken);
         }
 
-        return reclaimed;
+        return staleJobs.Count;
     }
 }
