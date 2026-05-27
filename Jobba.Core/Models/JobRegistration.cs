@@ -8,6 +8,8 @@ namespace Jobba.Core.Models;
 /// </summary>
 public class JobRegistration : IJobbaEntity
 {
+    private string _timeZoneId = "UTC";
+    private TimeZoneInfo _timeZoneInfo;
 
     /// <summary>
     /// The Id
@@ -89,15 +91,15 @@ public class JobRegistration : IJobbaEntity
     /// </summary>
     public string TimeZoneId
     {
-        get;
+        get => _timeZoneId;
         set
         {
-            field = value;
-            TimeZoneInfo = null;
+            _timeZoneId = value;
+            _timeZoneInfo = null;
         }
-    } = "UTC";
+    }
 
-    public TimeZoneInfo TimeZoneInfo { get => field ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC"); private set; }
+    public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC");
 
     public static JobRegistration FromTypes<TJob, TJobParams, TJobState>(
         string systemMoniker,
