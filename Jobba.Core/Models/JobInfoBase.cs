@@ -44,6 +44,11 @@ public record JobInfoBase
     public DateTimeOffset LastProgressDate { get; set; }
 
     /// <summary>
+    ///     The last time the job runner sent a heartbeat for this job.
+    /// </summary>
+    public DateTimeOffset? LastHeartbeatTime { get; set; }
+
+    /// <summary>
     ///     The Job's status
     /// </summary>
     public JobStatus Status { get; set; }

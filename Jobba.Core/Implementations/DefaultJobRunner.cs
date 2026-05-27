@@ -5,6 +5,7 @@ using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations;
@@ -13,7 +14,8 @@ public class DefaultJobRunner(
     ILogger<DefaultJobRunner> logger,
     IJobStore jobStore,
     IJobEventPublisher publisher,
-    IJobCancellationTokenStore jobCancellationTokenStore) : IJobRunner
+    IJobCancellationTokenStore jobCancellationTokenStore,
+    IServiceScopeFactory serviceScopeFactory) : IJobRunner
 {
     public async Task RunJobAsync<TJobParams, TJobState>(
         IJob<TJobParams, TJobState> job,
@@ -21,7 +23,13 @@ public class DefaultJobRunner(
         CancellationToken cancellationToken) where TJobParams : IJobParams where TJobState : IJobState
     {
         var jobCancellationToken = jobCancellationTokenStore.CreateJobCancellationToken(context.JobId, cancellationToken);
-        await jobStore.SetJobStatusAsync(context.JobId, JobStatus.InProgress, DateTimeOffset.UtcNow, default);
+        var now = DateTimeOffset.UtcNow;
+        await jobStore.SetHeartbeatAsync(context.JobId, now, CancellationToken.None);
+        await jobStore.SetJobStatusAsync(context.JobId, JobStatus.InProgress, now, CancellationToken.None);
+
+        using var heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(jobCancellationToken, cancellationToken);
+        var heartbeatInterval = context.JobWatchInterval;
+        var heartbeatTask = RunHeartbeatAsync(context.JobId, heartbeatInterval, heartbeatCts.Token);
 
         try
         {
@@ -34,7 +42,6 @@ public class DefaultJobRunner(
             else
             {
                 await OnJobCompletedAsync(context.JobId, context.JobRegistration.Id, job.JobName, default);
-                jobCancellationTokenStore.RemoveCompletedJob(context.JobId);
             }
         }
         catch (TaskCanceledException)
@@ -48,6 +55,83 @@ public class DefaultJobRunner(
         catch (Exception ex)
         {
             await OnJobFaulted(context.JobId, context.JobRegistration.Id, ex);
+        }
+        finally
+        {
+            try
+            {
+                heartbeatCts.Cancel();
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error cancelling heartbeat token for job {JobId}", context.JobId);
+            }
+
+            var heartbeatTimeout = heartbeatInterval > TimeSpan.Zero
+                ? heartbeatInterval * 2
+                : TimeSpan.FromSeconds(5);
+
+            try
+            {
+                await heartbeatTask.WaitAsync(heartbeatTimeout, CancellationToken.None);
+            }
+            catch (TimeoutException)
+            {
+                logger.LogWarning("Heartbeat task did not complete within {Timeout} for job {JobId}", heartbeatTimeout, context.JobId);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation succeeds
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error waiting for heartbeat task to complete for job {JobId}", context.JobId);
+            }
+            finally
+            {
+                jobCancellationTokenStore.RemoveCompletedJob(context.JobId);
+            }
+        }
+    }
+
+    private async Task RunHeartbeatAsync(Guid jobId, TimeSpan interval, CancellationToken cancellationToken)
+    {
+        if (interval <= TimeSpan.Zero)
+        {
+            logger.LogWarning("Heartbeat interval must be greater than zero for job {JobId}. Heartbeat disabled.", jobId);
+            return;
+        }
+
+        try
+        {
+            await Task.Delay(interval, cancellationToken);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var scope = serviceScopeFactory.CreateScope();
+                    var scopedStore = scope.ServiceProvider.GetRequiredService<IJobStore>();
+                    await scopedStore.SetHeartbeatAsync(jobId, DateTimeOffset.UtcNow, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Heartbeat write failed for job {JobId}; will retry next tick", jobId);
+                }
+
+                await Task.Delay(interval, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Heartbeat loop terminated unexpectedly for job {JobId}", jobId);
         }
     }
 

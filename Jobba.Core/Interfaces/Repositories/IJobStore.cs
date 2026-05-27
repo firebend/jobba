@@ -111,4 +111,21 @@ public interface IJobStore
     public Task<JobInfo<TJobParams, TJobState>> GetJobByIdAsync<TJobParams, TJobState>(Guid jobId, CancellationToken cancellationToken)
         where TJobParams : IJobParams
         where TJobState : IJobState;
+
+    /// <summary>
+    /// Sets the heartbeat time for a running job, indicating it is still alive.
+    /// </summary>
+    /// <param name="jobId">The job id.</param>
+    /// <param name="heartbeatTime">The current time to stamp as the last heartbeat.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public Task SetHeartbeatAsync(Guid jobId, DateTimeOffset heartbeatTime, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reclaims orphaned InProgress jobs by marking them as Faulted.
+    /// A job is considered orphaned if its LastHeartbeatTime is older than (JobWatchInterval × staleMultiplier).
+    /// </summary>
+    /// <param name="staleMultiplier">The multiplier to apply to JobWatchInterval to determine staleness.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of jobs reclaimed.</returns>
+    public Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken);
 }

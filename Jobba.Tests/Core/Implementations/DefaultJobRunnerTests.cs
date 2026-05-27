@@ -46,6 +46,9 @@ public class DefaultJobRunnerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _store.Setup(x => x.SetHeartbeatAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _publisher = _fixture.Freeze<Mock<IJobEventPublisher>>();
     }
 
@@ -140,6 +143,29 @@ public class DefaultJobRunnerTests
             JobStatus.Cancelled,
             It.IsAny<DateTimeOffset>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Default_Job_Runner_Should_Send_Heartbeat_While_Job_Runs()
+    {
+        //arrange
+        var heartbeatInterval = TimeSpan.FromMilliseconds(50);
+        var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
+        context.IsRestart = false;
+        context.JobWatchInterval = heartbeatInterval;
+        context.JobRegistration = new JobRegistration { DefaultJobWatchInterval = heartbeatInterval, JobName = "test", SystemMoniker = "test" };
+
+        _job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async () => await Task.Delay(TimeSpan.FromMilliseconds(200)));
+
+        //act
+        var runner = _fixture.Create<DefaultJobRunner>();
+        await runner.RunJobAsync(_job.Object, context, default);
+
+        //assert
+        _store.Verify(x => x.SetHeartbeatAsync(context.JobId, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
     }
 
     [TestMethod]

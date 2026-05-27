@@ -18,10 +18,10 @@ public class JobbaInMemoryBuilder
     {
         Builder = jobbaBuilder;
 
-        jobbaBuilder.Services.TryAddScoped<IJobListStore, InMemoryJobListStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobProgressStore, InMemoryJobProgressStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobStore, InMemoryJobStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobCleanUpStore, InMemoryJobCleanUpStore>();
-        jobbaBuilder.Services.TryAddScoped<IJobRegistrationStore, InMemoryJobRegistrationStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobListStore, InMemoryJobListStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobProgressStore, InMemoryJobProgressStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobStore, InMemoryJobStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobCleanUpStore, InMemoryJobCleanUpStore>();
+        jobbaBuilder.Services.TryAddTransient<IJobRegistrationStore, InMemoryJobRegistrationStore>();
     }
 }

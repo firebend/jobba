@@ -193,4 +193,58 @@ public class JobbaEfJobStoreTests
         jobInfoBase.CurrentNumberOfTries.Should().Be(job.CurrentNumberOfTries);
         jobInfoBase.MaxNumberOfTries.Should().Be(job.MaxNumberOfTries);
     }
+
+    [TestMethod]
+    public async Task Jobba_Ef_Job_Store_Should_Set_Heartbeat()
+    {
+        //arrange
+        var job = AddJob();
+        var service = _fixture.Create<JobbaEfJobStore>();
+        var heartbeatTime = DateTimeOffset.UtcNow;
+
+        //act
+        await service.SetHeartbeatAsync(job.Id, heartbeatTime, default);
+
+        //assert
+        var updatedJob = await _dbContext.Jobs.FindAsync(job.Id);
+        updatedJob.Should().NotBeNull();
+        updatedJob!.LastHeartbeatTime.Should().Be(heartbeatTime);
+    }
+
+    [TestMethod]
+    public async Task Jobba_Ef_Job_Store_Should_Reclaim_Orphaned_Jobs_Using_Heartbeat()
+    {
+        //arrange
+        var staleJob = AddJob();
+        var freshJob = AddJob();
+
+        var watchInterval = TimeSpan.FromSeconds(10);
+        const int staleMultiplier = 3;
+
+        staleJob.JobWatchInterval = watchInterval;
+        staleJob.LastHeartbeatTime = DateTimeOffset.UtcNow.Subtract(watchInterval * staleMultiplier * 2);
+
+        freshJob.JobWatchInterval = watchInterval;
+        freshJob.LastHeartbeatTime = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+
+        var systemInfoProvider = _fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(staleJob.SystemInfo);
+
+        var service = _fixture.Create<JobbaEfJobStore>();
+
+        //act
+        var count = await service.ReclaimOrphanedJobsAsync(staleMultiplier, default);
+
+        //assert
+        count.Should().Be(1);
+
+        var reclaimedJob = await _dbContext.Jobs.FindAsync(staleJob.Id);
+        reclaimedJob!.Status.Should().Be(JobStatus.Faulted);
+        reclaimedJob.FaultedReason.Should().Be(JobbaCoreOptions.OrphanedJobFaultedReason);
+
+        var untouchedJob = await _dbContext.Jobs.FindAsync(freshJob.Id);
+        untouchedJob!.Status.Should().Be(JobStatus.InProgress);
+    }
 }
