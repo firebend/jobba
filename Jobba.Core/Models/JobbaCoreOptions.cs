@@ -17,6 +17,8 @@ public class JobbaCoreOptions
     /// </summary>
     public static readonly TimeSpan DefaultJobWatchInterval = TimeSpan.FromSeconds(10);
 
+    private int _staleMultiplier = 3;
+
     /// <summary>
     /// The multiplier applied to JobWatchInterval to determine when an InProgress job is considered stale.
     /// If a job's LastHeartbeatTime is older than (JobWatchInterval × StaleMultiplier), it will be reclaimed.
@@ -25,9 +27,9 @@ public class JobbaCoreOptions
     /// <exception cref="ArgumentOutOfRangeException">Thrown when value is less than 1.</exception>
     public int StaleMultiplier
     {
-        get;
-        set => field = value < 1
+        get => _staleMultiplier;
+        set => _staleMultiplier = value < 1
             ? throw new ArgumentOutOfRangeException(nameof(StaleMultiplier), "StaleMultiplier must be at least 1.")
             : value;
-    } = 3;
+    }
 }
