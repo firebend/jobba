@@ -14,11 +14,6 @@ namespace Jobba.Tests.Core.Implementations;
 [TestClass]
 public class DefaultJobEventPublisherTests
 {
-    /// <summary>
-    /// Verifies that the DI scope remains alive while subscribers execute.
-    /// Previously, GetSubscribers disposed the scope before InvokeSubscribers ran,
-    /// so any scoped dependency accessed inside a subscriber would be disposed.
-    /// </summary>
     [TestMethod]
     public async Task Publisher_Scope_Should_Be_Alive_When_Subscriber_Executes()
     {
