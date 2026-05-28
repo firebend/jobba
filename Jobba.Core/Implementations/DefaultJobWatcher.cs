@@ -29,6 +29,7 @@ public class DefaultJobWatcher<TJobParams, TJobState> : IJobWatcher<TJobParams, 
         _jobScheduler = jobScheduler;
     }
 
+
     public async Task WatchJobAsync(Guid jobId, CancellationToken cancellationToken)
     {
         var job = await _jobStore.GetJobByIdAsync<TJobParams, TJobState>(jobId, cancellationToken);

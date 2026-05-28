@@ -49,8 +49,21 @@ public class JobbaBuilder
         Services.TryAddScoped<IJobOrchestrationService, DefaultJobOrchestrationService>();
         Services.TryAddSingleton<IJobSystemInfoProvider>(new DefaultJobSystemInfoProvider(_systemMoniker));
 
+        Services.AddOptions<JobbaCoreOptions>();
+
         Services.AddHostedService<JobbaHostedService>();
         Services.AddHostedService<JobbaCleanUpHostedService>();
+    }
+
+    /// <summary>
+    /// Configures JobbaCoreOptions for the jobba builder.
+    /// </summary>
+    /// <param name="configure">Configuration action to customize JobbaCoreOptions.</param>
+    /// <returns>The JobbaBuilder instance.</returns>
+    public JobbaBuilder ConfigureOptions(Action<JobbaCoreOptions> configure)
+    {
+        Services.Configure(configure);
+        return this;
     }
 
     public JobbaBuilder AddJob<TJob, TJobParams, TJobState>(string name,

@@ -321,5 +321,8 @@ public class DefaultJobScheduler(
             LastProgressPercentage = jobInfo.LastProgressPercentage,
             CurrentNumberOfTries = request.NumberOfTries,
             JobRegistration = jobRegistration,
+            JobWatchInterval = request.JobWatchInterval > TimeSpan.Zero
+                ? request.JobWatchInterval
+                : jobRegistration.DefaultJobWatchInterval,
         };
 }

@@ -31,6 +31,12 @@ public class JobEntity : IJobbaEntity
     public DateTimeOffset LastProgressDate { get; set; }
 
     /// <summary>
+    ///     The last time the job runner sent a heartbeat for this job.
+    ///     Null indicates the job either pre-dates heartbeat support or has not yet emitted its first heartbeat.
+    /// </summary>
+    public DateTimeOffset? LastHeartbeatTime { get; set; }
+
+    /// <summary>
     ///     The Job's status
     /// </summary>
     public JobStatus Status { get; set; }
@@ -86,7 +92,13 @@ public class JobEntity : IJobbaEntity
         Guid jobRegistrationId,
         JobSystemInfo jobSystemInfo)
         where TJobParams : IJobParams
-        where TJobState : IJobState => new()
+        where TJobState : IJobState
+    {
+        var watchInterval = jobRequest.JobWatchInterval > TimeSpan.Zero
+            ? jobRequest.JobWatchInterval
+            : JobbaCoreOptions.DefaultJobWatchInterval;
+
+        return new()
         {
             Description = jobRequest.Description,
             Id = jobRequest.JobId,
@@ -94,8 +106,9 @@ public class JobEntity : IJobbaEntity
             EnqueuedTime = DateTimeOffset.UtcNow,
             FaultedReason = null,
             JobType = jobRequest.JobType.AssemblyQualifiedName,
-            JobWatchInterval = jobRequest.JobWatchInterval,
+            JobWatchInterval = watchInterval,
             LastProgressDate = DateTimeOffset.UtcNow,
+            LastHeartbeatTime = null,
             LastProgressPercentage = 0,
             CurrentNumberOfTries = jobRequest.NumberOfTries,
             MaxNumberOfTries = jobRequest.MaxNumberOfTries,
@@ -108,6 +121,7 @@ public class JobEntity : IJobbaEntity
             JobName = jobRequest.JobName,
             SystemInfo = jobSystemInfo
         };
+    }
 
     public JobInfo<TJobParams, TJobState> ToJobInfo<TJobParams, TJobState>()
         where TJobParams : IJobParams
@@ -123,6 +137,7 @@ public class JobEntity : IJobbaEntity
             JobType = JobType,
             JobWatchInterval = JobWatchInterval,
             LastProgressDate = LastProgressDate,
+            LastHeartbeatTime = LastHeartbeatTime,
             LastProgressPercentage = LastProgressPercentage,
             CurrentNumberOfTries = CurrentNumberOfTries,
             MaxNumberOfTries = MaxNumberOfTries,
@@ -144,6 +159,7 @@ public class JobEntity : IJobbaEntity
         JobType = JobType,
         JobWatchInterval = JobWatchInterval,
         LastProgressDate = LastProgressDate,
+        LastHeartbeatTime = LastHeartbeatTime,
         LastProgressPercentage = LastProgressPercentage,
         CurrentNumberOfTries = CurrentNumberOfTries,
         MaxNumberOfTries = MaxNumberOfTries,

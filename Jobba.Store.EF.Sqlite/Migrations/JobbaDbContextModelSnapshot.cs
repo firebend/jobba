@@ -16,7 +16,7 @@ namespace Jobba.Store.EF.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
             modelBuilder.Entity("Jobba.Core.Models.Entities.JobEntity", b =>
                 {
@@ -61,6 +61,9 @@ namespace Jobba.Store.EF.Sqlite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<TimeSpan>("JobWatchInterval")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("LastHeartbeatTime")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("LastProgressDate")

@@ -9,6 +9,7 @@ using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
 
 namespace Jobba.Core.Implementations.Repositories.InMemory;
+
 internal static class InMemoryJobProgressStoreCache
 {
     public static ConcurrentDictionary<Guid, JobProgressEntity> Progress { get; } = new();

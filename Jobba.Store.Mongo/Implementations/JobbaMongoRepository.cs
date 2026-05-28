@@ -56,6 +56,15 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
                 new() { ReturnDocument = ReturnDocument.After },
                 cancellationToken));
 
+    public Task<TEntity> UpdateAsync(Expression<Func<TEntity, bool>> filter, UpdateDefinition<TEntity> update,
+        CancellationToken cancellationToken)
+        => RetryErrorAsync(() => GetCollection()
+            .FindOneAndUpdateAsync(
+                Builders<TEntity>.Filter.Where(filter),
+                update,
+                new() { ReturnDocument = ReturnDocument.After },
+                cancellationToken));
+
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
         await AssignGuidAsync(entity, cancellationToken);
@@ -83,7 +92,7 @@ public class JobbaMongoRepository<TEntity> : JobbaMongoEntityClient<TEntity>, IJ
 
         var ids = found.Select(x => x.Id).ToArray();
 
-        await RetryErrorAsync(() =>  GetCollection()
+        await RetryErrorAsync(() => GetCollection()
             .DeleteManyAsync(
                 Builders<TEntity>.Filter.In(x => x.Id, ids),
                 cancellationToken));

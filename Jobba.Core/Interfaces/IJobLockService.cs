@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jobba.Core.Interfaces;
+
 public record SystemLockResult(bool WasLockAcquired, IDisposable Lock);
 
 /// <summary>

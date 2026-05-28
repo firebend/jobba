@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -95,5 +96,62 @@ public class JobbaMongoJobStore : IJobStore
 
         var jobInfo = entity?.ToJobInfo<TJobParams, TJobState>();
         return jobInfo;
+    }
+
+    public async Task SetHeartbeatAsync(Guid jobId, DateTimeOffset heartbeatTime, CancellationToken cancellationToken)
+    {
+        var job = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        if (job == null)
+        {
+            return;
+        }
+
+        var update = Builders<JobEntity>
+            .Update
+            .Set(x => x.LastHeartbeatTime, heartbeatTime);
+
+        await _repository.UpdateAsync(jobId, update, cancellationToken);
+    }
+
+    public async Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var systemInfo = _systemInfoProvider.GetSystemInfo();
+
+        // Skip jobs with null heartbeat — they pre-date heartbeat support or haven't emitted one yet.
+        var inProgressJobs = await _repository.GetAllAsync(
+            x => x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker
+                 && x.Status == JobStatus.InProgress
+                 && x.LastHeartbeatTime != null,
+            cancellationToken);
+
+        // Filter staleness in memory — TimeSpan arithmetic on JobWatchInterval cannot be translated to a query expression.
+        var staleJobs = inProgressJobs
+            .Where(x => x.LastHeartbeatTime!.Value.Add(x.JobWatchInterval * staleMultiplier) < now)
+            .ToList();
+
+        var reclaimed = 0;
+
+        foreach (var job in staleJobs)
+        {
+            var jobId = job.Id;
+
+            var update = Builders<JobEntity>
+                .Update
+                .Set(x => x.FaultedReason, JobbaCoreOptions.OrphanedJobFaultedReason)
+                .Set(x => x.Status, JobStatus.Faulted);
+
+            var updated = await _repository.UpdateAsync(
+                x => x.Id == jobId,
+                update,
+                cancellationToken);
+
+            if (updated != null)
+            {
+                reclaimed++;
+            }
+        }
+
+        return reclaimed;
     }
 }

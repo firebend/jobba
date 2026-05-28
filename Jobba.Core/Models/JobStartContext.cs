@@ -39,6 +39,13 @@ public record JobStartContext<TJobParams, TJobState>
     public JobRegistration JobRegistration { get; set; }
 
     /// <summary>
+    ///     The per-job watch interval (used for heartbeat cadence and orphan reclaim staleness math).
+    ///     Comes from the originating <see cref="JobRequest{TJobParams,TJobState}"/>; falls back to the
+    ///     registration default when the request did not specify one.
+    /// </summary>
+    public TimeSpan JobWatchInterval { get; set; }
+
+    /// <summary>
     ///     The current number of times the job has been tried.
     /// </summary>
     public int CurrentNumberOfTries { get; set; }

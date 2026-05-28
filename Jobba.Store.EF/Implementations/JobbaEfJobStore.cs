@@ -147,4 +147,65 @@ public class JobbaEfJobStore(
 
         return entity;
     }
+
+    public async Task SetHeartbeatAsync(Guid jobId, DateTimeOffset heartbeatTime, CancellationToken cancellationToken)
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
+
+        job.LastHeartbeatTime = heartbeatTime;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task ModifyJobAsync(Guid jobId, Action<JobEntity> action, CancellationToken cancellationToken)
+    {
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
+
+        action(job);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var systemInfo = systemInfoProvider.GetSystemInfo();
+
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+
+        var candidates = await dbContext.Jobs
+            .AsNoTracking()
+            .Where(x => x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker
+                        && x.Status == JobStatus.InProgress
+                        && x.LastHeartbeatTime != null)
+            .Select(x => new { x.Id, x.LastHeartbeatTime, x.JobWatchInterval })
+            .ToListAsync(cancellationToken);
+
+        var staleJobs = candidates
+            .Where(x => x.LastHeartbeatTime!.Value.Add(x.JobWatchInterval * staleMultiplier) < now)
+            .ToList();
+
+        foreach (var job in staleJobs)
+        {
+            await ModifyJobAsync(job.Id,
+                x =>
+                {
+                    x.Status = JobStatus.Faulted;
+                    x.FaultedReason = JobbaCoreOptions.OrphanedJobFaultedReason;
+                }, cancellationToken);
+        }
+
+        return staleJobs.Count;
+    }
 }

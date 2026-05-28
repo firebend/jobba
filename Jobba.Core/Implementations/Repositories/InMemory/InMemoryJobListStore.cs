@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jobba.Core.Implementations.Repositories;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -18,7 +19,8 @@ public class InMemoryJobListStore(IJobSystemInfoProvider systemInfoProvider) : I
             .Select(x => x.ToJobInfoBase()));
 
     public Task<IEnumerable<JobInfoBase>> GetJobsToRetry(CancellationToken cancellationToken)
-        => Task.FromResult(InMemoryJobStoreCache.Jobs.Values
-            .Where(RepositoryExpressions.JobsInProgressExpression(_systemInfo).Compile())
-            .Select(x => x.ToJobInfoBase()));
+        => Task.FromResult<IEnumerable<JobInfoBase>>(InMemoryJobStoreCache.Jobs.Values
+            .Where(RepositoryExpressions.JobRetryExpression(_systemInfo).Compile())
+            .Select(x => x.ToJobInfoBase())
+            .ToArray());
 }

@@ -41,7 +41,7 @@ public class CronSchedulerTests
         {
             await Task.Delay(100);
 
-            if (Stopwatch.GetElapsedTime(start).TotalMinutes > 4)
+            if (Stopwatch.GetElapsedTime(start).TotalMinutes > 2)
             {
                 Assert.Fail("Job did not run.");
             }
@@ -68,7 +68,7 @@ public class CronSchedulerTests
         {
             await Task.Delay(100);
 
-            if (Stopwatch.GetElapsedTime(start).TotalMinutes > 8)
+            if (Stopwatch.GetElapsedTime(start).TotalMinutes > 4)
             {
                 Assert.Fail("Job did not run again");
             }

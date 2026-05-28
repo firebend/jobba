@@ -17,6 +17,13 @@ public interface IJobbaMongoRepository<TEntity>
 
     public Task<TEntity> UpdateAsync(Guid id, UpdateDefinition<TEntity> update, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Performs a guarded findOneAndUpdate, applying the update only if the supplied filter matches.
+    /// Returns the post-update document, or null when the filter matched nothing (i.e. the update did not happen).
+    /// Useful for atomic optimistic-concurrency style updates.
+    /// </summary>
+    public Task<TEntity> UpdateAsync(Expression<Func<TEntity, bool>> filter, UpdateDefinition<TEntity> update, CancellationToken cancellationToken);
+
     public Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken);
 
     public Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken);
