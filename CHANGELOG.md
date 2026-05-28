@@ -1,4 +1,15 @@
 Lit Redis Changelog
+<a name="10.0.0"></a>
+## [10.0.0](https://www.github.com/firebend/jobba/releases/tag/v10.0.0) (2026-05-28)
+
+### ✨ Features
+
+* reclaim orphaned jobs and fix scope issue ([#208](https://www.github.com/firebend/jobba/issues/208)) ([ed2d5d7](https://www.github.com/firebend/jobba/commit/ed2d5d76578eef98518e659b33f57a490d727091))
+
+### Breaking Changes
+
+* reclaim orphaned jobs and fix scope issue ([#208](https://www.github.com/firebend/jobba/issues/208)) ([ed2d5d7](https://www.github.com/firebend/jobba/commit/ed2d5d76578eef98518e659b33f57a490d727091))
+
 <a name="9.1.0"></a>
 ## [9.1.0](https://www.github.com/firebend/jobba/releases/tag/v9.1.0) (2026-05-05)
 
