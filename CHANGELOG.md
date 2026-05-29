@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="11.0.0"></a>
+## [11.0.0](https://www.github.com/firebend/jobba/releases/tag/v11.0.0) (2026-05-29)
+
+### Breaking Changes
+
+* fix deadlock and add ready gate for mass transit ([#210](https://www.github.com/firebend/jobba/issues/210)) ([f7c4b5e](https://www.github.com/firebend/jobba/commit/f7c4b5e370b5e12a3592adeefda194069c27b306))
+
 <a name="10.0.0"></a>
 ## [10.0.0](https://www.github.com/firebend/jobba/releases/tag/v10.0.0) (2026-05-28)
 
