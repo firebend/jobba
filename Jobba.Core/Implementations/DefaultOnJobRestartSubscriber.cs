@@ -24,7 +24,7 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
 
     public async Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
     {
-        using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, cancellationToken);
+        using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, "restart", cancellationToken);
 
         var method = GetType().GetMethod(nameof(RestartJob));
 

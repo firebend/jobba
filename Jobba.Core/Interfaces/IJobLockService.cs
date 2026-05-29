@@ -24,6 +24,21 @@ public interface IJobLockService
     public ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lock a job by id with a suffix so that other concurrent invocations will not occur.
+    /// </summary>
+    /// <param name="jobId">
+    /// The id of the job.
+    /// </param>
+    /// <param name="suffix">
+    /// The suffix to append to the job id.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns></returns>
+    public ValueTask<IDisposable> LockJobAsync(Guid jobId, string suffix, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Locks on the provided system moniker so that no other concurrently running system can do an action.
     /// </summary>
     /// <param name="systemMoniker">

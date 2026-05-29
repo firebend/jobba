@@ -20,6 +20,8 @@
 * [Usage](#usage)
   * [ScheduleJobAsync](#schedulejobasync)
   * [CancelJobAsync](#canceljobasync)
+  * [Letting a job survive shutdown so it can be restarted](#letting-a-job-survive-shutdown-so-it-can-be-restarted)
+  * [Custom Ready Gate](#custom-ready-gate)
 <!-- TOC -->
 
 # jobba
@@ -380,4 +382,69 @@ Use the job's ID and the provided cancellation token to cancel a scheduled or ru
       await _jobScheduler.CancelJobAsync(request.Id, stoppingToken);
    }
 ```
+
+## Letting a job survive shutdown so it can be restarted
+
+On graceful shutdown, Jobba signals every running job's cancellation token. If your job honors it, Jobba marks
+the job `Cancelled` and it will **not** be restarted on the next startup.
+
+To have the job picked up again on the next startup, ignore the cancellation token in your job. The host will
+kill the process mid-flight; on the next startup, Jobba reclaims the orphaned `InProgress` row and republishes a
+restart event.
+
+```csharp
+protected override Task OnStartAsync(JobStartContext<MyParams, MyState> ctx, CancellationToken cancellationToken)
+    => DoWorkAsync(CancellationToken.None);
+```
+
+Make sure `MaxNumberOfTries` is high enough to cover the expected number of restarts, and only use this pattern
+for work that is safe to kill and resume.
+
+## Custom Ready Gate
+
+`IJobbaReadyGate` lets you delay Jobba's startup restart fan-out until your infrastructure is ready. The
+MassTransit integration ships its own gate; you can register additional ones and they're all awaited in parallel.
+
+```csharp
+public class RedisReadyGate : IHostedService, IJobbaReadyGate
+{
+    private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly IConnectionMultiplexer _redis;
+
+    public RedisReadyGate(IConnectionMultiplexer redis) => _redis = redis;
+
+    public Task WaitAsync(CancellationToken cancellationToken)
+        => _ready.Task.WaitAsync(cancellationToken);
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _redis.GetDatabase().PingAsync();
+            _ready.TrySetResult();
+        }
+        catch (Exception ex)
+        {
+            _ready.TrySetException(ex);
+            throw;
+        }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+```
+
+```csharp
+serviceCollection.AddJobba("my-system", builder =>
+{
+    builder.UsingMassTransit();
+    builder.AddReadyGate<RedisReadyGate>();
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<RedisReadyGate>());
+});
+```
+
+`AddReadyGate<TGate>` registers `TGate` as a singleton and exposes it via `IJobbaReadyGate`, so the same
+instance can also be wired up as an `IHostedService` (as shown above) to drive its own readiness signal.
+Implementations must be thread-safe, idempotent across concurrent `WaitAsync` callers, and must observe the
+supplied `CancellationToken`.
 

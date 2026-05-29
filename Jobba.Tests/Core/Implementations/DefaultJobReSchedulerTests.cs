@@ -59,42 +59,7 @@ public class DefaultJobReSchedulerTests
                 It.IsAny<CancellationToken>()), Times.Exactly(5));
         mockJobStore.Verify(x => x.ReclaimOrphanedJobsAsync(new JobbaCoreOptions().StaleMultiplier, It.IsAny<CancellationToken>()), Times.Once);
 
-        callOrder[0].Should().Be("GetJobsToRetry");
-        callOrder[1].Should().Be("ReclaimOrphanedJobs");
-    }
-
-    [TestMethod]
-    public async Task Default_Job_Re_Scheduler_Should_Not_Restart_Reclaimed_Jobs_In_Same_Cycle()
-    {
-        //arrange
-        var fixture = new Fixture();
-        fixture.Customize(new AutoMoqCustomization());
-
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(
-                x => x.PublishJobRestartEvent(It.IsAny<JobRestartEvent>(),
-                    It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var mockJobListStore = fixture.Freeze<Mock<IJobListStore>>();
-        mockJobListStore.Setup(x => x.GetJobsToRetry(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<JobInfoBase>());
-
-        var mockJobStore = fixture.Freeze<Mock<IJobStore>>();
-        mockJobStore.Setup(x => x.ReclaimOrphanedJobsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(3);
-
-        var mockOptions = fixture.Freeze<Mock<IOptions<JobbaCoreOptions>>>();
-        mockOptions.Setup(x => x.Value).Returns(new JobbaCoreOptions());
-
-        var rescheduler = fixture.Create<DefaultJobReScheduler>();
-
-        //act
-        await rescheduler.RestartFaultedJobsAsync(default);
-
-        //assert — 3 jobs were reclaimed but none should be restarted this cycle
-        mockPublisher.Verify(
-            x => x.PublishJobRestartEvent(It.IsAny<JobRestartEvent>(),
-                It.IsAny<CancellationToken>()), Times.Never);
+        callOrder[0].Should().Be("ReclaimOrphanedJobs");
+        callOrder[1].Should().Be("GetJobsToRetry");
     }
 }

@@ -59,7 +59,7 @@ public class DefaultJobRunnerTests
     }
 
     [TestMethod]
-    public async Task Default_Job_Scheduler_Should_Schedule_Job()
+    public async Task Default_Job_Runner_Should_Run_Job()
     {
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
@@ -88,7 +88,7 @@ public class DefaultJobRunnerTests
     }
 
     [TestMethod]
-    public async Task Default_Job_Scheduler_Should_Handle_Force_Cancellation()
+    public async Task Default_Job_Runner_Should_Handle_Force_Cancellation()
     {
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
@@ -119,7 +119,7 @@ public class DefaultJobRunnerTests
     }
 
     [TestMethod]
-    public async Task Default_Job_Scheduler_Should_Handle_Cancellation()
+    public async Task Default_Job_Runner_Should_Handle_Cancellation()
     {
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
@@ -175,7 +175,7 @@ public class DefaultJobRunnerTests
     }
 
     [TestMethod]
-    public async Task Default_Job_Scheduler_Should_Handle_Job_Failure()
+    public async Task Default_Job_Runner_Should_Handle_Job_Failure()
     {
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();

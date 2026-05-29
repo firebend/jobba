@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Extensions;
+using Jobba.Core.Interfaces;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using MassTransit;
@@ -14,8 +15,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.MassTransit.HostedServices;
 
-public class MassTransitJobbaReceiverHostedService : BackgroundService
+public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaReadyGate
 {
+    private readonly TaskCompletionSource _endpointsReadySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
@@ -25,36 +28,66 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
         _scopeFactory = scopeFactory;
     }
 
+    /// <summary>
+    /// Awaits until the MassTransit receive endpoints have been connected AND each endpoint has signalled
+    /// that it is ready to receive messages. If endpoint registration fails, the awaiting task will observe
+    /// the underlying exception.
+    /// </summary>
+    public Task WaitAsync(CancellationToken cancellationToken)
+        => _endpointsReadySource.Task.WaitAsync(cancellationToken);
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            if (_scopeFactory.TryCreateScope(out var scope))
+            if (!_scopeFactory.TryCreateScope(out var scope))
             {
-                using (scope)
-                {
-                    var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
-
-                    var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? [];
-
-                    if (consumers.Count != 0)
-                    {
-                        RegisterJobbaEndpoints(scope, consumers);
-                    }
-                }
+                _logger.LogWarning("Could not create service scope to register MassTransit receivers; opening ready gate with no endpoints.");
+                _endpointsReadySource.TrySetResult();
+                return;
             }
+
+            List<HostReceiveEndpointHandle> handles;
+
+            using (scope)
+            {
+                var consumerInfoProvider = scope.ServiceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>();
+
+                var consumers = consumerInfoProvider?.GetConsumerInfos()?.ToList() ?? [];
+
+                if (consumers.Count == 0)
+                {
+                    _endpointsReadySource.TrySetResult();
+                    return;
+                }
+
+                handles = RegisterJobbaEndpoints(scope, consumers);
+
+                if (handles.Count == 0)
+                {
+                    _endpointsReadySource.TrySetResult();
+                    return;
+                }
+
+                await Task.WhenAll(handles.Select(h => h.Ready)).WaitAsync(stoppingToken);
+                _endpointsReadySource.TrySetResult();
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _endpointsReadySource.TrySetCanceled(stoppingToken);
         }
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Error connecting MassTransit receivers");
+            _endpointsReadySource.TrySetException(ex);
         }
-
-        return Task.CompletedTask;
     }
 
-    private void RegisterJobbaEndpoints(IServiceScope scope, List<JobbaMassTransitConsumerInfo> listeners)
+    private List<HostReceiveEndpointHandle> RegisterJobbaEndpoints(IServiceScope scope, List<JobbaMassTransitConsumerInfo> listeners)
     {
+        var handles = new List<HostReceiveEndpointHandle>();
+
         var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
         var endpointConnector = scope.ServiceProvider.GetService<IReceiveEndpointConnector>();
         var configureConsumer =
@@ -62,14 +95,14 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
 
         if (configureConsumer == null || configurationContext == null || endpointConnector == null)
         {
-            return;
+            return handles;
         }
 
         var queues = GetQueues(scope, configurationContext.QueueMode, configurationContext.ReceiveEndpointPrefix, listeners);
 
         foreach (var (queueName, consumerInfos) in queues)
         {
-            endpointConnector.ConnectReceiveEndpoint(queueName, (_, configurator) =>
+            var handle = endpointConnector.ConnectReceiveEndpoint(queueName, (_, configurator) =>
             {
                 foreach (var consumerInfo in consumerInfos)
                 {
@@ -77,7 +110,11 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService
                         .Invoke(null, [configurator, _scopeFactory]);
                 }
             });
+
+            handles.Add(handle);
         }
+
+        return handles;
     }
 
     private static Dictionary<string, List<JobbaMassTransitConsumerInfo>> GetQueues(
