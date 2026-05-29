@@ -51,7 +51,7 @@ public class JobbaHostedService : BackgroundService
 
         if (registrations.Length == 0)
         {
-            _logger.LogInformation("There are job definitions for Jobba to register");
+            _logger.LogInformation("There are no job definitions for Jobba to register");
             HasRegisteredJobsCancellationTokenSource.Cancel();
             return;
         }
@@ -83,7 +83,18 @@ public class JobbaHostedService : BackgroundService
         {
             _logger.LogDebug("Jobba is restarting faulted jobs");
 
+            var gates = scope.ServiceProvider.GetServices<IJobbaReadyGate>().ToArray();
+            if (gates.Length > 0)
+            {
+                stoppingToken.ThrowIfCancellationRequested();
+                await Task.WhenAll(gates.Select(g => g.WaitAsync(stoppingToken)));
+            }
+
             await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Expected when cancellation is requested
         }
         catch (Exception ex)
         {

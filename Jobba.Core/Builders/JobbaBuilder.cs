@@ -66,6 +66,17 @@ public class JobbaBuilder
         return this;
     }
 
+    /// <summary>
+    /// Registers an additional <see cref="IJobbaReadyGate"/>. All registered gates are awaited in parallel before
+    /// Jobba performs startup work that depends on infrastructure being ready (e.g. restarting faulted jobs).
+    /// </summary>
+    public JobbaBuilder AddReadyGate<TGate>() where TGate : class, IJobbaReadyGate
+    {
+        Services.TryAddSingleton<TGate>();
+        Services.AddSingleton<IJobbaReadyGate>(sp => sp.GetRequiredService<TGate>());
+        return this;
+    }
+
     public JobbaBuilder AddJob<TJob, TJobParams, TJobState>(string name,
         string description = null,
         Action<JobRegistration> configureRegistration = null)

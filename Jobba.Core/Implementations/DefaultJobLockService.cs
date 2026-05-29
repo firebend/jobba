@@ -16,6 +16,12 @@ public class DefaultJobLockService : IJobLockService
         o.PoolInitialFill = 1;
     });
 
+    private static readonly AsyncKeyedLocker<string> AsyncKeyedJobSuffixLocker = new(o =>
+    {
+        o.PoolSize = 20;
+        o.PoolInitialFill = 1;
+    });
+
     private static readonly AsyncKeyedLocker<string> AsyncKeyedSystemLocker = new(o =>
     {
         o.PoolSize = 20;
@@ -25,6 +31,10 @@ public class DefaultJobLockService : IJobLockService
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken)
         => AsyncKeyedLocker.LockAsync(jobId, cancellationToken);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ValueTask<IDisposable> LockJobAsync(Guid jobId, string suffix, CancellationToken cancellationToken)
+        => AsyncKeyedJobSuffixLocker.LockAsync($"{jobId}_{suffix}", cancellationToken);
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

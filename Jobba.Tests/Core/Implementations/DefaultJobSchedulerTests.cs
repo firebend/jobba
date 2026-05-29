@@ -30,9 +30,11 @@ public class DefaultJobSchedulerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        var runnerInvoked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var jobRunner = fixture.Freeze<Mock<IJobRunner>>();
         jobRunner.Setup(x => x.RunJobAsync(It.IsAny<IJob<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => runnerInvoked.TrySetResult())
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new AutoMoqCustomization());
@@ -102,6 +104,8 @@ public class DefaultJobSchedulerTests
             x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
+        await runnerInvoked.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
         jobRunner.Verify(
             x => x.RunJobAsync(It.IsAny<IJob<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()),
@@ -133,9 +137,11 @@ public class DefaultJobSchedulerTests
                 JobName = jobName
             });
 
+        var runnerInvoked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var jobRunner = fixture.Freeze<Mock<IJobRunner>>();
         jobRunner.Setup(x => x.RunJobAsync(It.IsAny<IJob<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => runnerInvoked.TrySetResult())
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new ServiceProviderCustomization(
@@ -195,6 +201,8 @@ public class DefaultJobSchedulerTests
         store.Verify(
             x => x.SetJobStatusAsync(jobId, JobStatus.Enqueued, It.IsAny<DateTimeOffset>(),
                 It.IsAny<CancellationToken>()), Times.Once);
+
+        await runnerInvoked.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         jobRunner.Verify(
             x => x.RunJobAsync(It.IsAny<IJob<DefaultJobParams, DefaultJobState>>(),
