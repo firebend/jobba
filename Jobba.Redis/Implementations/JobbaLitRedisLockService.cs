@@ -21,8 +21,32 @@ public class LitRedisJobLockService : IJobLockService
 
     public async ValueTask<IDisposable> LockJobAsync(Guid jobId, CancellationToken cancellationToken)
     {
+        var locker = await LockJobImplAsync($"Jobba_{jobId}", cancellationToken);
+
+        if (locker is not null)
+        {
+            return locker;
+        }
+
+        throw new Exception($"Could not acquire lock. Job Id {jobId}");
+    }
+
+    public async ValueTask<IDisposable> LockJobAsync(Guid jobId, string suffix, CancellationToken cancellationToken)
+    {
+        var locker = await LockJobImplAsync($"Jobba_{jobId}_{suffix}", cancellationToken);
+
+        if (locker is not null)
+        {
+            return locker;
+        }
+
+        throw new Exception($"Could not acquire lock. Job Id {jobId} with suffix {suffix}");
+    }
+
+    private async Task<LitRedisDistributedLockModel> LockJobImplAsync(string key, CancellationToken cancellationToken)
+    {
         var lockModel = RequestLockModel
-            .WithKey($"Jobba_{jobId}")
+            .WithKey(key)
             .WaitForever();
 
         var locker = await _lockService.AcquireLockAsync(lockModel, cancellationToken);
@@ -32,7 +56,7 @@ public class LitRedisJobLockService : IJobLockService
             return locker;
         }
 
-        throw new Exception($"Could not acquire lock. Job Id {jobId}");
+        return null;
     }
 
     public async Task<SystemLockResult> LockSystemAsync(string systemMoniker, TimeSpan span, CancellationToken cancellationToken)

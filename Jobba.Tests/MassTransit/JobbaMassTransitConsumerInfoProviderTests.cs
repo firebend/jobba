@@ -5,6 +5,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Models;
 using Jobba.MassTransit.Implementations;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
@@ -57,20 +58,23 @@ public class JobbaMassTransitConsumerInfoProviderTests
             .Select(_ => fixture.Freeze<Mock<IJobbaMassTransitConsumer>>().Object)
             .ToList();
 
-        var jobMocks = Enumerable
+        var registrations = Enumerable
             .Range(1, 3)
             .Select(index =>
-            {
-                var jobMock = fixture.Freeze<Mock<IJob>>();
-                jobMock.Setup(x => x.JobName).Returns($"Fake Job {index}");
-                return jobMock.Object;
-            })
+                new JobRegistration
+                {
+                    JobName = $"Fake Job {index}",
+                    SystemMoniker = "test",
+                    JobType = typeof(object),
+                    JobParamsType = typeof(object),
+                    JobStateType = typeof(object)
+                })
             .ToList();
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
             { typeof(IEnumerable<IJobbaMassTransitConsumer>), consumerMocks },
-            { typeof(IEnumerable<IJob>), jobMocks }
+            { typeof(IEnumerable<JobRegistration>), registrations }
         }));
 
         var service = fixture.Create<JobbaMassTransitConsumerInfoProvider>();

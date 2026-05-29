@@ -31,7 +31,7 @@ public class DefaultOnJobRestartSubscriberTests
         };
 
         var lockMock = fixture.Freeze<Mock<IJobLockService>>();
-        lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(new ValueTask<IDisposable>());
 
         var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
@@ -60,6 +60,7 @@ public class DefaultOnJobRestartSubscriberTests
         //assert
         lockMock.Verify(x => x.LockJobAsync(
             It.Is<Guid>(jobId => jobId == restartEvent.JobId),
+            It.Is<string>(s => s == "restart"),
             It.IsAny<CancellationToken>()), Times.Once);
 
         jobStoreMock.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(
@@ -97,7 +98,7 @@ public class DefaultOnJobRestartSubscriberTests
         };
 
         var lockMock = fixture.Freeze<Mock<IJobLockService>>();
-        lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(new ValueTask<IDisposable>());
 
         var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
@@ -126,6 +127,7 @@ public class DefaultOnJobRestartSubscriberTests
         //assert
         lockMock.Verify(x => x.LockJobAsync(
             It.Is<Guid>(jobId => jobId == restartEvent.JobId),
+            It.Is<string>(s => s == "restart"),
             It.IsAny<CancellationToken>()), Times.Once);
 
         jobStoreMock.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(

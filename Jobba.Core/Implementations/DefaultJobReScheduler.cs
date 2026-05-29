@@ -34,19 +34,16 @@ public class DefaultJobReScheduler : IJobReScheduler
 
     public async Task RestartFaultedJobsAsync(CancellationToken cancellationToken)
     {
-        // Snapshot jobs to retry before reclaiming orphans so that newly-reclaimed jobs are not
-        // restarted in the same cycle (they will be picked up by the next scheduler cycle instead).
-        var jobs = await _jobListStore.GetJobsToRetry(cancellationToken);
-
         // Reclaim orphaned InProgress jobs (those whose LastHeartbeatTime is older than JobWatchInterval × StaleMultiplier)
         var reclaimedCount = await _jobStore.ReclaimOrphanedJobsAsync(_options.StaleMultiplier, cancellationToken);
         if (reclaimedCount > 0)
         {
             _logger.LogInformation("Reclaimed {ReclaimedCount} orphaned InProgress job(s)", reclaimedCount);
         }
-        var jobsArray = jobs ?? Array.Empty<JobInfoBase>();
 
-        var tasks = jobsArray
+        var jobs = await _jobListStore.GetJobsToRetry(cancellationToken) ?? [];
+
+        var tasks = jobs
             .Select(job =>
             {
                 _logger.LogDebug("Restarting job. JobId: {JobId} Description: {JobDescription}", job.Id, job.Description);

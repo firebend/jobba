@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
+using Jobba.Core.Models;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,18 +39,18 @@ public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInf
 
             if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
             {
-                var jobs = scope
+                var registrations = scope
                     .ServiceProvider
-                    .GetServices<IJob>();
+                    .GetServices<JobRegistration>();
 
-                foreach (var job in jobs)
+                foreach (var registration in registrations)
                 {
                     foreach (var consumer in consumers)
                     {
                         yield return new JobbaMassTransitConsumerInfo
                         {
                             ConsumerType = consumer.GetType(),
-                            QueueName = job.JobName.Replace(" ", "_")
+                            QueueName = registration.JobName.Replace(" ", "_")
                         };
                     }
                 }

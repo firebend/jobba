@@ -36,6 +36,11 @@ public class ServiceProviderCustomization : ICustomization
                 }
             });
         }
+
+        if (_resolves.ContainsKey(typeof(IEnumerable<IJobbaReadyGate>)) is false)
+        {
+            _resolves.Add(typeof(IEnumerable<IJobbaReadyGate>), Array.Empty<IJobbaReadyGate>());
+        }
     }
 
     public void Customize(IFixture fixture) => MockServiceProvider(fixture);

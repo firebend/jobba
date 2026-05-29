@@ -11,6 +11,7 @@ using MassTransit;
 using MassTransit.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobba.MassTransit.Extensions;
 
@@ -38,7 +39,9 @@ public static class JobbaMassTransitBuilderExtensions
         IContainerRegistrar registrar = new DependencyInjectionContainerRegistrar(builder.Services);
         registrar.RegisterRequestClient<CancelJobEvent>();
 
-        builder.Services.AddHostedService<MassTransitJobbaReceiverHostedService>();
+        builder.Services.AddSingleton<MassTransitJobbaReceiverHostedService>();
+        builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<MassTransitJobbaReceiverHostedService>());
+        builder.Services.AddSingleton<IJobbaReadyGate>(sp => sp.GetRequiredService<MassTransitJobbaReceiverHostedService>());
 
         return builder;
     }
