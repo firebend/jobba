@@ -23,7 +23,7 @@ public class DefaultOnJobRestartSubscriberTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var restartEvent = new JobRestartEvent
+        var restartEvent = new JobRestartEvent<TestModels.FooJob>
         {
             JobId = Guid.NewGuid(),
             JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
@@ -43,7 +43,7 @@ public class DefaultOnJobRestartSubscriberTests
                 JobParameters = new TestModels.FooParams { Baz = "fake params" },
                 CurrentState = new TestModels.FooState { Bar = "fake state" },
                 JobWatchInterval = TimeSpan.FromMinutes(1),
-                JobType = typeof(object).AssemblyQualifiedName,
+                JobTypeName = typeof(object).AssemblyQualifiedName,
                 Status = JobStatus.Faulted,
                 Id = restartEvent.JobId
             });
@@ -52,7 +52,7 @@ public class DefaultOnJobRestartSubscriberTests
         jobSchedulerMock.Setup(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>());
 
-        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber>();
+        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await subscriber.OnJobRestartAsync(restartEvent, default);
@@ -90,7 +90,7 @@ public class DefaultOnJobRestartSubscriberTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var restartEvent = new JobRestartEvent
+        var restartEvent = new JobRestartEvent<TestModels.FooJob>
         {
             JobId = Guid.NewGuid(),
             JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
@@ -110,7 +110,7 @@ public class DefaultOnJobRestartSubscriberTests
                 JobParameters = new TestModels.FooParams { Baz = "fake params" },
                 CurrentState = new TestModels.FooState { Bar = "fake state" },
                 JobWatchInterval = TimeSpan.FromMinutes(1),
-                JobType = typeof(object).AssemblyQualifiedName,
+                JobTypeName = typeof(object).AssemblyQualifiedName,
                 Status = jobStatus,
                 Id = restartEvent.JobId
             });
@@ -119,7 +119,7 @@ public class DefaultOnJobRestartSubscriberTests
         jobSchedulerMock.Setup(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>());
 
-        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber>();
+        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await subscriber.OnJobRestartAsync(restartEvent, default);

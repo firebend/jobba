@@ -4,7 +4,7 @@ using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces.Subscribers;
 
-public interface IOnJobStartedSubscriber
+public interface IOnJobStartedSubscriber<TJob>
 {
-    public Task OnJobStartedAsync(JobStartedEvent jobCompletedEvent, CancellationToken cancellationToken);
+    public Task OnJobStartedAsync(JobStartedEvent<TJob> jobStartedEvent, CancellationToken cancellationToken);
 }

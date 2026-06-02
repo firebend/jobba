@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -14,7 +13,7 @@ namespace Jobba.Store.EF.Implementations;
 
 public class JobbaEfJobProgressStore(
     IDbContextProvider dbContextProvider,
-    IJobEventPublisher jobEventPublisher,
+    IJobEventDispatcher dispatcher,
     IJobbaGuidGenerator guidGenerator,
     ILogger<JobbaEfJobProgressStore> logger)
     : IJobProgressStore
@@ -41,9 +40,11 @@ public class JobbaEfJobProgressStore(
         logger.LogDebug("Publishing progress event for job {jobId}: {progress}",
             jobProgress.JobId, jobProgress.Progress);
 
-        await jobEventPublisher.PublishJobProgressEventAsync(
-            new JobProgressEvent(entity.Id, entity.JobId, entity.JobRegistrationId),
-            cancellationToken);
+        var jobType = Type.GetType(job.JobType);
+        if (jobType is not null)
+        {
+            await dispatcher.PublishProgressAsync(jobType, entity.Id, entity.JobId, entity.JobRegistrationId, cancellationToken);
+        }
 
         job.JobState = jobProgress.JobState;
         job.LastProgressDate = jobProgress.Date;

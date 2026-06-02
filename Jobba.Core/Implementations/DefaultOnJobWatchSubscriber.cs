@@ -10,82 +10,41 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobWatchSubscriber : IOnJobWatchSubscriber
+public class DefaultOnJobWatchSubscriber<TJob, TJobParams, TJobState> : IOnJobWatchSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
-    private readonly ILogger<DefaultOnJobWatchSubscriber> _logger;
+    private readonly ILogger<DefaultOnJobWatchSubscriber<TJob, TJobParams, TJobState>> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public DefaultOnJobWatchSubscriber(ILogger<DefaultOnJobWatchSubscriber> logger, IServiceScopeFactory scopeFactory)
+    public DefaultOnJobWatchSubscriber(ILogger<DefaultOnJobWatchSubscriber<TJob, TJobParams, TJobState>> logger, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
     }
 
-
-    public async Task WatchJobAsync(JobWatchEvent jobWatchEvent, CancellationToken cancellationToken)
+    public async Task WatchJobAsync(JobWatchEvent<TJob> jobWatchEvent, CancellationToken cancellationToken)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(jobWatchEvent.ParamsTypeName))
+            if (!_scopeFactory.TryCreateScope(out var scope))
             {
-                throw new ArgumentException("No job parameters type name provided.", nameof(jobWatchEvent));
+                return;
             }
 
-            if (string.IsNullOrWhiteSpace(jobWatchEvent.StateTypeName))
+            using (scope)
             {
-                throw new ArgumentException("No job state type name provided.", nameof(jobWatchEvent));
-            }
+                var watcher = scope.ServiceProvider.GetService<IJobWatcher<TJob, TJobParams, TJobState>>()
+                              ?? scope.ServiceProvider.Materialize(typeof(DefaultJobWatcher<TJob, TJobParams, TJobState>)) as IJobWatcher<TJob, TJobParams, TJobState>
+                              ?? throw new Exception($"Could not find job watcher for {typeof(TJobParams)} / {typeof(TJobState)}");
 
-            var jobParametersType = Type.GetType(jobWatchEvent.ParamsTypeName)
-                                    ?? throw new Exception($"Could not find type for parameters: {jobWatchEvent.ParamsTypeName}");
-
-            var jobStateType = Type.GetType(jobWatchEvent.StateTypeName)
-                               ?? throw new Exception($"Could not find type for state : {jobWatchEvent.StateTypeName}");
-
-            var jobWatcherType = typeof(IJobWatcher<,>).MakeGenericType(jobParametersType, jobStateType);
-
-            if (_scopeFactory.TryCreateScope(out var scope))
-            {
-                using var serviceScope = scope;
-
-                var watcher = CreateWatcher(scope,
-                    jobWatcherType,
-                    jobParametersType,
-                    jobStateType);
-
-                var methodInfo = jobWatcherType.GetMethod(nameof(IJobWatcher<DefaultJobParams, DefaultJobState>.WatchJobAsync)) ??
-                                 throw new Exception("Could not find job watcher watch job method.");
-
-                var invokeReturn = methodInfo.Invoke(watcher, new object[]
-                {
-                    jobWatchEvent.JobId,
-                    cancellationToken
-                });
-
-                if (invokeReturn is Task task)
-                {
-                    await task;
-                }
+                await watcher.WatchJobAsync(jobWatchEvent.JobId, cancellationToken);
             }
         }
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Error watching jobs");
         }
-    }
-
-    private static object CreateWatcher(IServiceScope scope, Type jobWatcherType, Type paramsType, Type stateType)
-    {
-        var watcher = scope.ServiceProvider.GetService(jobWatcherType);
-
-        if (watcher is not null)
-        {
-            return watcher;
-        }
-
-        var defaultWatcherType = typeof(DefaultJobWatcher<,>).MakeGenericType(paramsType, stateType);
-        watcher = scope.ServiceProvider.Materialize(defaultWatcherType);
-
-        return watcher ?? throw new Exception($"Could not find job watch. Type: {jobWatcherType}");
     }
 }

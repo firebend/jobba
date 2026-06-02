@@ -72,7 +72,7 @@ public record JobRequest<TJobParams, TJobState>
         IsRestart = true,
         JobId = info.Id,
         JobParameters = info.JobParameters,
-        JobType = Type.GetType(info.JobType),
+        JobType = Type.GetType(info.JobTypeName),
         InitialJobState = info.CurrentState,
         JobWatchInterval = info.JobWatchInterval,
         NumberOfTries = info.CurrentNumberOfTries + 1,

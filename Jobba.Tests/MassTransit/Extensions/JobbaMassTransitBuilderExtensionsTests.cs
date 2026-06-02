@@ -32,7 +32,7 @@ public class JobbaMassTransitBuilderExtensionsTests
 
         try
         {
-            serviceProvider.GetService<IRequestClient<CancelJobEvent>>().Should().NotBeNull();
+            serviceProvider.GetService<ICancelRequestClientResolver>().Should().NotBeNull();
             serviceProvider.GetService<IJobbaMassTransitConsumerInfoProvider>().Should().NotBeNull();
             serviceProvider.GetService<IJobEventPublisher>().Should().NotBeNull().And.BeOfType<MassTransitJobEventPublisher>();
             serviceProvider.GetService<JobbaMassTransitConfigurationContext>().Should().NotBeNull();

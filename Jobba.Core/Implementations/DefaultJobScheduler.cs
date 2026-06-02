@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
 using Jobba.Core.Extensions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
@@ -12,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace Jobba.Core.Implementations;
 
 public class DefaultJobScheduler(
-    IJobEventPublisher publisher,
+    IJobEventDispatcher dispatcher,
     IJobStore jobStore,
     IJobbaGuidGenerator guidGenerator,
     IJobLockService lockService,
@@ -82,9 +81,15 @@ public class DefaultJobScheduler(
             return;
         }
 
-        await publisher.PublishJobCancellationRequestAsync(
-            new CancelJobEvent(job.Id, job.JobRegistrationId),
-            cancellationToken);
+        var jobType = Type.GetType(job.JobTypeName);
+        if (jobType is not null)
+        {
+            await dispatcher.PublishCancellationRequestAsync(jobType, job.Id, job.JobRegistrationId, cancellationToken);
+        }
+        else
+        {
+            logger.LogError("Invalid job type found in store with job id {JobId}", jobId);
+        }
     }
 
     public async Task<JobInfo<TJobParams, TJobState>> DoScheduleJobAsync<TJobParams, TJobState>(
@@ -115,10 +120,12 @@ public class DefaultJobScheduler(
 
         var jobInfo = await UpdateAttemptsOrCreateJobAsync(request, cancellationToken);
         await jobStore.SetJobStatusAsync(jobId, JobStatus.Enqueued, DateTimeOffset.UtcNow, cancellationToken);
-        await WatchJobAsync<TJobParams, TJobState>(jobId, jobRegistration.Id, request.JobWatchInterval, cancellationToken);
+        await dispatcher.PublishWatchAsync(jobRegistration.JobType, jobId,
+            typeof(TJobParams), typeof(TJobState),
+            jobRegistration.Id, request.JobWatchInterval, cancellationToken);
         var context = GetJobStartContext(request, jobInfo, jobRegistration);
         _ = RunJobAsync(jobRegistration, request.JobType, context, cancellationToken);
-        await NotifyJobStartedAsync(jobId, jobRegistration.Id, cancellationToken);
+        await dispatcher.PublishStartedAsync(jobRegistration.JobType, jobId, jobRegistration.Id, cancellationToken);
 
         return jobInfo;
     }
@@ -152,7 +159,7 @@ public class DefaultJobScheduler(
         if (registration.JobType != jobType)
         {
             logger.LogCritical("Job type mismatch. Job Registration Id {JobRegistrationId}. Expected {RegistrationJobType}. Actual {JobType}",
-                registration.JobType,
+                registration.Id,
                 registration.JobType,
                 jobType);
 
@@ -187,24 +194,6 @@ public class DefaultJobScheduler(
         request.JobId = newGuid;
 
         return request.JobId;
-    }
-
-    private Task NotifyJobStartedAsync(Guid jobId, Guid jobRegistrationId, CancellationToken token)
-        => publisher.PublishJobStartedEvent(
-            new JobStartedEvent(jobId, jobRegistrationId),
-            token);
-
-    private async Task WatchJobAsync<TJobParams, TJobState>(Guid jobId,
-        Guid jobRegistrationId,
-        TimeSpan watchInterval,
-        CancellationToken cancellationToken)
-    {
-        var watchEvent = new JobWatchEvent(jobId,
-            typeof(TJobParams).AssemblyQualifiedName,
-            typeof(TJobState).AssemblyQualifiedName,
-            jobRegistrationId);
-
-        await publisher.PublishWatchJobEventAsync(watchEvent, watchInterval, cancellationToken);
     }
 
     private async Task<JobInfo<TJobParams, TJobState>> UpdateAttemptsOrCreateJobAsync<TJobParams, TJobState>(
@@ -269,6 +258,7 @@ public class DefaultJobScheduler(
 
             if (job is null)
             {
+                scope.Dispose();
                 return;
             }
 

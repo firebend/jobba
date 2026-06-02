@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -14,17 +13,17 @@ namespace Jobba.Store.Mongo.Implementations;
 public class JobbaMongoJobProgressStore : IJobProgressStore
 {
     private readonly IJobbaGuidGenerator _guidGenerator;
-    private readonly IJobEventPublisher _jobEventPublisher;
+    private readonly IJobEventDispatcher _dispatcher;
     private readonly IJobbaMongoRepository<JobEntity> _jobRepository;
     private readonly IJobbaMongoRepository<JobProgressEntity> _repository;
 
     public JobbaMongoJobProgressStore(IJobbaMongoRepository<JobProgressEntity> repository,
-        IJobEventPublisher jobEventPublisher,
+        IJobEventDispatcher dispatcher,
         IJobbaMongoRepository<JobEntity> jobRepository,
         IJobbaGuidGenerator guidGenerator)
     {
         _repository = repository;
-        _jobEventPublisher = jobEventPublisher;
+        _dispatcher = dispatcher;
         _jobRepository = jobRepository;
         _guidGenerator = guidGenerator;
     }
@@ -37,9 +36,15 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
 
         var added = await _repository.AddAsync(entity, cancellationToken);
 
-        await _jobEventPublisher.PublishJobProgressEventAsync(
-            new JobProgressEvent(added.Id, added.JobId, added.JobRegistrationId),
-            cancellationToken);
+        var jobEntity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == added.JobId, cancellationToken);
+        if (jobEntity is not null)
+        {
+            var jobType = Type.GetType(jobEntity.JobType);
+            if (jobType is not null)
+            {
+                await _dispatcher.PublishProgressAsync(jobType, added.Id, added.JobId, added.JobRegistrationId, cancellationToken);
+            }
+        }
 
         var update = Builders<JobEntity>
             .Update

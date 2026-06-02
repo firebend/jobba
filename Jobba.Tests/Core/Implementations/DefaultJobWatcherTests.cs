@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jobba.Core.Events;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
@@ -33,14 +32,13 @@ public class DefaultJobWatcherTests
             {
                 JobWatchInterval = timeSpan,
                 Id = jobId,
-                Status = jobStatus
+                Status = jobStatus,
+                JobTypeName = typeof(TestModels.FooJob).AssemblyQualifiedName
             });
 
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
-        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
@@ -48,10 +46,11 @@ public class DefaultJobWatcherTests
         //assert
         mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
 
-        mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.Is<JobWatchEvent>(e =>
-                e.JobId == jobId &&
-                e.ParamsTypeName == typeof(TestModels.FooParams).AssemblyQualifiedName &&
-                e.StateTypeName == typeof(TestModels.FooState).AssemblyQualifiedName),
+        mockDispatcher.Verify(x => x.PublishWatchAsync(
+            typeof(TestModels.FooJob), jobId,
+            typeof(TestModels.FooParams),
+            typeof(TestModels.FooState),
+            It.IsAny<Guid>(),
             It.Is<TimeSpan>(t => t == timeSpan),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -74,18 +73,16 @@ public class DefaultJobWatcherTests
                 Status = JobStatus.Completed
             });
 
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
-        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
 
         //assert
         mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
-        mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
+        mockDispatcher.Verify(x => x.PublishWatchAsync(It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Type>(), It.IsAny<Type>(), It.IsAny<Guid>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -107,15 +104,13 @@ public class DefaultJobWatcherTests
                 Status = JobStatus.Faulted,
                 CurrentNumberOfTries = 1,
                 MaxNumberOfTries = 3,
-                JobType = typeof(object).AssemblyQualifiedName,
+                JobTypeName = typeof(TestModels.FooJob).AssemblyQualifiedName,
                 Description = "Fake",
                 CurrentState = new TestModels.FooState { Bar = "fake state" },
                 JobParameters = new TestModels.FooParams { Baz = "fake params" }
             });
 
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         var mockJobScheduler = fixture.Freeze<Mock<IJobScheduler>>();
         mockJobScheduler.Setup(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()))
@@ -126,26 +121,26 @@ public class DefaultJobWatcherTests
                 Status = JobStatus.Faulted,
                 CurrentNumberOfTries = 2,
                 MaxNumberOfTries = 3,
-                JobType = typeof(object).FullName,
+                JobTypeName = typeof(TestModels.FooJob).AssemblyQualifiedName,
                 Description = "Fake",
                 CurrentState = new TestModels.FooState { Bar = "fake state" },
                 JobParameters = new TestModels.FooParams { Baz = "fake params" }
             });
 
-        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooParams, TestModels.FooState>>();
+        var watcher = fixture.Create<DefaultJobWatcher<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await watcher.WatchJobAsync(jobId, default);
 
         //assert
         mockJobStore.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(jobId, It.IsAny<CancellationToken>()), Times.Once);
-        mockPublisher.Verify(x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
+        mockDispatcher.Verify(x => x.PublishWatchAsync(It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Type>(), It.IsAny<Type>(), It.IsAny<Guid>(), It.Is<TimeSpan>(t => t == timeSpan), It.IsAny<CancellationToken>()),
             Times.Never);
         mockJobScheduler.Verify(x => x.ScheduleJobAsync(
                 It.Is<JobRequest<TestModels.FooParams, TestModels.FooState>>(request =>
                     request.JobId == jobId &&
                     request.IsRestart &&
-                    request.JobType == typeof(object) &&
+                    request.JobType == typeof(TestModels.FooJob) &&
                     request.Description == "Fake" &&
                     request.JobWatchInterval == TimeSpan.FromSeconds(10) &&
                     request.NumberOfTries == 2 &&

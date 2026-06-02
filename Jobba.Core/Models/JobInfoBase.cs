@@ -21,7 +21,7 @@ public record JobInfoBase
     /// <summary>
     ///     The type of job that was enqueued
     /// </summary>
-    public string JobType { get; set; }
+    public string JobTypeName { get; set; }
 
     /// <summary>
     ///     The job's description

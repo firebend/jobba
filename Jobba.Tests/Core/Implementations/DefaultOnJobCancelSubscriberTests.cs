@@ -23,7 +23,7 @@ public class DefaultOnJobCancelSubscriberTests
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
         var jobRegistrationId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent(jobId, jobRegistrationId);
+        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId);
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore
@@ -32,11 +32,11 @@ public class DefaultOnJobCancelSubscriberTests
 
         var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
         mockPublisher.Setup(x => x.PublishJobCancelledEventAsync(
-                It.IsAny<JobCancelledEvent>(),
+                It.IsAny<JobCancelledEvent<TestModels.FooJob>>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = fixture.Create<DefaultOnJobCancelSubscriber>();
+        var service = fixture.Create<DefaultOnJobCancelSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         var result = await service.OnJobCancellationRequestAsync(cancelEvent, default);
@@ -46,7 +46,7 @@ public class DefaultOnJobCancelSubscriberTests
         mockCancellationTokenStore.Verify(x => x.CancelJob(It.Is<Guid>(guid => guid == jobId)), Times.Once);
 
         mockPublisher.Verify(x => x.PublishJobCancelledEventAsync(
-            It.Is<JobCancelledEvent>(@event => @event.JobId == cancelEvent.JobId),
+            It.Is<JobCancelledEvent<TestModels.FooJob>>(@event => @event.JobId == cancelEvent.JobId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -58,14 +58,14 @@ public class DefaultOnJobCancelSubscriberTests
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
         var jobRegistrationId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent(jobId, jobRegistrationId);
+        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId);
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore
             .Setup(x => x.CancelJob(It.IsAny<Guid>()))
             .Returns(false);
 
-        var service = fixture.Create<DefaultOnJobCancelSubscriber>();
+        var service = fixture.Create<DefaultOnJobCancelSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         var result = await service.OnJobCancellationRequestAsync(cancelEvent, default);

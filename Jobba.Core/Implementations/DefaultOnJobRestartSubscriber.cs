@@ -9,7 +9,10 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
+public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : IOnJobRestartSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     private readonly IJobLockService _jobLockService;
     private readonly IJobScheduler _jobScheduler;
@@ -22,38 +25,16 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
         _jobScheduler = jobScheduler;
     }
 
-    public async Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
+    public async Task OnJobRestartAsync(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken)
     {
         using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, "restart", cancellationToken);
 
-        var method = GetType().GetMethod(nameof(RestartJob));
-
-        if (method == null)
-        {
-            return;
-        }
-
-        var genericMethod = method.MakeGenericMethod(
-            Type.GetType(jobRestartEvent.JobParamsTypeName)!,
-            Type.GetType(jobRestartEvent.JobStateTypeName)!);
-
-        var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
-        {
-            jobRestartEvent.JobId,
-            cancellationToken
-        });
-
-        if (restartJobTaskAsObject is Task restartJobTask)
-        {
-            await restartJobTask;
-        }
+        await RestartJob(jobRestartEvent.JobId, cancellationToken);
     }
 
-    public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
-        where TParams : IJobParams
-        where TState : IJobState
+    public async Task RestartJob(Guid jobId, CancellationToken cancellationToken)
     {
-        var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
+        var job = await _jobStore.GetJobByIdAsync<TJobParams, TJobState>(jobId, cancellationToken);
 
         if (job == null)
         {
@@ -70,8 +51,8 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
             return;
         }
 
-        var request = JobRequest<TParams, TState>.FromJobInfo(job);
+        var request = JobRequest<TJobParams, TJobState>.FromJobInfo(job);
 
-        await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+        _ = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
     }
 }

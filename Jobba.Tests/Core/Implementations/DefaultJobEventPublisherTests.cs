@@ -21,14 +21,14 @@ public class DefaultJobEventPublisherTests
 
         var services = new ServiceCollection();
         services.AddScoped<ScopedDependency>();
-        services.AddScoped<IOnJobCompletedSubscriber>(_ => new ScopedAwareSubscriber(
+        services.AddScoped<IOnJobCompletedSubscriber<TestModels.FooJob>>(_ => new ScopedAwareSubscriber(
             _.GetRequiredService<ScopedDependency>(), executed));
 
         await using var provider = services.BuildServiceProvider();
         var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
         var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory);
 
-        var evt = new JobCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
+        var evt = new JobCompletedEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid());
         _ = publisher.PublishJobCompletedEventAsync(evt, CancellationToken.None);
 
         var wasScopedDependencyDisposed = await executed.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -43,7 +43,7 @@ public class DefaultJobEventPublisherTests
         public void Dispose() { IsDisposed = true; }
     }
 
-    private sealed class ScopedAwareSubscriber : IOnJobCompletedSubscriber
+    private sealed class ScopedAwareSubscriber : IOnJobCompletedSubscriber<TestModels.FooJob>
     {
         private readonly ScopedDependency _dep;
         private readonly TaskCompletionSource<bool> _executed;
@@ -54,7 +54,7 @@ public class DefaultJobEventPublisherTests
             _executed = executed;
         }
 
-        public Task OnJobCompletedAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken)
+        public Task OnJobCompletedAsync(JobCompletedEvent<TestModels.FooJob> jobCompletedEvent, CancellationToken cancellationToken)
         {
             _executed.TrySetResult(_dep.IsDisposed);
             return Task.CompletedTask;

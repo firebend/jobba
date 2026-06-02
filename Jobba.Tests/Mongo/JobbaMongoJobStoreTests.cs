@@ -60,7 +60,7 @@ public class JobbaMongoJobStoreTests
         jobInfo.JobWatchInterval.Should().Be(jobRequest.JobWatchInterval);
         jobInfo.JobParameters.Should().NotBeNull();
         jobInfo.CurrentState.Should().NotBeNull();
-        jobInfo.JobType.Should().NotBeNull();
+        jobInfo.JobTypeName.Should().NotBeNull();
         jobInfo.MaxNumberOfTries.Should().Be(jobRequest.MaxNumberOfTries);
         jobInfo.CurrentNumberOfTries.Should().Be(jobRequest.NumberOfTries);
 
@@ -197,7 +197,7 @@ public class JobbaMongoJobStoreTests
         jobInfoBase.Status.Should().Be(jobEntity.Status);
         jobInfoBase.FaultedReason.Should().Be(jobEntity.FaultedReason);
         jobInfoBase.EnqueuedTime.Should().Be(jobEntity.EnqueuedTime);
-        jobInfoBase.JobType.Should().Be(jobEntity.JobType);
+        jobInfoBase.JobTypeName.Should().Be(jobEntity.JobType);
         jobInfoBase.JobWatchInterval.Should().Be(jobEntity.JobWatchInterval);
         jobInfoBase.LastProgressDate.Should().Be(jobEntity.LastProgressDate);
         jobInfoBase.CurrentNumberOfTries.Should().Be(jobEntity.CurrentNumberOfTries);

@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class JobProgressEvent
+public class JobProgressEvent<TJob>
 {
     public JobProgressEvent()
     {

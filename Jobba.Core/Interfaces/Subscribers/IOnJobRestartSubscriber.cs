@@ -4,7 +4,10 @@ using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces.Subscribers;
 
-public interface IOnJobRestartSubscriber
+public interface IOnJobRestartSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
-    public Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken);
+    public Task OnJobRestartAsync(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken);
 }

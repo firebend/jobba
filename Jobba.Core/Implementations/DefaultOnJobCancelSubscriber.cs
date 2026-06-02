@@ -7,7 +7,10 @@ using Jobba.Core.Interfaces.Subscribers;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobCancelSubscriber : IOnJobCancelSubscriber
+public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : IOnJobCancelSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     private readonly IJobCancellationTokenStore _cancellationTokenStore;
     private readonly IJobEventPublisher _jobEventPublisher;
@@ -19,22 +22,22 @@ public class DefaultOnJobCancelSubscriber : IOnJobCancelSubscriber
         _jobEventPublisher = jobEventPublisher;
     }
 
-    public Task<bool> OnJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
+    public async Task<bool> OnJobCancellationRequestAsync(CancelJobEvent<TJob> cancelJobEvent, CancellationToken cancellationToken)
     {
         if (cancelJobEvent.JobId == Guid.Empty)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
         var wasCancelled = _cancellationTokenStore.CancelJob(cancelJobEvent.JobId);
 
         if (wasCancelled)
         {
-            _jobEventPublisher.PublishJobCancelledEventAsync(
-                new JobCancelledEvent(cancelJobEvent.JobId, cancelJobEvent.JobRegistrationId),
+            await _jobEventPublisher.PublishJobCancelledEventAsync(
+                new JobCancelledEvent<TJob>(cancelJobEvent.JobId, cancelJobEvent.JobRegistrationId),
                 cancellationToken);
         }
 
-        return Task.FromResult(wasCancelled);
+        return wasCancelled;
     }
 }

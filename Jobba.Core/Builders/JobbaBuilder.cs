@@ -10,13 +10,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Jobba.Core.Builders;
 
-public record JobAddedEventArgs
-{
-    public Type JobType { get; set; }
-    public Type JobParamsType { get; set; }
-    public Type JobStateType { get; set; }
-}
-
 public class JobbaBuilder
 {
     private readonly string _systemMoniker;
@@ -25,12 +18,26 @@ public class JobbaBuilder
     {
         _systemMoniker = systemMoniker;
         Services = services;
+        Registry = new JobTypeRegistry();
+        Services.AddSingleton(Registry);
         AddDefaultServices();
     }
 
     public IServiceCollection Services { get; }
 
-    public Action<JobAddedEventArgs> OnJobAdded { get; set; }
+    public JobTypeRegistry Registry { get; }
+
+    private readonly List<IJobTypeRegistrar> _registrars = [];
+
+    public void AddRegistrar(IJobTypeRegistrar registrar)
+    {
+        _registrars.Add(registrar);
+
+        foreach (var registration in Registrations.Values)
+        {
+            ApplyRegistrar(registrar, registration);
+        }
+    }
 
     public Dictionary<string, JobRegistration> Registrations { get; } = new();
 
@@ -43,9 +50,8 @@ public class JobbaBuilder
         Services.TryAddScoped<IJobScheduler, DefaultJobScheduler>();
         Services.TryAddScoped<IJobRunner, DefaultJobRunner>();
         Services.TryAddScoped<IJobReScheduler, DefaultJobReScheduler>();
-        Services.TryAddScoped<IOnJobCancelSubscriber, DefaultOnJobCancelSubscriber>();
-        Services.TryAddScoped<IOnJobRestartSubscriber, DefaultOnJobRestartSubscriber>();
-        Services.TryAddScoped<IOnJobWatchSubscriber, DefaultOnJobWatchSubscriber>();
+        Services.TryAddTransient<IJobEventDispatcher, JobEventDispatcher>();
+
         Services.TryAddScoped<IJobOrchestrationService, DefaultJobOrchestrationService>();
         Services.TryAddSingleton<IJobSystemInfoProvider>(new DefaultJobSystemInfoProvider(_systemMoniker));
 
@@ -84,7 +90,10 @@ public class JobbaBuilder
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        Services.TryAddScoped<IJobWatcher<TJobParams, TJobState>, DefaultJobWatcher<TJobParams, TJobState>>();
+        Services.TryAddScoped<IJobWatcher<TJob, TJobParams, TJobState>, DefaultJobWatcher<TJob, TJobParams, TJobState>>();
+        Services.TryAddScoped<IOnJobCancelSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState>>();
+        Services.TryAddScoped<IOnJobRestartSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>>();
+        Services.TryAddScoped<IOnJobWatchSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobWatchSubscriber<TJob, TJobParams, TJobState>>();
 
         if (Registrations.ContainsKey(name))
         {
@@ -107,13 +116,26 @@ public class JobbaBuilder
 
         Services.AddSingleton(registration);
 
-        OnJobAdded?.Invoke(new JobAddedEventArgs
+        Registry.RegisterJobType<TJob, TJobParams, TJobState>();
+
+        foreach (var registrar in _registrars)
         {
-            JobType = typeof(TJob),
-            JobStateType = typeof(TJobState),
-            JobParamsType = typeof(TJobParams)
-        });
+            registrar.OnJobAdded<TJob, TJobParams, TJobState>(this);
+        }
 
         return this;
     }
+
+    private void ApplyRegistrar(IJobTypeRegistrar registrar, JobRegistration registration)
+    {
+        var method = GetType().GetMethod(nameof(ApplyRegistrarGeneric), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var genericMethod = method?.MakeGenericMethod(registration.JobType, registration.JobParamsType, registration.JobStateType);
+        _ = (genericMethod?.Invoke(this, [registrar]));
+    }
+
+    private void ApplyRegistrarGeneric<TJob, TJobParams, TJobState>(IJobTypeRegistrar registrar)
+        where TJob : class, IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
+        => registrar.OnJobAdded<TJob, TJobParams, TJobState>(this);
 }

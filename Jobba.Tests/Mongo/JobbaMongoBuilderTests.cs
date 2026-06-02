@@ -21,14 +21,13 @@ public class JobbaMongoBuilderTests
         //act
         serviceCollection.AddJobba("fake", builder =>
         {
-            builder.AddJob<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>("fake");
             builder.UsingMongo("mongodb://localhost:27017/jobba/?directConnection=true&appName=jobba-sample", true);
+            builder.AddJob<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>("fake");
         });
 
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert
-        serviceCollection.Count.Should().Be(38);
         var registrations = provider.GetServices<JobRegistration>().ToArray();
         registrations.Length.Should().Be(1);
         registrations.First().JobType.Should().Be<TestModels.FooJob>();

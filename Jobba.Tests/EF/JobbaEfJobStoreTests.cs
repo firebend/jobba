@@ -101,7 +101,7 @@ public class JobbaEfJobStoreTests
         jobInfo.Id.Should().NotBeEmpty();
         jobInfo.Description.Should().BeEquivalentTo(jobRequest.Description);
         jobInfo.JobWatchInterval.Should().Be(jobRequest.JobWatchInterval);
-        jobInfo.JobType.Should().Be(jobRequest.JobType.AssemblyQualifiedName);
+        jobInfo.JobTypeName.Should().Be(jobRequest.JobType.AssemblyQualifiedName);
         jobInfo.JobParameters.Should().NotBeNull();
         jobInfo.JobParameters.Should().BeOfType(typeof(TestModels.FooParams));
         jobInfo.CurrentState.Should().NotBeNull();
@@ -187,7 +187,7 @@ public class JobbaEfJobStoreTests
         jobInfoBase.Status.Should().Be(job.Status);
         jobInfoBase.FaultedReason.Should().Be(job.FaultedReason);
         jobInfoBase.EnqueuedTime.Should().Be(job.EnqueuedTime);
-        jobInfoBase.JobType.Should().Be(job.JobType);
+        jobInfoBase.JobTypeName.Should().Be(job.JobType);
         jobInfoBase.JobWatchInterval.Should().Be(job.JobWatchInterval);
         jobInfoBase.LastProgressDate.Should().Be(job.LastProgressDate);
         jobInfoBase.CurrentNumberOfTries.Should().Be(job.CurrentNumberOfTries);

@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -13,7 +12,7 @@ namespace Jobba.Core.Implementations;
 public class DefaultJobRunner(
     ILogger<DefaultJobRunner> logger,
     IJobStore jobStore,
-    IJobEventPublisher publisher,
+    IJobEventDispatcher dispatcher,
     IJobCancellationTokenStore jobCancellationTokenStore,
     IServiceScopeFactory serviceScopeFactory) : IJobRunner
 {
@@ -41,7 +40,7 @@ public class DefaultJobRunner(
             }
             else
             {
-                await OnJobCompletedAsync(context.JobId, context.JobRegistration.Id, job.JobName, default);
+                await OnJobCompletedAsync(context.JobRegistration.JobType, context.JobId, context.JobRegistration.Id, job.JobName, default);
             }
         }
         catch (TaskCanceledException)
@@ -54,7 +53,7 @@ public class DefaultJobRunner(
         }
         catch (Exception ex)
         {
-            await OnJobFaulted(context.JobId, context.JobRegistration.Id, ex);
+            await OnJobFaulted(context.JobRegistration.JobType, context.JobId, context.JobRegistration.Id, ex);
         }
         finally
         {
@@ -139,15 +138,16 @@ public class DefaultJobRunner(
     }
 
 
-    private async Task OnJobFaulted(Guid jobId, Guid jobRegistrationId, Exception ex)
+    private async Task OnJobFaulted(Type jobType, Guid jobId, Guid jobRegistrationId, Exception ex)
     {
         logger.LogDebug("Job Faulted. JobId: {JobId}. Message: {ExceptionMessage}", jobId, ex.Message);
 
         await jobStore.LogFailureAsync(jobId, ex, default);
 
-        await publisher.PublishJobFaultedEventAsync(
-            new JobFaultedEvent(jobId, jobRegistrationId),
-            default);
+        if (jobType is not null)
+        {
+            await dispatcher.PublishFaultedAsync(jobType, jobId, jobRegistrationId, default);
+        }
     }
 
     private Task OnJobCancelledAsync(Guid jobId, bool wasForced, CancellationToken cancellationToken)
@@ -158,7 +158,7 @@ public class DefaultJobRunner(
             DateTimeOffset.UtcNow, cancellationToken);
     }
 
-    private async Task OnJobCompletedAsync(Guid jobId, Guid jobRegistrationId, string jobName,
+    private async Task OnJobCompletedAsync(Type jobType, Guid jobId, Guid jobRegistrationId, string jobName,
         CancellationToken cancellationToken)
     {
         logger.LogDebug("Job Completed. Id: {JobId} Name: {Name}", jobId, jobName);
@@ -167,8 +167,9 @@ public class DefaultJobRunner(
 
         logger.LogDebug("Publishing job completed event. JobId: {JobId}", jobId);
 
-        await publisher.PublishJobCompletedEventAsync(
-            new JobCompletedEvent(jobId, jobRegistrationId),
-            cancellationToken);
+        if (jobType is not null)
+        {
+            await dispatcher.PublishCompletedAsync(jobType, jobId, jobRegistrationId, cancellationToken);
+        }
     }
 }

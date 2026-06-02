@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class CancelJobEvent
+public class CancelJobEvent<TJob>
 {
     public CancelJobEvent()
     {

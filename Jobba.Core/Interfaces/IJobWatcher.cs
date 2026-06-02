@@ -13,7 +13,8 @@ namespace Jobba.Core.Interfaces;
 /// <typeparam name="TJobState">
 /// The type of job state.
 /// </typeparam>
-public interface IJobWatcher<TJobParams, TJobState>
+public interface IJobWatcher<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
     where TJobParams : IJobParams
     where TJobState : IJobState
 {

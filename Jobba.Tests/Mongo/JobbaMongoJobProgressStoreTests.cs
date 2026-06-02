@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -35,17 +34,17 @@ public class JobbaMongoJobProgressStoreTests
             .ReturnsAsync(new JobProgressEntity());
 
         var mockJobRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
+        mockJobRepo.Setup(x => x.GetFirstOrDefaultAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<JobEntity, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobEntity { JobType = typeof(TestModels.FooJob).AssemblyQualifiedName });
         mockJobRepo.Setup(x => x.UpdateAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
 
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(x => x.PublishJobProgressEventAsync(
-                It.IsAny<JobProgressEvent>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         var service = fixture.Create<JobbaMongoJobProgressStore>();
 
@@ -58,8 +57,8 @@ public class JobbaMongoJobProgressStoreTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        mockPublisher.Verify(x => x.PublishJobProgressEventAsync(
-                It.IsAny<JobProgressEvent>(),
+        mockDispatcher.Verify(x => x.PublishProgressAsync(
+                It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 

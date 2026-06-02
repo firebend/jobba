@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class JobWatchEvent
+public class JobWatchEvent<TJob>
 {
     public JobWatchEvent()
     {

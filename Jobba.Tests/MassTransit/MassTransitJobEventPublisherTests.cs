@@ -21,54 +21,57 @@ namespace Jobba.Tests.MassTransit;
 [TestClass]
 public class MassTransitJobEventPublisherTests
 {
+    private static readonly Guid TestJobId = Guid.NewGuid();
+    private static readonly Guid TestRegistrationId = Guid.NewGuid();
+
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Progress_Messages()
     {
-        var message = new JobProgressEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        await PublishEventHelper<JobProgressEvent>(publisher => publisher.PublishJobProgressEventAsync(message, default));
+        var message = new JobProgressEvent<TestModels.FooJob>(TestJobId, TestJobId, TestRegistrationId);
+        await PublishEventHelper<JobProgressEvent<TestModels.FooJob>>(publisher => publisher.PublishJobProgressEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Started_Messages()
     {
-        var message = new JobStartedEvent(Guid.NewGuid(), Guid.NewGuid());
-        await PublishEventHelper<JobStartedEvent>(publisher => publisher.PublishJobStartedEvent(message, default));
+        var message = new JobStartedEvent<TestModels.FooJob>(TestJobId, TestRegistrationId);
+        await PublishEventHelper<JobStartedEvent<TestModels.FooJob>>(publisher => publisher.PublishJobStartedEvent(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Cancelled_Messages()
     {
-        var message = new JobCancelledEvent(Guid.NewGuid(), Guid.NewGuid());
-        await PublishEventHelper<JobCancelledEvent>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
+        var message = new JobCancelledEvent<TestModels.FooJob>(TestJobId, TestRegistrationId);
+        await PublishEventHelper<JobCancelledEvent<TestModels.FooJob>>(publisher => publisher.PublishJobCancelledEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Completed_Messages()
     {
-        var message = new JobCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
-        await PublishEventHelper<JobCompletedEvent>(publisher => publisher.PublishJobCompletedEventAsync(message, default));
+        var message = new JobCompletedEvent<TestModels.FooJob>(TestJobId, TestRegistrationId);
+        await PublishEventHelper<JobCompletedEvent<TestModels.FooJob>>(publisher => publisher.PublishJobCompletedEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Faulted_Messages()
     {
-        var message = new JobFaultedEvent(Guid.NewGuid(), Guid.NewGuid());
-        await PublishEventHelper<JobFaultedEvent>(publisher => publisher.PublishJobFaultedEventAsync(message, default));
+        var message = new JobFaultedEvent<TestModels.FooJob>(TestJobId, TestRegistrationId);
+        await PublishEventHelper<JobFaultedEvent<TestModels.FooJob>>(publisher => publisher.PublishJobFaultedEventAsync(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Restarted_Messages()
     {
-        var message = new JobRestartEvent();
-        await PublishEventHelper<JobRestartEvent>(publisher => publisher.PublishJobRestartEvent(message, default));
+        var message = new JobRestartEvent<TestModels.FooJob>();
+        await PublishEventHelper<JobRestartEvent<TestModels.FooJob>>(publisher => publisher.PublishJobRestartEvent<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(message, default));
     }
 
     [TestMethod]
     public async Task MassTransit_Job_Event_Publisher_Should_Pub_Sub_Watched_Messages()
     {
-        var message = new JobWatchEvent();
+        var message = new JobWatchEvent<TestModels.FooJob>();
         var delay = TimeSpan.FromSeconds(1);
-        await PublishEventHelper<JobWatchEvent>(publisher => publisher.PublishWatchJobEventAsync(message, delay, default), delay);
+        await PublishEventHelper<JobWatchEvent<TestModels.FooJob>>(publisher => publisher.PublishWatchJobEventAsync<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(message, delay, default), delay);
     }
 
     private static async Task PublishEventHelper<TMessage>(Func<IJobEventPublisher, Task> pubCallback, TimeSpan? delay = null)
@@ -79,6 +82,7 @@ public class MassTransitJobEventPublisherTests
         serviceCollection.AddMassTransitTestHarness(cfg => cfg.AddDelayedMessageScheduler());
         var builder = new JobbaBuilder(serviceCollection, "fake");
         builder.UsingMassTransit().UsingInMemory();
+        builder.AddJob<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>("FooJob");
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
         var harness = serviceProvider.GetRequiredService<ITestHarness>();
