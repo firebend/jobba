@@ -65,6 +65,17 @@ public class JobbaMongoJobStore : IJobStore
         return info;
     }
 
+    public async Task SetJobAttempts(Guid jobId, int attempts, CancellationToken cancellationToken)
+    {
+        var updateDef = Builders<JobEntity>.Update
+            .Set(x => x.CurrentNumberOfTries, attempts);
+
+        await _repository.UpdateAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            updateDef,
+            cancellationToken);
+    }
+
     public async Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken)
     {
         var update = Builders<JobEntity>

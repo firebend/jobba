@@ -185,4 +185,63 @@ public class DefaultOnJobRestartSubscriberTests
         jobStoreMock.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         jobSchedulerMock.Verify(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [TestMethod]
+    public async Task Default_On_Job_Restart_Subscriber_Should_Not_Schedule_When_Job_Type_Cannot_Be_Resolved()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var restartEvent = new JobRestartEvent<TestModels.FooJob>
+        {
+            JobId = Guid.NewGuid(),
+            JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
+            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName,
+            SystemMoniker = "test-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
+
+        var lockMock = fixture.Freeze<Mock<IJobLockService>>();
+        lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(new ValueTask<IDisposable>());
+
+        var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
+        jobStoreMock.Setup(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobInfo<TestModels.FooParams, TestModels.FooState>
+            {
+                CurrentNumberOfTries = 1,
+                MaxNumberOfTries = 5,
+                JobParameters = new TestModels.FooParams { Baz = "fake params" },
+                CurrentState = new TestModels.FooState { Bar = "fake state" },
+                JobWatchInterval = TimeSpan.FromMinutes(1),
+                JobTypeName = "Missing.Namespace.FooJob, Missing.Assembly",
+                Status = JobStatus.Faulted,
+                Id = restartEvent.JobId
+            });
+
+        var jobSchedulerMock = fixture.Freeze<Mock<IJobScheduler>>();
+        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
+
+        //act
+        await subscriber.OnJobRestartAsync(restartEvent, default);
+
+        //assert
+        lockMock.Verify(x => x.LockJobAsync(
+            It.Is<Guid>(jobId => jobId == restartEvent.JobId),
+            It.Is<string>(s => s == "restart"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        jobStoreMock.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(
+            It.Is<Guid>(jobId => jobId == restartEvent.JobId),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        jobSchedulerMock.Verify(x => x.ScheduleJobAsync(
+            It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+    }
 }

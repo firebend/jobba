@@ -54,6 +54,21 @@ public interface IJobStore
         where TJobState : IJobState;
 
     /// <summary>
+    /// Sets the job attempts for a given job id without requiring typed job payload/state.
+    /// </summary>
+    /// <param name="jobId">
+    /// The job id.
+    /// </param>
+    /// <param name="attempts">
+    /// The number of attempts.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token.
+    /// </param>
+    /// <returns></returns>
+    public Task SetJobAttempts(Guid jobId, int attempts, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Sets the job status for a given job id.
     /// </summary>
     /// <param name="jobId">

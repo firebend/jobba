@@ -66,17 +66,23 @@ public record JobRequest<TJobParams, TJobState>
     /// </summary>
     public string JobName { get; set; }
 
-    public static JobRequest<TJobParams, TJobState> FromJobInfo(JobInfo<TJobParams, TJobState> info) => new()
+    public static JobRequest<TJobParams, TJobState> FromJobInfo(JobInfo<TJobParams, TJobState> info)
     {
-        Description = info.Description,
-        IsRestart = true,
-        JobId = info.Id,
-        JobParameters = info.JobParameters,
-        JobType = Type.GetType(info.JobTypeName),
-        InitialJobState = info.CurrentState,
-        JobWatchInterval = info.JobWatchInterval,
-        NumberOfTries = info.CurrentNumberOfTries + 1,
-        MaxNumberOfTries = info.MaxNumberOfTries,
-        JobName = info.JobName
-    };
+        var jobType = Type.GetType(info.JobTypeName)
+            ?? throw new InvalidOperationException($"Could not find job type {info.JobTypeName}");
+
+        return new()
+        {
+            Description = info.Description,
+            IsRestart = true,
+            JobId = info.Id,
+            JobParameters = info.JobParameters,
+            JobType = jobType,
+            InitialJobState = info.CurrentState,
+            JobWatchInterval = info.JobWatchInterval,
+            NumberOfTries = info.CurrentNumberOfTries + 1,
+            MaxNumberOfTries = info.MaxNumberOfTries,
+            JobName = info.JobName
+        };
+    }
 }

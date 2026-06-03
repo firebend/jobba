@@ -43,7 +43,7 @@ public class DefaultJobReScheduler : IJobReScheduler
         var jobs = await _jobListStore.GetJobsToRetry(cancellationToken) ?? [];
 
         var tasks = jobs
-            .Select(job =>
+            .Select(async job =>
             {
                 _logger.LogDebug("Restarting job. JobId: {JobId} Description: {JobDescription}", job.Id, job.Description);
 
@@ -53,10 +53,13 @@ public class DefaultJobReScheduler : IJobReScheduler
                 if (jobType is null || paramsType is null || stateType is null)
                 {
                     _logger.LogError("Could not find job type, params type, or state type for job {JobId}", job.Id);
-                    return Task.CompletedTask;
+                    // update the job attempts so if a faulted job gets removed or renamed
+                    // we don't end up attempting to retry it every time jobba starts up forever
+                    await _jobStore.SetJobAttempts(job.Id, job.CurrentNumberOfTries + 1, cancellationToken);
+                    return;
                 }
 
-                return _dispatcher.PublishRestartAsync(jobType, job.Id,
+                await _dispatcher.PublishRestartAsync(jobType, job.Id,
                     paramsType, stateType,
                     job.JobRegistrationId, cancellationToken);
             })

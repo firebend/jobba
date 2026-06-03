@@ -77,6 +77,22 @@ public class JobbaEfJobStore(
         return job.ToJobInfo<TJobParams, TJobState>();
     }
 
+    public async Task SetJobAttempts(Guid jobId, int attempts, CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Setting job {JobId} attempts to {Attempts}", jobId, attempts);
+        var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
+        var job = await GetJobFromDbAsync(dbContext, jobId, false, cancellationToken);
+
+        if (job == null)
+        {
+            return;
+        }
+
+        job.CurrentNumberOfTries = attempts;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date,
         CancellationToken cancellationToken)
     {

@@ -6,6 +6,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations;
 
@@ -17,17 +18,20 @@ public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : Abstra
     private readonly IJobLockService _jobLockService;
     private readonly IJobScheduler _jobScheduler;
     private readonly IJobStore _jobStore;
+    private readonly ILogger<DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>> _logger;
 
     public DefaultOnJobRestartSubscriber(
         IJobLockService jobLockService,
         IJobStore jobStore,
         IJobScheduler jobScheduler,
-        IJobSystemInfoProvider systemInfoProvider)
+        IJobSystemInfoProvider systemInfoProvider,
+        ILogger<DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>> logger)
         : base(systemInfoProvider)
     {
         _jobLockService = jobLockService;
         _jobStore = jobStore;
         _jobScheduler = jobScheduler;
+        _logger = logger;
     }
 
     public async Task OnJobRestartAsync(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken)
@@ -63,7 +67,17 @@ public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : Abstra
             return;
         }
 
-        var request = JobRequest<TJobParams, TJobState>.FromJobInfo(job);
+        JobRequest<TJobParams, TJobState> request;
+
+        try
+        {
+            request = JobRequest<TJobParams, TJobState>.FromJobInfo(job);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to create job request from job info for job {jobId}.");
+            return;
+        }
 
         _ = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
     }
