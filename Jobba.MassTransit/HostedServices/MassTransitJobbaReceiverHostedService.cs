@@ -138,12 +138,23 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
         }
 
         var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
+        var systemInfoProvider = scope.ServiceProvider.GetService<IJobSystemInfoProvider>();
 
         var prefix = configurationContext?.QueuePrefix ?? string.Empty;
+        var systemMoniker = systemInfoProvider?.GetSystemInfo().SystemMoniker ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(systemMoniker))
+        {
+            prefix = string.IsNullOrWhiteSpace(prefix)
+                ? systemMoniker
+                : $"{prefix}_{systemMoniker}";
+        }
 
         if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
         {
-            prefix = $"{prefix}_{receiveEndpointPrefix}";
+            prefix = string.IsNullOrWhiteSpace(prefix)
+                ? receiveEndpointPrefix
+                : $"{prefix}_{receiveEndpointPrefix}";
         }
 
         return queueMode switch
