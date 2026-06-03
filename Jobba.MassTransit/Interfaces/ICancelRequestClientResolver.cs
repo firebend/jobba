@@ -9,7 +9,7 @@ namespace Jobba.MassTransit.Interfaces;
 
 public interface ICancelRequestClientResolver
 {
-    Task<JobbaMassTransitJobCancelRequestResult<TJob>> RequestCancellationAsync<TJob, TJobParams, TJobState>(
+    public Task<JobbaMassTransitJobCancelRequestResult<TJob>> RequestCancellationAsync<TJob, TJobParams, TJobState>(
         CancelJobEvent<TJob> cancelJobEvent,
         CancellationToken cancellationToken)
         where TJob : IJob<TJobParams, TJobState>

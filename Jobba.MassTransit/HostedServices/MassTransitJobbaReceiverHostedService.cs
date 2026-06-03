@@ -105,7 +105,8 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
                 foreach (var consumerInfo in consumerInfos)
                 {
                     var consumerType = consumerInfo.ConsumerType;
-                    configurator.Consumer(consumerType, _ => {
+                    configurator.Consumer(consumerType, _ =>
+                    {
                         if (!_scopeFactory.TryCreateScope(out var scope))
                         {
                             return null;
