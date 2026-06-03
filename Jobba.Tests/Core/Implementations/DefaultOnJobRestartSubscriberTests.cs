@@ -16,8 +16,11 @@ namespace Jobba.Tests.Core.Implementations;
 [TestClass]
 public class DefaultOnJobRestartSubscriberTests
 {
+    [DataRow(JobStatus.Faulted)]
+    [DataRow(JobStatus.ForceCancelled)]
+    [DataRow(JobStatus.Unknown)]
     [TestMethod]
-    public async Task Default_On_Job_Restart_Subscriber_Should_Restart_Jobs()
+    public async Task Default_On_Job_Restart_Subscriber_Should_Restart_Jobs(JobStatus jobStatus)
     {
         //arrange
         var fixture = new Fixture();
@@ -44,7 +47,7 @@ public class DefaultOnJobRestartSubscriberTests
                 CurrentState = new TestModels.FooState { Bar = "fake state" },
                 JobWatchInterval = TimeSpan.FromMinutes(1),
                 JobTypeName = typeof(object).AssemblyQualifiedName,
-                Status = JobStatus.Faulted,
+                Status = jobStatus,
                 Id = restartEvent.JobId
             });
 

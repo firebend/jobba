@@ -41,7 +41,9 @@ public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : IOnJob
             return;
         }
 
-        if (job.Status != JobStatus.Faulted)
+        if (job.Status != JobStatus.Faulted
+            && job.Status != JobStatus.ForceCancelled
+            && job.Status != JobStatus.Unknown)
         {
             return;
         }
