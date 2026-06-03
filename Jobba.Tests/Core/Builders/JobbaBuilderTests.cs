@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +38,42 @@ public class JobbaBuilderTests
         registrations.First().JobParamsType.Should().Be<FooParams>();
     }
 
+    [TestMethod]
+    public void Jobba_Builder_Should_Throw_For_Duplicate_Job_Name()
+    {
+        // arrange
+        var serviceCollection = new ServiceCollection();
+        var builder = new JobbaBuilder(serviceCollection, "fake");
+        var mockProgressStore = new Mock<IJobProgressStore>();
+        serviceCollection.AddSingleton(mockProgressStore.Object);
+        builder.AddJob<FooJob, FooParams, FooState>("dup-name");
+
+        // act
+        var action = () => builder.AddJob<BarJob, BarParams, BarState>("dup-name");
+
+        // assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*already registered*");
+    }
+
+    [TestMethod]
+    public void Jobba_Builder_Should_Throw_For_Duplicate_Job_Type()
+    {
+        // arrange
+        var serviceCollection = new ServiceCollection();
+        var builder = new JobbaBuilder(serviceCollection, "fake");
+        var mockProgressStore = new Mock<IJobProgressStore>();
+        serviceCollection.AddSingleton(mockProgressStore.Object);
+        builder.AddJob<FooJob, FooParams, FooState>("job-1");
+
+        // act
+        var action = () => builder.AddJob<FooJob, FooParams, FooState>("job-2");
+
+        // assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*already registered*");
+    }
+
     private class FooState : IJobState;
 
     private class FooParams : IJobParams;
@@ -50,6 +87,22 @@ public class JobbaBuilderTests
         public override string JobName => "Jerb";
 
         protected override Task OnStartAsync(JobStartContext<FooParams, FooState> jobStartContext, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+    }
+
+    private class BarState : IJobState;
+
+    private class BarParams : IJobParams;
+
+    private class BarJob : AbstractJobBaseClass<BarParams, BarState>
+    {
+        public BarJob(IJobProgressStore progressStore) : base(progressStore)
+        {
+        }
+
+        public override string JobName => "BarJerb";
+
+        protected override Task OnStartAsync(JobStartContext<BarParams, BarState> jobStartContext, CancellationToken cancellationToken)
             => Task.CompletedTask;
     }
 }

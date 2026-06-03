@@ -124,10 +124,10 @@ public class CronScheduler : ICronScheduler
             registration.CronExpression,
             DateTimeOffset.UtcNow);
 
-        if (!_cronRegistry.TryGetEnqueueHandler(registration.JobType, registration.JobParamsType, registration.JobStateType, out var handler))
+        if (!_cronRegistry.TryGetEnqueueHandler(registration.JobType, out var handler))
         {
-            _logger.LogCritical("No enqueue handler registered for job {JobType} params {ParamsType} state {StateType}. Was AddJob<> called?",
-                registration.JobType, registration.JobParamsType, registration.JobStateType);
+            _logger.LogCritical("No enqueue handler registered for job {JobType}. Was AddJob<> called?",
+                registration.JobType);
             return;
         }
 

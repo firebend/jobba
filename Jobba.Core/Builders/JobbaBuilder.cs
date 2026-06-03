@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
@@ -90,15 +91,20 @@ public class JobbaBuilder
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
+        if (Registrations.ContainsKey(name))
+        {
+            throw new InvalidOperationException($"Job {name} is already registered");
+        }
+
+        if (Registrations.Values.Any(x => x.JobType == typeof(TJob)))
+        {
+            throw new InvalidOperationException($"Job type {typeof(TJob)} is already registered");
+        }
+
         Services.TryAddScoped<IJobWatcher<TJob, TJobParams, TJobState>, DefaultJobWatcher<TJob, TJobParams, TJobState>>();
         Services.TryAddScoped<IOnJobCancelSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState>>();
         Services.TryAddScoped<IOnJobRestartSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>>();
         Services.TryAddScoped<IOnJobWatchSubscriber<TJob, TJobParams, TJobState>, DefaultOnJobWatchSubscriber<TJob, TJobParams, TJobState>>();
-
-        if (Registrations.ContainsKey(name))
-        {
-            throw new Exception($"Job {name} is already registered");
-        }
 
         var registration = new JobRegistration
         {
