@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Events;
 using Jobba.Core.Implementations;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Subscribers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -26,7 +27,8 @@ public class DefaultJobEventPublisherTests
 
         await using var provider = services.BuildServiceProvider();
         var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory);
+        var systemInfoProvider = new MockSystemInfoProvider();
+        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory, systemInfoProvider);
 
         var evt = new JobCompletedEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid());
         _ = publisher.PublishJobCompletedEventAsync(evt, CancellationToken.None);
@@ -35,6 +37,24 @@ public class DefaultJobEventPublisherTests
 
         wasScopedDependencyDisposed.Should().BeFalse(
             "the scope must remain alive for the entire duration of subscriber execution");
+    }
+
+    [TestMethod]
+    public Task Default_Job_Event_Publisher_Should_Set_System_Moniker_On_Event()
+    {
+        var services = new ServiceCollection();
+        using var provider = services.BuildServiceProvider();
+        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+        var systemInfoProvider = new MockSystemInfoProvider();
+        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory, systemInfoProvider);
+
+        var evt = new JobCompletedEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid());
+
+        _ = publisher.PublishJobCompletedEventAsync(evt, CancellationToken.None);
+
+        evt.SystemMoniker.Should().Be("test");
+
+        return Task.CompletedTask;
     }
 
     private sealed class ScopedDependency : IDisposable
@@ -59,5 +79,10 @@ public class DefaultJobEventPublisherTests
             _executed.TrySetResult(_dep.IsDisposed);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class MockSystemInfoProvider : IJobSystemInfoProvider
+    {
+        public JobSystemInfo GetSystemInfo() => new("test", "machine", "user", "os");
     }
 }

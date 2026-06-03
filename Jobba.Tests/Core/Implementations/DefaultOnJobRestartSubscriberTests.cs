@@ -30,8 +30,13 @@ public class DefaultOnJobRestartSubscriberTests
         {
             JobId = Guid.NewGuid(),
             JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
-            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName
+            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName,
+            SystemMoniker = "test-system"
         };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
 
         var lockMock = fixture.Freeze<Mock<IJobLockService>>();
         lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -97,8 +102,13 @@ public class DefaultOnJobRestartSubscriberTests
         {
             JobId = Guid.NewGuid(),
             JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
-            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName
+            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName,
+            SystemMoniker = "test-system"
         };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
 
         var lockMock = fixture.Freeze<Mock<IJobLockService>>();
         lockMock.Setup(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -140,5 +150,39 @@ public class DefaultOnJobRestartSubscriberTests
         jobSchedulerMock.Verify(x => x.ScheduleJobAsync(
             It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(),
             It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task Default_On_Job_Restart_Subscriber_Should_Ignore_Different_System_Moniker()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var restartEvent = new JobRestartEvent<TestModels.FooJob>
+        {
+            JobId = Guid.NewGuid(),
+            JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
+            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName,
+            SystemMoniker = "other-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
+
+        var lockMock = fixture.Freeze<Mock<IJobLockService>>();
+        var jobStoreMock = fixture.Freeze<Mock<IJobStore>>();
+        var jobSchedulerMock = fixture.Freeze<Mock<IJobScheduler>>();
+
+        var subscriber = fixture.Create<DefaultOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
+
+        //act
+        await subscriber.OnJobRestartAsync(restartEvent, default);
+
+        //assert
+        lockMock.Verify(x => x.LockJobAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        jobStoreMock.Verify(x => x.GetJobByIdAsync<TestModels.FooParams, TestModels.FooState>(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        jobSchedulerMock.Verify(x => x.ScheduleJobAsync(It.IsAny<JobRequest<TestModels.FooParams, TestModels.FooState>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

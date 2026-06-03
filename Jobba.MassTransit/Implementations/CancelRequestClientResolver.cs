@@ -23,8 +23,7 @@ public class CancelRequestClientResolver : ICancelRequestClientResolver
     }
 
     public async Task<JobbaMassTransitJobCancelRequestResult<TJob>> RequestCancellationAsync<TJob, TJobParams, TJobState>(
-        Guid jobId,
-        Guid jobRegistrationId,
+        CancelJobEvent<TJob> cancelJobEvent,
         CancellationToken cancellationToken)
         where TJob : IJob<TJobParams, TJobState>
         where TJobParams : IJobParams
@@ -38,7 +37,7 @@ public class CancelRequestClientResolver : ICancelRequestClientResolver
             try
             {
                 var response = await client.GetResponse<JobbaMassTransitJobCancelRequestResult<TJob>>(
-                    new CancelJobEvent<TJob>(jobId, jobRegistrationId),
+                    cancelJobEvent,
                     cancellationToken);
 
                 if (response.Message.WasCancelled)
@@ -64,6 +63,6 @@ public class CancelRequestClientResolver : ICancelRequestClientResolver
             }
         }
 
-        return new JobbaMassTransitJobCancelRequestResult<TJob> { JobId = jobId, WasCancelled = false };
+        return new JobbaMassTransitJobCancelRequestResult<TJob> { JobId = cancelJobEvent.JobId, WasCancelled = false };
     }
 }

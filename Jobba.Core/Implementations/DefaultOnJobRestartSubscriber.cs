@@ -9,7 +9,7 @@ using Jobba.Core.Models;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : IOnJobRestartSubscriber<TJob, TJobParams, TJobState>
+public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : AbstractJobbaEventSubscriber, IOnJobRestartSubscriber<TJob, TJobParams, TJobState>
     where TJob : IJob<TJobParams, TJobState>
     where TJobParams : IJobParams
     where TJobState : IJobState
@@ -18,7 +18,12 @@ public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : IOnJob
     private readonly IJobScheduler _jobScheduler;
     private readonly IJobStore _jobStore;
 
-    public DefaultOnJobRestartSubscriber(IJobLockService jobLockService, IJobStore jobStore, IJobScheduler jobScheduler)
+    public DefaultOnJobRestartSubscriber(
+        IJobLockService jobLockService,
+        IJobStore jobStore,
+        IJobScheduler jobScheduler,
+        IJobSystemInfoProvider systemInfoProvider)
+        : base(systemInfoProvider)
     {
         _jobLockService = jobLockService;
         _jobStore = jobStore;
@@ -27,6 +32,11 @@ public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : IOnJob
 
     public async Task OnJobRestartAsync(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken)
     {
+        if (!ShouldProcessEvent(jobRestartEvent))
+        {
+            return;
+        }
+
         using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, "restart", cancellationToken);
 
         await RestartJob(jobRestartEvent.JobId, cancellationToken);

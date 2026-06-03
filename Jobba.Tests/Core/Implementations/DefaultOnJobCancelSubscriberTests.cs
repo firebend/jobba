@@ -23,7 +23,14 @@ public class DefaultOnJobCancelSubscriberTests
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
         var jobRegistrationId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId);
+        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId)
+        {
+            SystemMoniker = "test-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore
@@ -46,7 +53,8 @@ public class DefaultOnJobCancelSubscriberTests
         mockCancellationTokenStore.Verify(x => x.CancelJob(It.Is<Guid>(guid => guid == jobId)), Times.Once);
 
         mockPublisher.Verify(x => x.PublishJobCancelledEventAsync(
-            It.Is<JobCancelledEvent<TestModels.FooJob>>(@event => @event.JobId == cancelEvent.JobId),
+            It.Is<JobCancelledEvent<TestModels.FooJob>>(@event => @event.JobId == cancelEvent.JobId
+                && @event.JobRegistrationId == cancelEvent.JobRegistrationId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -58,7 +66,14 @@ public class DefaultOnJobCancelSubscriberTests
         fixture.Customize(new AutoMoqCustomization());
         var jobId = Guid.NewGuid();
         var jobRegistrationId = Guid.NewGuid();
-        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId);
+        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId)
+        {
+            SystemMoniker = "test-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
 
         var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
         mockCancellationTokenStore
@@ -73,5 +88,35 @@ public class DefaultOnJobCancelSubscriberTests
         //assert
         result.Should().BeFalse();
         mockCancellationTokenStore.Verify(x => x.CancelJob(It.Is<Guid>(guid => guid == jobId)), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Default_on_Job_Cancel_Subscriber_Should_Ignore_Different_System_Moniker()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var cancelEvent = new CancelJobEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid())
+        {
+            SystemMoniker = "other-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
+
+        var mockCancellationTokenStore = fixture.Freeze<Mock<IJobCancellationTokenStore>>();
+        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
+
+        var service = fixture.Create<DefaultOnJobCancelSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
+
+        //act
+        var result = await service.OnJobCancellationRequestAsync(cancelEvent, default);
+
+        //assert
+        result.Should().BeFalse();
+        mockCancellationTokenStore.Verify(x => x.CancelJob(It.IsAny<Guid>()), Times.Never);
+        mockPublisher.Verify(x => x.PublishJobCancelledEventAsync(It.IsAny<JobCancelledEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

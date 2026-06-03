@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class JobRestartEvent<TJob>
+public class JobRestartEvent<TJob> : IJobbaEvent
 {
     /// <summary>
     /// The job id.
@@ -23,6 +23,8 @@ public class JobRestartEvent<TJob>
     /// The job's registration id
     /// </summary>
     public Guid JobRegistrationId { get; set; }
+
+    public string SystemMoniker { get; set; }
 
     public JobRestartEvent()
     {

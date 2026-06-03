@@ -7,7 +7,7 @@ using Jobba.Core.Interfaces.Subscribers;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : IOnJobCancelSubscriber<TJob, TJobParams, TJobState>
+public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : AbstractJobbaEventSubscriber, IOnJobCancelSubscriber<TJob, TJobParams, TJobState>
     where TJob : IJob<TJobParams, TJobState>
     where TJobParams : IJobParams
     where TJobState : IJobState
@@ -16,7 +16,9 @@ public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : IOnJobC
     private readonly IJobEventPublisher _jobEventPublisher;
 
     public DefaultOnJobCancelSubscriber(IJobCancellationTokenStore cancellationTokenStore,
-        IJobEventPublisher jobEventPublisher)
+        IJobEventPublisher jobEventPublisher,
+        IJobSystemInfoProvider systemInfoProvider)
+        : base(systemInfoProvider)
     {
         _cancellationTokenStore = cancellationTokenStore;
         _jobEventPublisher = jobEventPublisher;
@@ -24,6 +26,11 @@ public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : IOnJobC
 
     public async Task<bool> OnJobCancellationRequestAsync(CancelJobEvent<TJob> cancelJobEvent, CancellationToken cancellationToken)
     {
+        if (!ShouldProcessEvent(cancelJobEvent))
+        {
+            return false;
+        }
+
         if (cancelJobEvent.JobId == Guid.Empty)
         {
             return false;
@@ -34,7 +41,10 @@ public class DefaultOnJobCancelSubscriber<TJob, TJobParams, TJobState> : IOnJobC
         if (wasCancelled)
         {
             await _jobEventPublisher.PublishJobCancelledEventAsync(
-                new JobCancelledEvent<TJob>(cancelJobEvent.JobId, cancelJobEvent.JobRegistrationId),
+                new JobCancelledEvent<TJob>(cancelJobEvent.JobId, cancelJobEvent.JobRegistrationId)
+                {
+                    SystemMoniker = cancelJobEvent.SystemMoniker
+                },
                 cancellationToken);
         }
 

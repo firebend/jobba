@@ -15,11 +15,16 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 {
     private readonly ILogger<DefaultJobEventPublisher> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly string _systemMoniker;
 
-    public DefaultJobEventPublisher(ILogger<DefaultJobEventPublisher> logger, IServiceScopeFactory scopeFactory)
+    public DefaultJobEventPublisher(
+        ILogger<DefaultJobEventPublisher> logger,
+        IServiceScopeFactory scopeFactory,
+        IJobSystemInfoProvider systemInfoProvider)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
+        _systemMoniker = systemInfoProvider.GetSystemInfo()?.SystemMoniker ?? string.Empty;
     }
 
     public void Dispose()
@@ -114,11 +119,18 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
         return Task.CompletedTask;
     }
 
+    private void SetSystemMoniker(IJobbaEvent @event)
+    {
+        @event.SystemMoniker = _systemMoniker;
+    }
+
     private Task ResolveAndInvokeSubscribersAsync<TSubscriber, TEvent>(
         TEvent @event,
         Func<TSubscriber, TEvent, CancellationToken, Task> func,
         CancellationToken cancellationToken)
+            where TEvent : class, IJobbaEvent
     {
+        SetSystemMoniker(@event);
         return Task.Run(async () =>
         {
             try

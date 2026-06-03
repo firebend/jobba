@@ -13,14 +13,17 @@ public class MassTransitJobEventPublisher : IJobEventPublisher
     private readonly IBus _bus;
     private readonly IMessageScheduler _messageScheduler;
     private readonly ICancelRequestClientResolver _cancelRequestClientResolver;
+    private readonly string _systemMoniker;
 
     public MassTransitJobEventPublisher(IBus bus,
         IMessageScheduler messageScheduler,
-        ICancelRequestClientResolver cancelRequestClientResolver)
+        ICancelRequestClientResolver cancelRequestClientResolver,
+        IJobSystemInfoProvider systemInfoProvider)
     {
         _bus = bus;
         _messageScheduler = messageScheduler;
         _cancelRequestClientResolver = cancelRequestClientResolver;
+        _systemMoniker = systemInfoProvider.GetSystemInfo()?.SystemMoniker ?? string.Empty;
     }
 
     public async Task PublishJobCancellationRequestAsync<TJob, TJobParams, TJobState>(CancelJobEvent<TJob> cancelJobEvent, CancellationToken cancellationToken)
@@ -28,9 +31,9 @@ public class MassTransitJobEventPublisher : IJobEventPublisher
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
+        SetSystemMoniker(cancelJobEvent);
         _ = await _cancelRequestClientResolver.RequestCancellationAsync<TJob, TJobParams, TJobState>(
-            cancelJobEvent.JobId,
-            cancelJobEvent.JobRegistrationId,
+            cancelJobEvent,
             cancellationToken);
     }
 
@@ -61,8 +64,16 @@ public class MassTransitJobEventPublisher : IJobEventPublisher
         where TJobState : IJobState
         => PublishMessageAsync(jobRestartEvent, null, cancellationToken);
 
-    private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken) where T : class
-        => delay.HasValue is false
+    private void SetSystemMoniker(IJobbaEvent @event)
+    {
+        @event.SystemMoniker = _systemMoniker;
+    }
+
+    private Task PublishMessageAsync<T>(T message, TimeSpan? delay, CancellationToken cancellationToken) where T : class, IJobbaEvent
+    {
+        SetSystemMoniker(message);
+        return delay.HasValue is false
             ? _bus.Publish(message, cancellationToken)
             : _messageScheduler.SchedulePublish(delay.Value, message, cancellationToken);
+    }
 }

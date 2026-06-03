@@ -30,7 +30,14 @@ public class DefaultOnJobWatchSubscriberTests
             jobId,
             typeof(TestModels.FooParams).AssemblyQualifiedName,
             typeof(TestModels.FooState).AssemblyQualifiedName,
-            jobRegistrationId);
+            jobRegistrationId)
+        {
+            SystemMoniker = "test-system"
+        };
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
 
         var watcher = fixture.Freeze<Mock<IJobWatcher<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>>();
         watcher.Setup(x => x.WatchJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -48,7 +55,8 @@ public class DefaultOnJobWatchSubscriberTests
         var scopeFactory = fixture.Create<IServiceScopeFactory>();
         var service = new DefaultOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
             NullLogger<DefaultOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>.Instance,
-            scopeFactory);
+            scopeFactory,
+            systemInfoProvider.Object);
 
         //act
         await service.WatchJobAsync(watchEvent, default);
@@ -57,5 +65,45 @@ public class DefaultOnJobWatchSubscriberTests
         watcher.Verify(x => x.WatchJobAsync(
             It.Is<Guid>(guid => guid == jobId),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Default_On_Job_Watch_Subscriber_Should_Ignore_Different_System_Moniker()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var watchEvent = new JobWatchEvent<TestModels.FooJob>(
+            Guid.NewGuid(),
+            typeof(TestModels.FooParams).AssemblyQualifiedName,
+            typeof(TestModels.FooState).AssemblyQualifiedName,
+            Guid.NewGuid())
+        {
+            SystemMoniker = "other-system"
+        };
+
+        var watcher = fixture.Freeze<Mock<IJobWatcher<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>>();
+
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo("test-system", "machine", "user", "os"));
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IJobWatcher<,,>).MakeGenericType(typeof(TestModels.FooJob), typeof(TestModels.FooParams), typeof(TestModels.FooState)), watcher.Object }
+        }));
+
+        var scopeFactory = fixture.Create<IServiceScopeFactory>();
+        var service = new DefaultOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>(
+            NullLogger<DefaultOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>.Instance,
+            scopeFactory,
+            systemInfoProvider.Object);
+
+        //act
+        await service.WatchJobAsync(watchEvent, default);
+
+        //assert
+        watcher.Verify(x => x.WatchJobAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
