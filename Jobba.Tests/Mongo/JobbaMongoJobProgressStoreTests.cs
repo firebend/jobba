@@ -27,6 +27,10 @@ public class JobbaMongoJobProgressStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
+        var systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(systemInfo);
+
         var mockRepo = fixture.Freeze<Mock<IJobbaMongoRepository<JobProgressEntity>>>();
         mockRepo.Setup(x => x.AddAsync(
                 It.IsAny<JobProgressEntity>(),
@@ -37,9 +41,13 @@ public class JobbaMongoJobProgressStoreTests
         mockJobRepo.Setup(x => x.GetFirstOrDefaultAsync(
                 It.IsAny<System.Linq.Expressions.Expression<Func<JobEntity, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JobEntity { JobType = typeof(TestModels.FooJob).AssemblyQualifiedName });
+            .ReturnsAsync(new JobEntity
+            {
+                JobType = typeof(TestModels.FooJob).AssemblyQualifiedName,
+                SystemInfo = systemInfo
+            });
         mockJobRepo.Setup(x => x.UpdateAsync(
-                It.IsAny<Guid>(),
+                It.IsAny<Expression<Func<JobEntity, bool>>>(),
                 It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
@@ -63,7 +71,7 @@ public class JobbaMongoJobProgressStoreTests
             Times.Once);
 
         mockJobRepo.Verify(x => x.UpdateAsync(
-            It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
             It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
                 .ShouldSetFields(
                     nameof(JobEntity.JobState),

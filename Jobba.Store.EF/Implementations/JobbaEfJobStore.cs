@@ -20,6 +20,8 @@ public class JobbaEfJobStore(
     ILogger<JobbaEfJobStore> logger)
     : IJobStore
 {
+    private readonly JobSystemInfo _systemInfo = systemInfoProvider.GetSystemInfo();
+
     public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(
         JobRequest<TJobParams, TJobState> jobRequest,
         CancellationToken cancellationToken)
@@ -130,7 +132,7 @@ public class JobbaEfJobStore(
     private async Task<JobEntity?> GetJobFromDbAsync(IJobbaDbContext dbContext, Guid jobId, bool asNoTracking,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Jobs.Where(x => x.Id == jobId);
+        var query = dbContext.Jobs.Where(x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker);
 
         if (asNoTracking)
         {
@@ -180,7 +182,7 @@ public class JobbaEfJobStore(
     public async Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
-        var systemInfo = systemInfoProvider.GetSystemInfo();
+        var systemInfo = _systemInfo;
 
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
 

@@ -15,9 +15,12 @@ public class JobbaEfJobProgressStore(
     IDbContextProvider dbContextProvider,
     IJobEventDispatcher dispatcher,
     IJobbaGuidGenerator guidGenerator,
+    IJobSystemInfoProvider systemInfoProvider,
     ILogger<JobbaEfJobProgressStore> logger)
     : IJobProgressStore
 {
+    private readonly JobSystemInfo _systemInfo = systemInfoProvider.GetSystemInfo();
+
     public async Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress,
         CancellationToken cancellationToken)
         where TJobState : IJobState
@@ -29,7 +32,9 @@ public class JobbaEfJobProgressStore(
         entity.Id = await guidGenerator.GenerateGuidAsync(cancellationToken);
 
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
-        var job = await dbContext.Jobs.FindAsync([jobProgress.JobId], cancellationToken) ??
+        var job = await dbContext.Jobs.FirstOrDefaultAsync(
+                  x => x.Id == jobProgress.JobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+                  cancellationToken) ??
                   throw new InvalidOperationException($"Job with id {jobProgress.JobId} not found.");
 
         entity.JobRegistrationId = job.JobRegistrationId;

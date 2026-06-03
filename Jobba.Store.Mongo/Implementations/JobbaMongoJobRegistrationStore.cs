@@ -26,7 +26,8 @@ public class JobbaMongoJobRegistrationStore(
 
     public async Task<JobRegistration> RegisterJobAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
-        Expression<Func<JobRegistration, bool>> jobNameFilter = x => x.JobName == registration.JobName;
+        Expression<Func<JobRegistration, bool>> jobNameFilter = x =>
+            x.JobName == registration.JobName && x.SystemMoniker == _systemInfo.SystemMoniker;
 
         var existing = await repo.GetFirstOrDefaultAsync(
             jobNameFilter,
@@ -71,7 +72,9 @@ public class JobbaMongoJobRegistrationStore(
     }
 
     public Task<JobRegistration> GetJobRegistrationAsync(Guid registrationId, CancellationToken cancellationToken)
-        => repo.GetFirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
+        => repo.GetFirstOrDefaultAsync(
+            x => x.Id == registrationId && x.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
 
     public async Task<IEnumerable<JobRegistration>> GetJobsWithCronExpressionsAsync(CancellationToken cancellationToken)
         => await repo.GetAllAsync(RepositoryExpressions.GetCronJobRegistrationsExpression(_systemInfo), cancellationToken);
@@ -87,7 +90,7 @@ public class JobbaMongoJobRegistrationStore(
             previousInvocationDate);
 
         return repo.UpdateAsync(
-            registrationId,
+            x => x.Id == registrationId && x.SystemMoniker == _systemInfo.SystemMoniker,
             Builders<JobRegistration>.Update
                 .Set(x => x.NextExecutionDate, nextInvocationDate)
                 .Set(x => x.PreviousExecutionDate, previousInvocationDate),
@@ -99,7 +102,9 @@ public class JobbaMongoJobRegistrationStore(
 
     public async Task<JobRegistration> RemoveByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await repo.DeleteManyAsync(x => x.Id == id, cancellationToken);
+        var deleted = await repo.DeleteManyAsync(
+            x => x.Id == id && x.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
 
         return deleted.FirstOrDefault();
     }
@@ -108,7 +113,7 @@ public class JobbaMongoJobRegistrationStore(
     {
         logger.LogDebug("Setting job registration {JobId} to inactive {IsInactive}", registrationId, isInactive);
 
-        return repo.UpdateAsync(registrationId,
+        return repo.UpdateAsync(x => x.Id == registrationId && x.SystemMoniker == _systemInfo.SystemMoniker,
             Builders<JobRegistration>.Update
                 .Set(x => x.IsInactive, isInactive),
             cancellationToken);

@@ -24,12 +24,18 @@ public class JobbaEfJobProgressStoreTests
     private JobbaDbContext _dbContext;
     private JobRegistration _jobRegistration;
     private JobEntity _job;
+    private JobSystemInfo _systemInfo;
 
     [TestInitialize]
     public void TestSetup()
     {
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
+
+        _systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = _fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(_systemInfo);
+
         _testContext = new EfTestContext();
         _dbContext = _testContext.CreateContext(_fixture);
         _jobRegistration = AddRegistration();
@@ -47,6 +53,7 @@ public class JobbaEfJobProgressStoreTests
     {
         var jobRegistration = _fixture.JobRegistrationBuilder()
             .With(x => x.Id, Guid.NewGuid)
+            .With(x => x.SystemMoniker, _systemInfo.SystemMoniker)
             .Create();
         _dbContext.JobRegistrations.Add(jobRegistration);
         _dbContext.SaveChanges();
@@ -59,6 +66,7 @@ public class JobbaEfJobProgressStoreTests
             .With(x => x.Status, JobStatus.InProgress)
             .With(x => x.IsOutOfRetry, false)
             .With(x => x.JobType, typeof(TestModels.FooJob).AssemblyQualifiedName)
+            .With(x => x.SystemInfo, _systemInfo)
             .Create();
 
         _dbContext.Jobs.Add(job);

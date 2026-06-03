@@ -16,16 +16,19 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
     private readonly IJobEventDispatcher _dispatcher;
     private readonly IJobbaMongoRepository<JobEntity> _jobRepository;
     private readonly IJobbaMongoRepository<JobProgressEntity> _repository;
+    private readonly JobSystemInfo _systemInfo;
 
     public JobbaMongoJobProgressStore(IJobbaMongoRepository<JobProgressEntity> repository,
         IJobEventDispatcher dispatcher,
         IJobbaMongoRepository<JobEntity> jobRepository,
-        IJobbaGuidGenerator guidGenerator)
+        IJobbaGuidGenerator guidGenerator,
+        IJobSystemInfoProvider systemInfoProvider)
     {
         _repository = repository;
         _dispatcher = dispatcher;
         _jobRepository = jobRepository;
         _guidGenerator = guidGenerator;
+        _systemInfo = systemInfoProvider.GetSystemInfo();
     }
 
     public async Task LogProgressAsync<TJobState>(JobProgress<TJobState> jobProgress, CancellationToken cancellationToken)
@@ -36,7 +39,9 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
 
         var added = await _repository.AddAsync(entity, cancellationToken);
 
-        var jobEntity = await _jobRepository.GetFirstOrDefaultAsync(x => x.Id == added.JobId, cancellationToken);
+        var jobEntity = await _jobRepository.GetFirstOrDefaultAsync(
+            x => x.Id == added.JobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
         if (jobEntity is not null)
         {
             var jobType = Type.GetType(jobEntity.JobType);
@@ -52,7 +57,10 @@ public class JobbaMongoJobProgressStore : IJobProgressStore
             .Set(x => x.LastProgressDate, added.Date)
             .Set(x => x.LastProgressPercentage, added.Progress);
 
-        await _jobRepository.UpdateAsync(jobProgress.JobId, update, cancellationToken);
+        await _jobRepository.UpdateAsync(
+            x => x.Id == jobProgress.JobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            update,
+            cancellationToken);
     }
 
     public Task<JobProgressEntity> GetProgressById(Guid id, CancellationToken cancellationToken)

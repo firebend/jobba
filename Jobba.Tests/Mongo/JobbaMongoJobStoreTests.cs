@@ -75,9 +75,13 @@ public class JobbaMongoJobStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
+        var systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(systemInfo);
+
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
-                It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
                 It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
@@ -91,7 +95,7 @@ public class JobbaMongoJobStoreTests
         jobInfo.Should().NotBeNull();
 
         repo.Verify(x => x.UpdateAsync(
-            It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
             It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
                 .ShouldSetFieldWithValue(nameof(JobEntity.CurrentNumberOfTries), 2)),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -104,9 +108,13 @@ public class JobbaMongoJobStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
+        var systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(systemInfo);
+
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
-                It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
                 It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
@@ -120,7 +128,7 @@ public class JobbaMongoJobStoreTests
         //assert
 
         repo.Verify(x => x.UpdateAsync(
-            It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
             It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
                 .ShouldSetFieldsWithValues(new()
                 {
@@ -137,9 +145,13 @@ public class JobbaMongoJobStoreTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
+        var systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(systemInfo);
+
         var repo = fixture.Freeze<Mock<IJobbaMongoRepository<JobEntity>>>();
         repo.Setup(x => x.UpdateAsync(
-                It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
                 It.IsAny<UpdateDefinition<JobEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JobEntity());
@@ -153,7 +165,7 @@ public class JobbaMongoJobStoreTests
         //assert
 
         repo.Verify(x => x.UpdateAsync(
-            It.IsAny<Guid>(),
+            It.IsAny<Expression<Func<JobEntity, bool>>>(),
             It.Is<UpdateDefinition<JobEntity>>(update => new MongoUpdateDefinitionAsserter<JobEntity>(update)
                 .ShouldSetFieldsWithValues(new()
                 {
@@ -171,6 +183,9 @@ public class JobbaMongoJobStoreTests
         fixture.Customize(new AutoMoqCustomization());
 
         var jobId = Guid.NewGuid();
+        var systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(systemInfo);
 
         var jobEntity = fixture.Create<JobEntity>();
         jobEntity.Id = jobId;
@@ -181,7 +196,7 @@ public class JobbaMongoJobStoreTests
             .ReturnsAsync(jobEntity);
 
         var service = fixture.Create<JobbaMongoJobStore>();
-        Expression<Func<JobEntity, bool>> expression = x => x.Id == jobId;
+        Expression<Func<JobEntity, bool>> expression = x => x.Id == jobId && x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker;
 
         //act
         var jobInfoBase = await service.GetJobByIdAsync(jobId, default);
