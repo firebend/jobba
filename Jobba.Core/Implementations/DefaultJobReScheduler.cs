@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
@@ -13,7 +12,7 @@ namespace Jobba.Core.Implementations;
 
 public class DefaultJobReScheduler : IJobReScheduler
 {
-    private readonly IJobEventPublisher _jobEventPublisher;
+    private readonly IJobEventDispatcher _dispatcher;
     private readonly IJobListStore _jobListStore;
     private readonly IJobStore _jobStore;
     private readonly ILogger<DefaultJobReScheduler> _logger;
@@ -21,13 +20,13 @@ public class DefaultJobReScheduler : IJobReScheduler
 
     public DefaultJobReScheduler(IJobListStore jobListStore,
         IJobStore jobStore,
-        IJobEventPublisher jobEventPublisher,
+        IJobEventDispatcher dispatcher,
         ILogger<DefaultJobReScheduler> logger,
         IOptions<JobbaCoreOptions> options)
     {
         _jobListStore = jobListStore;
         _jobStore = jobStore;
-        _jobEventPublisher = jobEventPublisher;
+        _dispatcher = dispatcher;
         _logger = logger;
         _options = options.Value;
     }
@@ -44,21 +43,29 @@ public class DefaultJobReScheduler : IJobReScheduler
         var jobs = await _jobListStore.GetJobsToRetry(cancellationToken) ?? [];
 
         var tasks = jobs
-            .Select(job =>
+            .Select(async job =>
             {
                 _logger.LogDebug("Restarting job. JobId: {JobId} Description: {JobDescription}", job.Id, job.Description);
 
-                return _jobEventPublisher
-                    .PublishJobRestartEvent(
-                        new JobRestartEvent(job.Id,
-                            job.JobParamsTypeName,
-                            job.JobStateTypeName,
-                            job.JobRegistrationId
-                        ),
-                        cancellationToken);
+                var jobType = Type.GetType(job.JobTypeName);
+                var paramsType = Type.GetType(job.JobParamsTypeName);
+                var stateType = Type.GetType(job.JobStateTypeName);
+                if (jobType is null || paramsType is null || stateType is null)
+                {
+                    _logger.LogError("Could not find job type, params type, or state type for job {JobId}", job.Id);
+                    // update the job attempts so if a faulted job gets removed or renamed
+                    // we don't end up attempting to retry it every time jobba starts up forever
+                    await _jobStore.SetJobAttempts(job.Id, job.CurrentNumberOfTries + 1, cancellationToken);
+                    return;
+                }
+
+                await _dispatcher.PublishRestartAsync(jobType, job.Id,
+                    paramsType, stateType,
+                    job.JobRegistrationId, cancellationToken);
             })
             .ToArray();
 
         await Task.WhenAll(tasks);
     }
+
 }

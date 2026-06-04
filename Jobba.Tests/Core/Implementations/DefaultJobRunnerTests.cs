@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Jobba.Core.Events;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
@@ -21,7 +20,7 @@ public class DefaultJobRunnerTests
 {
     private IFixture _fixture;
     private Mock<IJobStore> _store;
-    private Mock<IJobEventPublisher> _publisher;
+    private Mock<IJobEventDispatcher> _dispatcher;
     private Mock<IJob<DefaultJobParams, DefaultJobState>> _job;
     private Mock<IJobCancellationTokenStore> _cancellationTokenStore;
 
@@ -55,7 +54,7 @@ public class DefaultJobRunnerTests
             { typeof(IJobStore), _store.Object }
         }));
 
-        _publisher = _fixture.Freeze<Mock<IJobEventPublisher>>();
+        _dispatcher = _fixture.Freeze<Mock<IJobEventDispatcher>>();
     }
 
     [TestMethod]
@@ -64,6 +63,7 @@ public class DefaultJobRunnerTests
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
         context.IsRestart = false;
+        context.JobRegistration = new JobRegistration { JobType = typeof(TestModels.FooJob), JobName = "test", SystemMoniker = "test" };
 
         //act
         var runner = _fixture.Create<DefaultJobRunner>();
@@ -82,8 +82,8 @@ public class DefaultJobRunnerTests
             x => x.SetJobStatusAsync(context.JobId, JobStatus.Completed, It.IsAny<DateTimeOffset>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _publisher.Verify(x => x.PublishJobCompletedEventAsync(
-            It.Is<JobCompletedEvent>(jobCompletedEvent => jobCompletedEvent.JobId == context.JobId),
+        _dispatcher.Verify(x => x.PublishCompletedAsync(
+            typeof(TestModels.FooJob), context.JobId, context.JobRegistration.Id,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -179,6 +179,7 @@ public class DefaultJobRunnerTests
     {
         //arrange
         var context = _fixture.Create<JobStartContext<DefaultJobParams, DefaultJobState>>();
+        context.JobRegistration = new JobRegistration { JobType = typeof(TestModels.FooJob), JobName = "test", SystemMoniker = "test" };
         _job.Setup(x => x.StartAsync(It.IsAny<JobStartContext<DefaultJobParams, DefaultJobState>>(),
                 It.IsAny<CancellationToken>()))
             .Throws<Exception>();
@@ -201,8 +202,8 @@ public class DefaultJobRunnerTests
             It.IsAny<Exception>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        _publisher.Verify(x => x.PublishJobFaultedEventAsync(
-            It.Is<JobFaultedEvent>(jobFaultedEvent => jobFaultedEvent.JobId == context.JobId),
+        _dispatcher.Verify(x => x.PublishFaultedAsync(
+            typeof(TestModels.FooJob), context.JobId, context.JobRegistration.Id,
             It.IsAny<CancellationToken>()), Times.Once);
 
         _store.Verify(x => x.SetJobStatusAsync(context.JobId,

@@ -105,4 +105,36 @@ public class JobbaHostedServiceTests
         await hostedService.StartAsync(default);
         registrationStore.VerifyAll();
     }
+
+    [TestMethod]
+    public async Task Jobba_Hosted_Service_Should_Throw_When_Ready_Gate_Fails()
+    {
+        //arrange
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        var readyGate = fixture.Freeze<Mock<IJobbaReadyGate>>();
+        readyGate.Setup(x => x.WaitAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromException(new InvalidOperationException("gate failed")));
+
+        var rescheduler = fixture.Freeze<Mock<IJobReScheduler>>();
+        rescheduler.Setup(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IJobReScheduler), rescheduler.Object },
+            { typeof(IEnumerable<IJobbaReadyGate>), new[] { readyGate.Object } }
+        }));
+
+        var hostedService = fixture.Create<JobbaHostedService>();
+
+        //act
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => hostedService.StartAsync(default));
+
+        //assert
+        readyGate.Verify(x => x.WaitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

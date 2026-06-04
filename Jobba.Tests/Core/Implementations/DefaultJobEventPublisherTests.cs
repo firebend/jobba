@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Events;
 using Jobba.Core.Implementations;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Subscribers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,14 +22,15 @@ public class DefaultJobEventPublisherTests
 
         var services = new ServiceCollection();
         services.AddScoped<ScopedDependency>();
-        services.AddScoped<IOnJobCompletedSubscriber>(_ => new ScopedAwareSubscriber(
+        services.AddScoped<IOnJobCompletedSubscriber<TestModels.FooJob>>(_ => new ScopedAwareSubscriber(
             _.GetRequiredService<ScopedDependency>(), executed));
 
         await using var provider = services.BuildServiceProvider();
         var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory);
+        var systemInfoProvider = new MockSystemInfoProvider();
+        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory, systemInfoProvider);
 
-        var evt = new JobCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
+        var evt = new JobCompletedEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid());
         _ = publisher.PublishJobCompletedEventAsync(evt, CancellationToken.None);
 
         var wasScopedDependencyDisposed = await executed.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -37,13 +39,31 @@ public class DefaultJobEventPublisherTests
             "the scope must remain alive for the entire duration of subscriber execution");
     }
 
+    [TestMethod]
+    public Task Default_Job_Event_Publisher_Should_Set_System_Moniker_On_Event()
+    {
+        var services = new ServiceCollection();
+        using var provider = services.BuildServiceProvider();
+        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+        var systemInfoProvider = new MockSystemInfoProvider();
+        var publisher = new DefaultJobEventPublisher(NullLogger<DefaultJobEventPublisher>.Instance, scopeFactory, systemInfoProvider);
+
+        var evt = new JobCompletedEvent<TestModels.FooJob>(Guid.NewGuid(), Guid.NewGuid());
+
+        _ = publisher.PublishJobCompletedEventAsync(evt, CancellationToken.None);
+
+        evt.SystemMoniker.Should().Be("test");
+
+        return Task.CompletedTask;
+    }
+
     private sealed class ScopedDependency : IDisposable
     {
         public bool IsDisposed { get; private set; }
         public void Dispose() { IsDisposed = true; }
     }
 
-    private sealed class ScopedAwareSubscriber : IOnJobCompletedSubscriber
+    private sealed class ScopedAwareSubscriber : IOnJobCompletedSubscriber<TestModels.FooJob>
     {
         private readonly ScopedDependency _dep;
         private readonly TaskCompletionSource<bool> _executed;
@@ -54,10 +74,15 @@ public class DefaultJobEventPublisherTests
             _executed = executed;
         }
 
-        public Task OnJobCompletedAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken)
+        public Task OnJobCompletedAsync(JobCompletedEvent<TestModels.FooJob> jobCompletedEvent, CancellationToken cancellationToken)
         {
             _executed.TrySetResult(_dep.IsDisposed);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class MockSystemInfoProvider : IJobSystemInfoProvider
+    {
+        public JobSystemInfo GetSystemInfo() => new("test", "machine", "user", "os");
     }
 }

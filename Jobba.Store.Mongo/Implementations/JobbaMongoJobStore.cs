@@ -16,6 +16,7 @@ public class JobbaMongoJobStore : IJobStore
     private readonly IJobbaMongoRepository<JobEntity> _repository;
     private readonly IJobRegistrationStore _jobRegistrationStore;
     private readonly IJobSystemInfoProvider _systemInfoProvider;
+    private readonly JobSystemInfo _systemInfo;
 
     public JobbaMongoJobStore(IJobbaMongoRepository<JobEntity> repository,
         IJobRegistrationStore jobRegistrationStore,
@@ -24,6 +25,7 @@ public class JobbaMongoJobStore : IJobStore
         _repository = repository;
         _jobRegistrationStore = jobRegistrationStore;
         _systemInfoProvider = systemInfoProvider;
+        _systemInfo = systemInfoProvider.GetSystemInfo();
     }
 
     public async Task<JobInfo<TJobParams, TJobState>> AddJobAsync<TJobParams, TJobState>(JobRequest<TJobParams, TJobState> jobRequest,
@@ -55,9 +57,23 @@ public class JobbaMongoJobStore : IJobStore
         var updateDef = Builders<JobEntity>.Update
             .Set(x => x.CurrentNumberOfTries, attempts);
 
-        var updated = await _repository.UpdateAsync(jobId, updateDef, cancellationToken);
+        var updated = await _repository.UpdateAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            updateDef,
+            cancellationToken);
         var info = updated.ToJobInfo<TJobParams, TJobState>();
         return info;
+    }
+
+    public async Task SetJobAttempts(Guid jobId, int attempts, CancellationToken cancellationToken)
+    {
+        var updateDef = Builders<JobEntity>.Update
+            .Set(x => x.CurrentNumberOfTries, attempts);
+
+        await _repository.UpdateAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            updateDef,
+            cancellationToken);
     }
 
     public async Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken)
@@ -67,7 +83,10 @@ public class JobbaMongoJobStore : IJobStore
             .Set(x => x.Status, status)
             .Set(x => x.LastProgressDate, date);
 
-        await _repository.UpdateAsync(jobId, update, cancellationToken);
+        await _repository.UpdateAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            update,
+            cancellationToken);
     }
 
     public async Task LogFailureAsync(Guid jobId, Exception ex, CancellationToken cancellationToken)
@@ -77,12 +96,17 @@ public class JobbaMongoJobStore : IJobStore
             .Set(x => x.FaultedReason, ex.ToString())
             .Set(x => x.Status, JobStatus.Faulted);
 
-        await _repository.UpdateAsync(jobId, update, cancellationToken);
+        await _repository.UpdateAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            update,
+            cancellationToken);
     }
 
     public async Task<JobInfoBase> GetJobByIdAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var entity = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        var entity = await _repository.GetFirstOrDefaultAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
 
         var jobInfoBase = entity?.ToJobInfoBase();
         return jobInfoBase;
@@ -92,7 +116,9 @@ public class JobbaMongoJobStore : IJobStore
         where TJobParams : IJobParams
         where TJobState : IJobState
     {
-        var entity = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        var entity = await _repository.GetFirstOrDefaultAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
 
         var jobInfo = entity?.ToJobInfo<TJobParams, TJobState>();
         return jobInfo;
@@ -100,7 +126,9 @@ public class JobbaMongoJobStore : IJobStore
 
     public async Task SetHeartbeatAsync(Guid jobId, DateTimeOffset heartbeatTime, CancellationToken cancellationToken)
     {
-        var job = await _repository.GetFirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        var job = await _repository.GetFirstOrDefaultAsync(
+            x => x.Id == jobId && x.SystemInfo.SystemMoniker == _systemInfo.SystemMoniker,
+            cancellationToken);
         if (job == null)
         {
             return;
@@ -116,7 +144,7 @@ public class JobbaMongoJobStore : IJobStore
     public async Task<int> ReclaimOrphanedJobsAsync(int staleMultiplier, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
-        var systemInfo = _systemInfoProvider.GetSystemInfo();
+        var systemInfo = _systemInfo;
 
         // Skip jobs with null heartbeat — they pre-date heartbeat support or haven't emitted one yet.
         var inProgressJobs = await _repository.GetAllAsync(
@@ -142,7 +170,7 @@ public class JobbaMongoJobStore : IJobStore
                 .Set(x => x.Status, JobStatus.Faulted);
 
             var updated = await _repository.UpdateAsync(
-                x => x.Id == jobId,
+                x => x.Id == jobId && x.SystemInfo.SystemMoniker == systemInfo.SystemMoniker,
                 update,
                 cancellationToken);
 

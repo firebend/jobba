@@ -78,6 +78,12 @@ public class InMemoryJobStore : IJobStore
         return Task.FromResult(info);
     }
 
+    public Task SetJobAttempts(Guid jobId, int attempts, CancellationToken cancellationToken)
+    {
+        ModifyJob(jobId, x => x.CurrentNumberOfTries = attempts);
+        return Task.CompletedTask;
+    }
+
     public Task SetJobStatusAsync(Guid jobId, JobStatus status, DateTimeOffset date, CancellationToken cancellationToken)
     {
         ModifyJob(jobId, x =>

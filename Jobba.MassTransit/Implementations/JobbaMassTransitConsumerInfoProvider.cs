@@ -32,37 +32,26 @@ public class JobbaMassTransitConsumerInfoProvider : IJobbaMassTransitConsumerInf
 
         using (scope)
         {
-            var consumers = scope
+            var openConsumerTypes = scope
                 .ServiceProvider
-                .GetServices<IJobbaMassTransitConsumer>()
+                .GetServices<JobbaMassTransitOpenConsumerRegistration>()
+                .Select(r => r.OpenConsumerType)
                 .ToList();
 
-            if (_configurationContext.QueueMode == JobbaMassTransitQueueMode.OnePerJob)
-            {
-                var registrations = scope
-                    .ServiceProvider
-                    .GetServices<JobRegistration>();
+            var registrations = scope
+                .ServiceProvider
+                .GetServices<JobRegistration>()
+                .ToList();
 
-                foreach (var registration in registrations)
-                {
-                    foreach (var consumer in consumers)
-                    {
-                        yield return new JobbaMassTransitConsumerInfo
-                        {
-                            ConsumerType = consumer.GetType(),
-                            QueueName = registration.JobName.Replace(" ", "_")
-                        };
-                    }
-                }
-            }
-            else
+            foreach (var registration in registrations)
             {
-                foreach (var consumer in consumers)
+                foreach (var openConsumerType in openConsumerTypes)
                 {
+                    var closedType = openConsumerType.MakeGenericType(registration.JobType, registration.JobParamsType, registration.JobStateType);
                     yield return new JobbaMassTransitConsumerInfo
                     {
-                        ConsumerType = consumer.GetType(),
-                        QueueName = string.Empty
+                        ConsumerType = closedType,
+                        QueueName = registration.JobName.Replace(" ", "_")
                     };
                 }
             }

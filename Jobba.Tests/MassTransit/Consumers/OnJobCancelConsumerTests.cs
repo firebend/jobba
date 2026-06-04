@@ -25,36 +25,36 @@ public class OnJobCancelConsumerTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var subscriberMock = fixture.Freeze<Mock<IOnJobCancelSubscriber>>();
-        subscriberMock.Setup(x => x.OnJobCancellationRequestAsync(It.IsAny<CancelJobEvent>(), It.IsAny<CancellationToken>()))
+        var subscriberMock = fixture.Freeze<Mock<IOnJobCancelSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>>();
+        subscriberMock.Setup(x => x.OnJobCancellationRequestAsync(It.IsAny<CancelJobEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
             {
-                typeof(IEnumerable<IOnJobCancelSubscriber>), new[]
+                typeof(IEnumerable<IOnJobCancelSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>), new[]
                 {
                     subscriberMock.Object
                 }
             }
         }));
 
-        var consumeContextMock = new Mock<ConsumeContext<CancelJobEvent>>();
-        consumeContextMock.Setup(x => x.RespondAsync(It.IsAny<JobbaMassTransitJobCancelRequestResult>()))
+        var consumeContextMock = new Mock<ConsumeContext<CancelJobEvent<TestModels.FooJob>>>();
+        consumeContextMock.Setup(x => x.RespondAsync(It.IsAny<JobbaMassTransitJobCancelRequestResult<TestModels.FooJob>>()))
             .Returns(Task.CompletedTask);
 
         var jobId = Guid.NewGuid();
         var jobRegistrationId = Guid.NewGuid();
 
         consumeContextMock.Setup(x => x.Message)
-            .Returns(new CancelJobEvent(jobId, jobRegistrationId));
+            .Returns(new CancelJobEvent<TestModels.FooJob>(jobId, jobRegistrationId));
 
-        var consumer = fixture.Create<OnJobCancelConsumer>();
+        var consumer = fixture.Create<OnJobCancelConsumer<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
         await consumer.Consume(consumeContextMock.Object);
 
         //assert
-        subscriberMock.Verify(x => x.OnJobCancellationRequestAsync(It.IsAny<CancelJobEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        subscriberMock.Verify(x => x.OnJobCancellationRequestAsync(It.IsAny<CancelJobEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

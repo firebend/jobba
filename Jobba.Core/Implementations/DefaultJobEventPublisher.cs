@@ -15,11 +15,16 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
 {
     private readonly ILogger<DefaultJobEventPublisher> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly string _systemMoniker;
 
-    public DefaultJobEventPublisher(ILogger<DefaultJobEventPublisher> logger, IServiceScopeFactory scopeFactory)
+    public DefaultJobEventPublisher(
+        ILogger<DefaultJobEventPublisher> logger,
+        IServiceScopeFactory scopeFactory,
+        IJobSystemInfoProvider systemInfoProvider)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
+        _systemMoniker = systemInfoProvider.GetSystemInfo()?.SystemMoniker ?? string.Empty;
     }
 
     public void Dispose()
@@ -28,57 +33,63 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
     }
 
 
-    public Task PublishJobCancellationRequestAsync(CancelJobEvent cancelJobEvent, CancellationToken cancellationToken)
+    public Task PublishJobCancellationRequestAsync<TJob, TJobParams, TJobState>(CancelJobEvent<TJob> cancelJobEvent, CancellationToken cancellationToken)
+        where TJob : IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelSubscriber, CancelJobEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelSubscriber<TJob, TJobParams, TJobState>, CancelJobEvent<TJob>>(
             cancelJobEvent,
             (subscriber, @event, ct) => subscriber.OnJobCancellationRequestAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishJobCancelledEventAsync(JobCancelledEvent jobCancelledEvent, CancellationToken cancellationToken)
+    public Task PublishJobCancelledEventAsync<TJob>(JobCancelledEvent<TJob> jobCancelledEvent, CancellationToken cancellationToken)
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelledSubscriber, JobCancelledEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCancelledSubscriber<TJob>, JobCancelledEvent<TJob>>(
             jobCancelledEvent,
             (subscriber, @event, ct) => subscriber.OnJobCancelledAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishJobCompletedEventAsync(JobCompletedEvent jobCompletedEvent, CancellationToken cancellationToken)
+    public Task PublishJobCompletedEventAsync<TJob>(JobCompletedEvent<TJob> jobCompletedEvent, CancellationToken cancellationToken)
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobCompletedSubscriber, JobCompletedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobCompletedSubscriber<TJob>, JobCompletedEvent<TJob>>(
             jobCompletedEvent,
             (subscriber, @event, ct) => subscriber.OnJobCompletedAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishJobFaultedEventAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken)
+    public Task PublishJobFaultedEventAsync<TJob>(JobFaultedEvent<TJob> jobFaultedEvent, CancellationToken cancellationToken)
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobFaultedSubscriber, JobFaultedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobFaultedSubscriber<TJob>, JobFaultedEvent<TJob>>(
             jobFaultedEvent,
             (subscriber, @event, ct) => subscriber.OnJobFaultedAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishJobProgressEventAsync(JobProgressEvent jobProgressEvent, CancellationToken cancellationToken)
+    public Task PublishJobProgressEventAsync<TJob>(JobProgressEvent<TJob> jobProgressEvent, CancellationToken cancellationToken)
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobProgressSubscriber, JobProgressEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobProgressSubscriber<TJob>, JobProgressEvent<TJob>>(
             jobProgressEvent,
             (subscriber, @event, ct) => subscriber.OnJobProgressAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishWatchJobEventAsync(JobWatchEvent jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken)
+    public Task PublishWatchJobEventAsync<TJob, TJobParams, TJobState>(JobWatchEvent<TJob> jobWatchEvent, TimeSpan delay, CancellationToken cancellationToken)
+        where TJob : IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
         _ = Task.Run(async () =>
         {
             await Task.Delay(delay, cancellationToken);
-            await ResolveAndInvokeSubscribersAsync<IOnJobWatchSubscriber, JobWatchEvent>(
+            await ResolveAndInvokeSubscribersAsync<IOnJobWatchSubscriber<TJob, TJobParams, TJobState>, JobWatchEvent<TJob>>(
                 jobWatchEvent,
                 (subscriber, @event, ct) => subscriber.WatchJobAsync(@event, ct),
                 cancellationToken);
@@ -87,29 +98,39 @@ public class DefaultJobEventPublisher : IJobEventPublisher, IDisposable
         return Task.CompletedTask;
     }
 
-    public Task PublishJobStartedEvent(JobStartedEvent jobStartedEvent, CancellationToken cancellationToken)
+    public Task PublishJobStartedEvent<TJob>(JobStartedEvent<TJob> jobStartedEvent, CancellationToken cancellationToken)
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobStartedSubscriber, JobStartedEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobStartedSubscriber<TJob>, JobStartedEvent<TJob>>(
             jobStartedEvent,
             (subscriber, @event, ct) => subscriber.OnJobStartedAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task PublishJobRestartEvent(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
+    public Task PublishJobRestartEvent<TJob, TJobParams, TJobState>(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken)
+        where TJob : IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
     {
-        _ = ResolveAndInvokeSubscribersAsync<IOnJobRestartSubscriber, JobRestartEvent>(
+        _ = ResolveAndInvokeSubscribersAsync<IOnJobRestartSubscriber<TJob, TJobParams, TJobState>, JobRestartEvent<TJob>>(
             jobRestartEvent,
             (subscriber, @event, ct) => subscriber.OnJobRestartAsync(@event, ct),
             cancellationToken);
         return Task.CompletedTask;
     }
 
+    private void SetSystemMoniker(IJobbaEvent @event)
+    {
+        @event.SystemMoniker = _systemMoniker;
+    }
+
     private Task ResolveAndInvokeSubscribersAsync<TSubscriber, TEvent>(
         TEvent @event,
         Func<TSubscriber, TEvent, CancellationToken, Task> func,
         CancellationToken cancellationToken)
+            where TEvent : class, IJobbaEvent
     {
+        SetSystemMoniker(@event);
         return Task.Run(async () =>
         {
             try

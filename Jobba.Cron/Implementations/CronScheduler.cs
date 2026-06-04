@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Interfaces;
@@ -22,6 +21,7 @@ public class CronScheduler : ICronScheduler
     private readonly ICronService _cronService;
     private readonly IJobRegistrationStore _jobRegistrationStore;
     private readonly IJobLockService _lockService;
+    private readonly CronJobTypeRegistry _cronRegistry;
 
     private record JobExecutionInfo(JobRegistration Registration,
         DateTimeOffset? NextExecutionDate,
@@ -35,13 +35,15 @@ public class CronScheduler : ICronScheduler
         ILogger<CronScheduler> logger,
         ICronService cronService,
         IJobRegistrationStore jobRegistrationStore,
-        IJobLockService lockService)
+        IJobLockService lockService,
+        CronJobTypeRegistry cronRegistry)
     {
         _scheduler = scheduler;
         _logger = logger;
         _cronService = cronService;
         _jobRegistrationStore = jobRegistrationStore;
         _lockService = lockService;
+        _cronRegistry = cronRegistry;
     }
 
     public async Task EnqueueJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken)
@@ -95,7 +97,7 @@ public class CronScheduler : ICronScheduler
         }
 
         var tasks = jobs
-            .Select(x => InvokeJobUsingReflectionAsync(x.Registration, cancellationToken))
+            .Select(x => InvokeJobAsync(x.Registration, cancellationToken))
             .ToArray();
 
         await Task.WhenAll(tasks);
@@ -115,36 +117,21 @@ public class CronScheduler : ICronScheduler
         return Task.WhenAll(tasks);
     }
 
-    private async Task InvokeJobUsingReflectionAsync(JobRegistration registration, CancellationToken cancellationToken)
+    private async Task InvokeJobAsync(JobRegistration registration, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Job is set for execution. {JobName} {CronExpression} {Start}",
             registration.JobName,
             registration.CronExpression,
             DateTimeOffset.UtcNow);
 
-        var methodInfo = typeof(CronScheduler)
-            .GetMethod(nameof(EnqueueJobAsync), BindingFlags.NonPublic | BindingFlags.Static)
-            ?.MakeGenericMethod(registration.JobParamsType, registration.JobStateType);
-
-        if (methodInfo is null)
+        if (!_cronRegistry.TryGetEnqueueHandler(registration.JobType, out var handler))
         {
-            _logger.LogCritical("Could not find method info for {Method}", nameof(EnqueueJobAsync));
+            _logger.LogCritical("No enqueue handler registered for job {JobType}. Was AddJob<> called?",
+                registration.JobType);
             return;
         }
 
-        var methodInfoParameters = new object[]
-        {
-            _scheduler,
-            registration,
-            cancellationToken
-        };
-
-        var enqueueTask = methodInfo.Invoke(this, methodInfoParameters);
-
-        if (enqueueTask is Task task)
-        {
-            await task;
-        }
+        await handler(_scheduler, registration, cancellationToken);
     }
 
     private DateTimeOffset? GetNextExecutionDate(string cron, TimeZoneInfo timeZoneInfo, DateTimeOffset? start = null)
@@ -217,13 +204,4 @@ public class CronScheduler : ICronScheduler
         return jobs;
     }
 
-    private static Task EnqueueJobAsync<TJobParams, TJobState>(IJobScheduler jobScheduler,
-        JobRegistration jobRegistration,
-        CancellationToken cancellationToken)
-        where TJobParams : IJobParams
-        where TJobState : IJobState
-        => jobScheduler.ScheduleJobAsync(jobRegistration.Id,
-            jobRegistration.DefaultParams == default ? default : (TJobParams)jobRegistration.DefaultParams,
-            jobRegistration.DefaultState == default ? default : (TJobState)jobRegistration.DefaultState,
-            cancellationToken);
 }

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Jobba.Core.Events;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
@@ -75,15 +74,7 @@ public class DefaultJobSchedulerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        publisher.Setup(x => x.PublishWatchJobEventAsync(
-                It.IsAny<JobWatchEvent>(),
-                It.IsAny<TimeSpan>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var dispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         //act
         var scheduler = fixture.Create<DefaultJobScheduler>();
@@ -91,10 +82,10 @@ public class DefaultJobSchedulerTests
 
         //assert
         jobInfo.Should().NotBeNull();
-        publisher.Verify(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()),
+        dispatcher.Verify(x => x.PublishStartedAsync(It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Once);
-        publisher.Verify(
-            x => x.PublishWatchJobEventAsync(It.IsAny<JobWatchEvent>(), It.IsAny<TimeSpan>(),
+        dispatcher.Verify(
+            x => x.PublishWatchAsync(It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Type>(), It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()), Times.Once);
         store.Verify(
             x => x.AddJobAsync(It.IsAny<JobRequest<DefaultJobParams, DefaultJobState>>(),
@@ -167,15 +158,7 @@ public class DefaultJobSchedulerTests
                 MaxNumberOfTries = 5
             });
 
-        var publisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        publisher.Setup(x => x.PublishJobStartedEvent(It.IsAny<JobStartedEvent>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        publisher.Setup(x => x.PublishWatchJobEventAsync(
-                It.IsAny<JobWatchEvent>(),
-                It.IsAny<TimeSpan>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var dispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         //act
         var scheduler = fixture.Create<DefaultJobScheduler>();
@@ -184,12 +167,12 @@ public class DefaultJobSchedulerTests
         //assert
 
         jobInfo.Should().NotBeNull();
-        publisher.Verify(x => x.PublishJobStartedEvent(
-            It.Is<JobStartedEvent>(@event => @event.JobId == jobId),
+        dispatcher.Verify(x => x.PublishStartedAsync(
+            It.IsAny<Type>(), jobId, It.IsAny<Guid>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        publisher.Verify(x => x.PublishWatchJobEventAsync(
-            It.Is<JobWatchEvent>(jobWatchEvent => jobWatchEvent.JobId == jobId),
+        dispatcher.Verify(x => x.PublishWatchAsync(
+            It.IsAny<Type>(), jobId, It.IsAny<Type>(), It.IsAny<Type>(), It.IsAny<Guid>(),
             It.Is<TimeSpan>(timeSpan => timeSpan == TimeSpan.FromMinutes(1)),
             It.IsAny<CancellationToken>()), Times.Once);
 

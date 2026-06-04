@@ -25,14 +25,14 @@ public class AbstractJobbaMassTransitConsumerTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var subscriberMock = fixture.Freeze<Mock<IOnJobProgressSubscriber>>();
-        subscriberMock.Setup(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()))
+        var subscriberMock = fixture.Freeze<Mock<IOnJobProgressSubscriber<TestModels.FooJob>>>();
+        subscriberMock.Setup(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
             {
-                typeof(IEnumerable<IOnJobProgressSubscriber>), new[]
+                typeof(IEnumerable<IOnJobProgressSubscriber<TestModels.FooJob>>), new[]
                 {
                     subscriberMock.Object
                 }
@@ -42,16 +42,16 @@ public class AbstractJobbaMassTransitConsumerTests
         var consumer = fixture.Create<FakeConsumer>();
 
         //act
-        await consumer.Consume(new Mock<ConsumeContext<JobProgressEvent>>().Object);
+        await consumer.Consume(new Mock<ConsumeContext<JobProgressEvent<TestModels.FooJob>>>().Object);
 
         //assert
-        subscriberMock.Verify(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        subscriberMock.Verify(x => x.OnJobProgressAsync(It.IsAny<JobProgressEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private class FakeConsumer : AbstractJobbaMassTransitConsumer<JobProgressEvent, IOnJobProgressSubscriber>
+    private class FakeConsumer : AbstractJobbaMassTransitConsumer<JobProgressEvent<TestModels.FooJob>, IOnJobProgressSubscriber<TestModels.FooJob>>
     {
 
-        protected override Task HandleMessageAsync(IOnJobProgressSubscriber subscriber, JobProgressEvent message, CancellationToken cancellationToken) =>
+        protected override Task HandleMessageAsync(IOnJobProgressSubscriber<TestModels.FooJob> subscriber, JobProgressEvent<TestModels.FooJob> message, CancellationToken cancellationToken) =>
             subscriber.OnJobProgressAsync(message, cancellationToken);
 
         public FakeConsumer(IServiceScopeFactory scopeFactory) : base(scopeFactory)

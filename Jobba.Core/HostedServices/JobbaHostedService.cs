@@ -30,7 +30,7 @@ public class JobbaHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogDebug("Jobba Hosted Service is running");
+        _logger.LogInformation("Jobba Hosted Service has started");
 
         if (!_scopeFactory.TryCreateScope(out var scope))
         {
@@ -39,10 +39,28 @@ public class JobbaHostedService : BackgroundService
 
         using var serviceScope = scope;
 
-        await RegisterJobsFromStoreAsync(scope, stoppingToken);
-        await RestartFaultedJobsAsync(scope, stoppingToken);
+        try
+        {
+            var gates = scope.ServiceProvider.GetServices<IJobbaReadyGate>().ToArray();
+            if (gates.Length > 0)
+            {
+                stoppingToken.ThrowIfCancellationRequested();
+                await Task.WhenAll(gates.Select(g => g.WaitAsync(stoppingToken)));
+            }
 
-        stoppingToken.Register(CancelAllJobs);
+            _logger.LogInformation("Jobba Hosted Service is ready to initialize");
+
+            await RegisterJobsFromStoreAsync(scope, stoppingToken);
+            await RestartFaultedJobsAsync(scope, stoppingToken);
+
+            _logger.LogInformation("Jobba Hosted Service has completed initialization and is now running");
+
+            stoppingToken.Register(CancelAllJobs);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Expected when cancellation is requested
+        }
     }
 
     private async Task RegisterJobsFromStoreAsync(IServiceScope scope, CancellationToken stoppingToken)
@@ -81,14 +99,7 @@ public class JobbaHostedService : BackgroundService
 
         try
         {
-            _logger.LogDebug("Jobba is restarting faulted jobs");
-
-            var gates = scope.ServiceProvider.GetServices<IJobbaReadyGate>().ToArray();
-            if (gates.Length > 0)
-            {
-                stoppingToken.ThrowIfCancellationRequested();
-                await Task.WhenAll(gates.Select(g => g.WaitAsync(stoppingToken)));
-            }
+            _logger.LogInformation("Jobba is restarting faulted jobs");
 
             await jobScheduler.RestartFaultedJobsAsync(stoppingToken);
         }
@@ -99,6 +110,7 @@ public class JobbaHostedService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Error trying to restart failed jobs");
+            throw;
         }
     }
 

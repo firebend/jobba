@@ -33,5 +33,6 @@ public class JobbaEfBuilder
         jobbaBuilder.Services.TryAddTransient<IJobCleanUpStore, JobbaEfCleanUpStore>();
         jobbaBuilder.Services.TryAddTransient<IJobRegistrationStore, JobbaEfJobRegistrationStore>();
         jobbaBuilder.Services.TryAddTransient<IDbContextProvider, DefaultDbContextProvider>();
+        jobbaBuilder.AddReadyGate<JobbaEfReadyGate>();
     }
 }

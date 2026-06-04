@@ -4,7 +4,7 @@ using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces.Subscribers;
 
-public interface IOnJobFaultedSubscriber
+public interface IOnJobFaultedSubscriber<TJob>
 {
-    public Task OnJobFaultedAsync(JobFaultedEvent jobFaultedEvent, CancellationToken cancellationToken);
+    public Task OnJobFaultedAsync(JobFaultedEvent<TJob> jobFaultedEvent, CancellationToken cancellationToken);
 }

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Jobba.Core.Events;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Core.Models.Entities;
@@ -25,12 +24,18 @@ public class JobbaEfJobProgressStoreTests
     private JobbaDbContext _dbContext;
     private JobRegistration _jobRegistration;
     private JobEntity _job;
+    private JobSystemInfo _systemInfo;
 
     [TestInitialize]
     public void TestSetup()
     {
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
+
+        _systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = _fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(_systemInfo);
+
         _testContext = new EfTestContext();
         _dbContext = _testContext.CreateContext(_fixture);
         _jobRegistration = AddRegistration();
@@ -48,6 +53,7 @@ public class JobbaEfJobProgressStoreTests
     {
         var jobRegistration = _fixture.JobRegistrationBuilder()
             .With(x => x.Id, Guid.NewGuid)
+            .With(x => x.SystemMoniker, _systemInfo.SystemMoniker)
             .Create();
         _dbContext.JobRegistrations.Add(jobRegistration);
         _dbContext.SaveChanges();
@@ -59,6 +65,8 @@ public class JobbaEfJobProgressStoreTests
         var job = _fixture.JobBuilder(_jobRegistration.Id)
             .With(x => x.Status, JobStatus.InProgress)
             .With(x => x.IsOutOfRetry, false)
+            .With(x => x.JobType, typeof(TestModels.FooJob).AssemblyQualifiedName)
+            .With(x => x.SystemInfo, _systemInfo)
             .Create();
 
         _dbContext.Jobs.Add(job);
@@ -81,11 +89,7 @@ public class JobbaEfJobProgressStoreTests
     public async Task Jobba_Ef_Job_Progress_Store_Should_Add_Progress()
     {
         //arrange
-        var mockPublisher = _fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(x => x.PublishJobProgressEventAsync(
-                It.IsAny<JobProgressEvent>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = _fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         var progress = CreateProgress();
 
@@ -95,8 +99,8 @@ public class JobbaEfJobProgressStoreTests
         await service.LogProgressAsync(progress, default);
 
         //assert
-        mockPublisher.Verify(x => x.PublishJobProgressEventAsync(
-                It.IsAny<JobProgressEvent>(),
+        mockDispatcher.Verify(x => x.PublishProgressAsync(
+                It.IsAny<Type>(), It.IsAny<Guid>(), _job.Id, _job.JobRegistrationId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
 

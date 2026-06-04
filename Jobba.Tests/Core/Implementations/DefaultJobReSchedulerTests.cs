@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Jobba.Core.Events;
 using Jobba.Core.Implementations;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
@@ -27,13 +26,15 @@ public class DefaultJobReSchedulerTests
         fixture.Customize(new AutoMoqCustomization());
 
         var jobIds = fixture.CreateMany<Guid>(5);
-        var jobBases = jobIds.Select(x => new JobInfoBase { Id = x }).ToArray();
+        var jobBases = jobIds.Select(x => new JobInfoBase
+        {
+            Id = x,
+            JobTypeName = typeof(TestModels.FooJob).AssemblyQualifiedName,
+            JobParamsTypeName = typeof(TestModels.FooParams).AssemblyQualifiedName,
+            JobStateTypeName = typeof(TestModels.FooState).AssemblyQualifiedName
+        }).ToArray();
 
-        var mockPublisher = fixture.Freeze<Mock<IJobEventPublisher>>();
-        mockPublisher.Setup(
-                x => x.PublishJobRestartEvent(It.IsAny<JobRestartEvent>(),
-                    It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var mockDispatcher = fixture.Freeze<Mock<IJobEventDispatcher>>();
 
         var mockJobListStore = fixture.Freeze<Mock<IJobListStore>>();
         var mockJobStore = fixture.Freeze<Mock<IJobStore>>();
@@ -54,8 +55,8 @@ public class DefaultJobReSchedulerTests
         await rescheduler.RestartFaultedJobsAsync(default);
 
         //assert
-        mockPublisher.Verify(
-            x => x.PublishJobRestartEvent(It.IsAny<JobRestartEvent>(),
+        mockDispatcher.Verify(
+            x => x.PublishRestartAsync(It.IsAny<Type>(), It.IsAny<Guid>(), It.IsAny<Type>(), It.IsAny<Type>(), It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()), Times.Exactly(5));
         mockJobStore.Verify(x => x.ReclaimOrphanedJobsAsync(new JobbaCoreOptions().StaleMultiplier, It.IsAny<CancellationToken>()), Times.Once);
 

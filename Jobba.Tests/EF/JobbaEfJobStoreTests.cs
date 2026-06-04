@@ -22,12 +22,18 @@ public class JobbaEfJobStoreTests
     private EfTestContext _testContext;
     private JobbaDbContext _dbContext;
     private JobRegistration _jobRegistration;
+    private JobSystemInfo _systemInfo;
 
     [TestInitialize]
     public void TestSetup()
     {
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
+
+        _systemInfo = new JobSystemInfo("test-system", "machine", "user", "os");
+        var systemInfoProvider = _fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        systemInfoProvider.Setup(x => x.GetSystemInfo()).Returns(_systemInfo);
+
         _testContext = new EfTestContext();
         _dbContext = _testContext.CreateContext(_fixture);
         _jobRegistration = AddRegistration();
@@ -44,6 +50,7 @@ public class JobbaEfJobStoreTests
     {
         var jobRegistration = _fixture.JobRegistrationBuilder()
             .With(x => x.Id, Guid.NewGuid)
+            .With(x => x.SystemMoniker, _systemInfo.SystemMoniker)
             .Create();
         _dbContext.JobRegistrations.Add(jobRegistration);
         _dbContext.SaveChanges();
@@ -55,6 +62,7 @@ public class JobbaEfJobStoreTests
         var job = _fixture.JobBuilder(_jobRegistration.Id)
             .With(x => x.Status, JobStatus.InProgress)
             .With(x => x.IsOutOfRetry, false)
+            .With(x => x.SystemInfo, _systemInfo)
             .Create();
 
         _dbContext.Jobs.Add(job);
@@ -79,8 +87,6 @@ public class JobbaEfJobStoreTests
             JobType = typeof(TestModels.FooJob)
         };
 
-        var systemInfo = new JobSystemInfo("a", "b", "c", "d");
-
         var registrationStore = _fixture.Freeze<Mock<IJobRegistrationStore>>();
         registrationStore.Setup(x => x.GetByJobNameAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -88,7 +94,7 @@ public class JobbaEfJobStoreTests
 
         var systemInfoProvider = _fixture.Freeze<Mock<IJobSystemInfoProvider>>();
         systemInfoProvider.Setup(x => x.GetSystemInfo())
-            .Returns(systemInfo)
+            .Returns(_systemInfo)
             .Verifiable();
 
         var service = _fixture.Create<JobbaEfJobStore>();
@@ -101,7 +107,7 @@ public class JobbaEfJobStoreTests
         jobInfo.Id.Should().NotBeEmpty();
         jobInfo.Description.Should().BeEquivalentTo(jobRequest.Description);
         jobInfo.JobWatchInterval.Should().Be(jobRequest.JobWatchInterval);
-        jobInfo.JobType.Should().Be(jobRequest.JobType.AssemblyQualifiedName);
+        jobInfo.JobTypeName.Should().Be(jobRequest.JobType.AssemblyQualifiedName);
         jobInfo.JobParameters.Should().NotBeNull();
         jobInfo.JobParameters.Should().BeOfType(typeof(TestModels.FooParams));
         jobInfo.CurrentState.Should().NotBeNull();
@@ -187,7 +193,7 @@ public class JobbaEfJobStoreTests
         jobInfoBase.Status.Should().Be(job.Status);
         jobInfoBase.FaultedReason.Should().Be(job.FaultedReason);
         jobInfoBase.EnqueuedTime.Should().Be(job.EnqueuedTime);
-        jobInfoBase.JobType.Should().Be(job.JobType);
+        jobInfoBase.JobTypeName.Should().Be(job.JobType);
         jobInfoBase.JobWatchInterval.Should().Be(job.JobWatchInterval);
         jobInfoBase.LastProgressDate.Should().Be(job.LastProgressDate);
         jobInfoBase.CurrentNumberOfTries.Should().Be(job.CurrentNumberOfTries);

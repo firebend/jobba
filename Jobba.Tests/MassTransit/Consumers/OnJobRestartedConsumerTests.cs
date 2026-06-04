@@ -24,26 +24,26 @@ public class OnJobRestartedConsumerTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var subscriberMock = fixture.Freeze<Mock<IOnJobRestartSubscriber>>();
-        subscriberMock.Setup(x => x.OnJobRestartAsync(It.IsAny<JobRestartEvent>(), It.IsAny<CancellationToken>()))
+        var subscriberMock = fixture.Freeze<Mock<IOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>>();
+        subscriberMock.Setup(x => x.OnJobRestartAsync(It.IsAny<JobRestartEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
             {
-                typeof(IEnumerable<IOnJobRestartSubscriber>), new[]
+                typeof(IEnumerable<IOnJobRestartSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>), new[]
                 {
                     subscriberMock.Object
                 }
             }
         }));
 
-        var consumer = fixture.Create<OnJobRestartConsumer>();
+        var consumer = fixture.Create<OnJobRestartConsumer<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
-        await consumer.Consume(new Mock<ConsumeContext<JobRestartEvent>>().Object);
+        await consumer.Consume(new Mock<ConsumeContext<JobRestartEvent<TestModels.FooJob>>>().Object);
 
         //assert
-        subscriberMock.Verify(x => x.OnJobRestartAsync(It.IsAny<JobRestartEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        subscriberMock.Verify(x => x.OnJobRestartAsync(It.IsAny<JobRestartEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

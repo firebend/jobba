@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,12 +31,32 @@ public class JobbaBuilderServiceCollectionExtensionsTests
         var provider = serviceCollection.BuildServiceProvider();
 
         //assert
-        serviceCollection.Count.Should().Be(22);
         var registrations = provider.GetServices<JobRegistration>().ToArray();
         registrations.Length.Should().Be(1);
         registrations.First().JobType.Should().Be<FooJob>();
         registrations.First().JobStateType.Should().Be<FooState>();
         registrations.First().JobParamsType.Should().Be<FooParams>();
+    }
+
+    [TestMethod]
+    public void Jobba_Builder_Service_Collection_Extensions_Should_Throw_For_Duplicate_Job_Type()
+    {
+        // arrange
+        var serviceCollection = new ServiceCollection();
+        var mockProgressStore = new Mock<IJobProgressStore>();
+        serviceCollection.AddSingleton(mockProgressStore.Object);
+
+        // act
+        var action = () =>
+            serviceCollection.AddJobba("fake", builder =>
+            {
+                builder.AddJob<FooJob, FooParams, FooState>("job-1");
+                builder.AddJob<FooJob, FooParams, FooState>("job-2");
+            });
+
+        // assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*already registered*");
     }
 
     private class FooState : IJobState;

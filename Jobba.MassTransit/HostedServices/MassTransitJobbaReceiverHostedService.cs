@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.Extensions;
@@ -22,7 +21,8 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
     private readonly ILogger<MassTransitJobbaReceiverHostedService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public MassTransitJobbaReceiverHostedService(ILogger<MassTransitJobbaReceiverHostedService> logger, IServiceScopeFactory scopeFactory)
+    public MassTransitJobbaReceiverHostedService(ILogger<MassTransitJobbaReceiverHostedService> logger,
+        IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
@@ -90,10 +90,8 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
 
         var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
         var endpointConnector = scope.ServiceProvider.GetService<IReceiveEndpointConnector>();
-        var configureConsumer =
-            typeof(MassTransitJobbaReceiverHostedService).GetMethod(nameof(ConfigureConsumer), BindingFlags.Static | BindingFlags.NonPublic);
 
-        if (configureConsumer == null || configurationContext == null || endpointConnector == null)
+        if (configurationContext == null || endpointConnector == null)
         {
             return handles;
         }
@@ -106,8 +104,20 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
             {
                 foreach (var consumerInfo in consumerInfos)
                 {
-                    configureConsumer.MakeGenericMethod(consumerInfo.ConsumerType)
-                        .Invoke(null, [configurator, _scopeFactory]);
+                    var consumerType = consumerInfo.ConsumerType;
+                    configurator.Consumer(consumerType, _ =>
+                    {
+                        if (!_scopeFactory.TryCreateScope(out var scope))
+                        {
+                            return null;
+                        }
+
+                        using (scope)
+                        {
+                            var consumer = scope.ServiceProvider.GetService(consumerType);
+                            return consumer;
+                        }
+                    });
                 }
             });
 
@@ -129,12 +139,23 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
         }
 
         var configurationContext = scope.ServiceProvider.GetService<JobbaMassTransitConfigurationContext>();
+        var systemInfoProvider = scope.ServiceProvider.GetService<IJobSystemInfoProvider>();
 
         var prefix = configurationContext?.QueuePrefix ?? string.Empty;
+        var systemMoniker = systemInfoProvider?.GetSystemInfo().SystemMoniker ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(systemMoniker))
+        {
+            prefix = string.IsNullOrWhiteSpace(prefix)
+                ? systemMoniker
+                : $"{prefix}_{systemMoniker}";
+        }
 
         if (!string.IsNullOrWhiteSpace(receiveEndpointPrefix))
         {
-            prefix = $"{prefix}_{receiveEndpointPrefix}";
+            prefix = string.IsNullOrWhiteSpace(prefix)
+                ? receiveEndpointPrefix
+                : $"{prefix}_{receiveEndpointPrefix}";
         }
 
         return queueMode switch
@@ -149,20 +170,4 @@ public class MassTransitJobbaReceiverHostedService : BackgroundService, IJobbaRe
         };
     }
 
-    private static void ConfigureConsumer<TConsumer>(
-        IReceiveEndpointConfigurator receiveEndpointConfigurator,
-        IServiceScopeFactory scopeFactory)
-        where TConsumer : class, IConsumer => receiveEndpointConfigurator.Consumer(typeof(TConsumer), _ =>
-    {
-        if (!scopeFactory.TryCreateScope(out var scope))
-        {
-            return null;
-        }
-
-        using (scope)
-        {
-            var consumer = scope.ServiceProvider.GetService<TConsumer>();
-            return consumer;
-        }
-    });
 }

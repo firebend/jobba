@@ -4,7 +4,10 @@ using Jobba.Core.Events;
 
 namespace Jobba.Core.Interfaces.Subscribers;
 
-public interface IOnJobWatchSubscriber
+public interface IOnJobWatchSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
-    public Task WatchJobAsync(JobWatchEvent jobWatchEvent, CancellationToken cancellationToken);
+    public Task WatchJobAsync(JobWatchEvent<TJob> jobWatchEvent, CancellationToken cancellationToken);
 }

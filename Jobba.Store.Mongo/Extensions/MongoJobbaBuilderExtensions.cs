@@ -18,7 +18,7 @@ public static class MongoJobbaBuilderExtensions
     {
         RegisterSerializers();
 
-        jobbaBuilder.OnJobAdded += OnJobAdded;
+        jobbaBuilder.AddRegistrar(new MongoJobTypeRegistrar());
         var jobbaMongoBuilder = new JobbaMongoBuilder(jobbaBuilder, connectionString, enableCommandLogging);
         configure?.Invoke(jobbaMongoBuilder);
         return jobbaBuilder;
@@ -61,20 +61,28 @@ public static class MongoJobbaBuilderExtensions
         });
     }
 
-    private static void OnJobAdded(JobAddedEventArgs obj)
-        => RegisterBsonTypes(
-            obj.JobType,
-            obj.JobParamsType,
-            obj.JobStateType,
-            typeof(JobInfo<,>).MakeGenericType(obj.JobParamsType, obj.JobStateType),
-            typeof(JobProgress<>).MakeGenericType(obj.JobStateType),
-            typeof(JobRequest<,>).MakeGenericType(obj.JobParamsType, obj.JobStateType));
-
-    private static void RegisterBsonTypes(params Type[] types)
+    internal static void RegisterBsonTypes(params Type[] types)
     {
         foreach (var type in types)
         {
             BsonClassMap.LookupClassMap(type);
         }
+    }
+}
+
+internal class MongoJobTypeRegistrar : IJobTypeRegistrar
+{
+    public void OnJobAdded<TJob, TJobParams, TJobState>(JobbaBuilder builder)
+        where TJob : class, IJob<TJobParams, TJobState>
+        where TJobParams : IJobParams
+        where TJobState : IJobState
+    {
+        MongoJobbaBuilderExtensions.RegisterBsonTypes(
+            typeof(TJob),
+            typeof(TJobParams),
+            typeof(TJobState),
+            typeof(JobInfo<TJobParams, TJobState>),
+            typeof(JobProgress<TJobState>),
+            typeof(JobRequest<TJobParams, TJobState>));
     }
 }

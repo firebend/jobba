@@ -1,8 +1,10 @@
 using System.Linq;
 using FluentAssertions;
 using Jobba.Core.Extensions;
+using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Store.EF.DbContexts;
+using Jobba.Store.EF.Implementations;
 using Jobba.Store.EF.Sqlite.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +41,14 @@ public class JobbaEfBuilderTests
 
         var dbContext = provider.GetRequiredService<JobbaDbContext>();
         dbContext.Database.IsSqlite().Should().BeTrue();
+
+        provider.GetServices<IJobbaReadyGate>()
+            .Should()
+            .ContainSingle()
+            .Which
+            .Should()
+            .BeOfType<JobbaEfReadyGate>();
+
         testContext.Dispose();
     }
 }

@@ -27,7 +27,8 @@ public class JobbaEfJobRegistrationStore(
     {
         var jobName = registration.JobName;
         var dbContext = await dbContextProvider.GetDbContextAsync(cancellationToken);
-        var existing = await dbContext.JobRegistrations.Where(x => x.JobName == jobName)
+        var existing = await dbContext.JobRegistrations
+            .Where(RepositoryExpressions.GetJobByNameExpression(_systemInfo, jobName))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existing is not null)
@@ -86,7 +87,9 @@ public class JobbaEfJobRegistrationStore(
     private async Task<JobRegistration> GetTrackedJobRegistrationAsync(IJobbaDbContext dbContext, Guid registrationId,
         CancellationToken cancellationToken)
     {
-        var registration = await dbContext.JobRegistrations.FindAsync([registrationId], cancellationToken);
+        var registration = await dbContext.JobRegistrations
+            .FirstOrDefaultAsync(x => x.Id == registrationId && x.SystemMoniker == _systemInfo.SystemMoniker,
+                cancellationToken);
 
         if (registration is null)
         {

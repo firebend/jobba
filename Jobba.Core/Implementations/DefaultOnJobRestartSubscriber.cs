@@ -6,61 +6,58 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Interfaces.Subscribers;
 using Jobba.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Jobba.Core.Implementations;
 
-public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
+public class DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState> : AbstractJobbaEventSubscriber, IOnJobRestartSubscriber<TJob, TJobParams, TJobState>
+    where TJob : IJob<TJobParams, TJobState>
+    where TJobParams : IJobParams
+    where TJobState : IJobState
 {
     private readonly IJobLockService _jobLockService;
     private readonly IJobScheduler _jobScheduler;
     private readonly IJobStore _jobStore;
+    private readonly ILogger<DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>> _logger;
 
-    public DefaultOnJobRestartSubscriber(IJobLockService jobLockService, IJobStore jobStore, IJobScheduler jobScheduler)
+    public DefaultOnJobRestartSubscriber(
+        IJobLockService jobLockService,
+        IJobStore jobStore,
+        IJobScheduler jobScheduler,
+        IJobSystemInfoProvider systemInfoProvider,
+        ILogger<DefaultOnJobRestartSubscriber<TJob, TJobParams, TJobState>> logger)
+        : base(systemInfoProvider)
     {
         _jobLockService = jobLockService;
         _jobStore = jobStore;
         _jobScheduler = jobScheduler;
+        _logger = logger;
     }
 
-    public async Task OnJobRestartAsync(JobRestartEvent jobRestartEvent, CancellationToken cancellationToken)
+    public async Task OnJobRestartAsync(JobRestartEvent<TJob> jobRestartEvent, CancellationToken cancellationToken)
     {
-        using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, "restart", cancellationToken);
-
-        var method = GetType().GetMethod(nameof(RestartJob));
-
-        if (method == null)
+        if (!ShouldProcessEvent(jobRestartEvent))
         {
             return;
         }
 
-        var genericMethod = method.MakeGenericMethod(
-            Type.GetType(jobRestartEvent.JobParamsTypeName)!,
-            Type.GetType(jobRestartEvent.JobStateTypeName)!);
+        using var _ = await _jobLockService.LockJobAsync(jobRestartEvent.JobId, "restart", cancellationToken);
 
-        var restartJobTaskAsObject = genericMethod.Invoke(this, new object[]
-        {
-            jobRestartEvent.JobId,
-            cancellationToken
-        });
-
-        if (restartJobTaskAsObject is Task restartJobTask)
-        {
-            await restartJobTask;
-        }
+        await RestartJob(jobRestartEvent.JobId, cancellationToken);
     }
 
-    public async Task RestartJob<TParams, TState>(Guid jobId, CancellationToken cancellationToken)
-        where TParams : IJobParams
-        where TState : IJobState
+    public async Task RestartJob(Guid jobId, CancellationToken cancellationToken)
     {
-        var job = await _jobStore.GetJobByIdAsync<TParams, TState>(jobId, cancellationToken);
+        var job = await _jobStore.GetJobByIdAsync<TJobParams, TJobState>(jobId, cancellationToken);
 
         if (job == null)
         {
             return;
         }
 
-        if (job.Status != JobStatus.Faulted)
+        if (job.Status != JobStatus.Faulted
+            && job.Status != JobStatus.ForceCancelled
+            && job.Status != JobStatus.Unknown)
         {
             return;
         }
@@ -70,8 +67,18 @@ public class DefaultOnJobRestartSubscriber : IOnJobRestartSubscriber
             return;
         }
 
-        var request = JobRequest<TParams, TState>.FromJobInfo(job);
+        JobRequest<TJobParams, TJobState> request;
 
-        await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
+        try
+        {
+            request = JobRequest<TJobParams, TJobState>.FromJobInfo(job);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to create job request from job info for job {jobId}.");
+            return;
+        }
+
+        _ = await _jobScheduler.ScheduleJobAsync(request, cancellationToken);
     }
 }

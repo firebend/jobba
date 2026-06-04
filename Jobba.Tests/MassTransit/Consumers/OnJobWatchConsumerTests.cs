@@ -24,26 +24,26 @@ public class OnJobWatchConsumerTests
         var fixture = new Fixture();
         fixture.Customize(new AutoMoqCustomization());
 
-        var subscriberMock = fixture.Freeze<Mock<IOnJobWatchSubscriber>>();
-        subscriberMock.Setup(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()))
+        var subscriberMock = fixture.Freeze<Mock<IOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>>();
+        subscriberMock.Setup(x => x.WatchJobAsync(It.IsAny<JobWatchEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
             {
-                typeof(IEnumerable<IOnJobWatchSubscriber>), new[]
+                typeof(IEnumerable<IOnJobWatchSubscriber<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>), new[]
                 {
                     subscriberMock.Object
                 }
             }
         }));
 
-        var consumer = fixture.Create<OnJobWatchConsumer>();
+        var consumer = fixture.Create<OnJobWatchConsumer<TestModels.FooJob, TestModels.FooParams, TestModels.FooState>>();
 
         //act
-        await consumer.Consume(new Mock<ConsumeContext<JobWatchEvent>>().Object);
+        await consumer.Consume(new Mock<ConsumeContext<JobWatchEvent<TestModels.FooJob>>>().Object);
 
         //assert
-        subscriberMock.Verify(x => x.WatchJobAsync(It.IsAny<JobWatchEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        subscriberMock.Verify(x => x.WatchJobAsync(It.IsAny<JobWatchEvent<TestModels.FooJob>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

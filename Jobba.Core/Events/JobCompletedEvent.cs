@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class JobCompletedEvent
+public class JobCompletedEvent<TJob> : IJobbaEvent
 {
     public JobCompletedEvent()
     {
@@ -23,4 +23,6 @@ public class JobCompletedEvent
     /// The job's registration id
     /// </summary>
     public Guid JobRegistrationId { get; set; }
+
+    public string SystemMoniker { get; set; }
 }

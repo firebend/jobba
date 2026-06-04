@@ -2,7 +2,7 @@ using System;
 
 namespace Jobba.Core.Events;
 
-public class CancelJobEvent
+public class CancelJobEvent<TJob> : IJobbaEvent
 {
     public CancelJobEvent()
     {
@@ -23,4 +23,6 @@ public class CancelJobEvent
     /// The job's registration id
     /// </summary>
     public Guid JobRegistrationId { get; set; }
+
+    public string SystemMoniker { get; set; }
 }

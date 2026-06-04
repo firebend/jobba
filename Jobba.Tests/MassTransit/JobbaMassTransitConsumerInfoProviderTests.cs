@@ -7,6 +7,7 @@ using FluentAssertions;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.MassTransit.Implementations;
+using Jobba.MassTransit.Implementations.Consumers;
 using Jobba.MassTransit.Interfaces;
 using Jobba.MassTransit.Models;
 using Jobba.Tests.AutoMoqCustomizations;
@@ -27,12 +28,23 @@ public class JobbaMassTransitConsumerInfoProviderTests
 
         fixture.Inject(new JobbaMassTransitConfigurationContext { QueueMode = JobbaMassTransitQueueMode.OneQueue });
 
-        var mocks = Enumerable
-            .Range(1, 3)
-            .Select(_ => fixture.Freeze<Mock<IJobbaMassTransitConsumer>>().Object)
-            .ToList();
+        var openRegistrations = new List<JobbaMassTransitOpenConsumerRegistration>
+        {
+            new() { OpenConsumerType = typeof(OnJobCompleteConsumer<,,>) },
+            new() { OpenConsumerType = typeof(OnJobFaultedConsumer<,,>) },
+            new() { OpenConsumerType = typeof(OnJobProgressConsumer<,,>) }
+        };
 
-        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object> { { typeof(IEnumerable<IJobbaMassTransitConsumer>), mocks } }));
+        var registrations = new List<JobRegistration>
+        {
+            new() { JobName = "Fake Job 1", SystemMoniker = "test", JobType = typeof(TestModels.FooJob), JobParamsType = typeof(TestModels.FooParams), JobStateType = typeof(TestModels.FooState) }
+        };
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(IEnumerable<JobbaMassTransitOpenConsumerRegistration>), openRegistrations },
+            { typeof(IEnumerable<JobRegistration>), registrations }
+        }));
 
         var service = fixture.Create<JobbaMassTransitConsumerInfoProvider>();
 
@@ -53,10 +65,12 @@ public class JobbaMassTransitConsumerInfoProviderTests
 
         fixture.Inject(new JobbaMassTransitConfigurationContext { QueueMode = JobbaMassTransitQueueMode.OnePerJob });
 
-        var consumerMocks = Enumerable
-            .Range(1, 3)
-            .Select(_ => fixture.Freeze<Mock<IJobbaMassTransitConsumer>>().Object)
-            .ToList();
+        var openRegistrations = new List<JobbaMassTransitOpenConsumerRegistration>
+        {
+            new() { OpenConsumerType = typeof(OnJobCompleteConsumer<,,>) },
+            new() { OpenConsumerType = typeof(OnJobFaultedConsumer<,,>) },
+            new() { OpenConsumerType = typeof(OnJobProgressConsumer<,,>) }
+        };
 
         var registrations = Enumerable
             .Range(1, 3)
@@ -65,15 +79,15 @@ public class JobbaMassTransitConsumerInfoProviderTests
                 {
                     JobName = $"Fake Job {index}",
                     SystemMoniker = "test",
-                    JobType = typeof(object),
-                    JobParamsType = typeof(object),
-                    JobStateType = typeof(object)
+                    JobType = typeof(TestModels.FooJob),
+                    JobParamsType = typeof(TestModels.FooParams),
+                    JobStateType = typeof(TestModels.FooState)
                 })
             .ToList();
 
         fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
         {
-            { typeof(IEnumerable<IJobbaMassTransitConsumer>), consumerMocks },
+            { typeof(IEnumerable<JobbaMassTransitOpenConsumerRegistration>), openRegistrations },
             { typeof(IEnumerable<JobRegistration>), registrations }
         }));
 
