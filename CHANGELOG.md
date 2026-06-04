@@ -1,4 +1,11 @@
 Lit Redis Changelog
+<a name="12.0.0"></a>
+## [12.0.0](https://www.github.com/firebend/jobba/releases/tag/v12.0.0) (2026-06-04)
+
+### Breaking Changes
+
+* mass transit topology fix, and guard against cross-system events ([#211](https://www.github.com/firebend/jobba/issues/211)) ([51e3b11](https://www.github.com/firebend/jobba/commit/51e3b11807ea00d458f257634d72f2020f668690))
+
 <a name="11.0.0"></a>
 ## [11.0.0](https://www.github.com/firebend/jobba/releases/tag/v11.0.0) (2026-05-29)
 
