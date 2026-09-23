@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jobba.Core.HostedServices;
@@ -50,13 +51,21 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
         {
             //ignore
         }
+        catch (OperationCanceledException)
+        {
+            //ignore
+        }
+        catch (AggregateException e) when (e.Flatten().InnerExceptions.All(x => x is OperationCanceledException))
+        {
+            //ignore
+        }
         catch (Exception e)
         {
             _logger.LogCritical(e, "Jobba Cron Hosted Service encountered a fatal error");
         }
     }
 
-    private static async Task CenterTimerAsync(CancellationToken stoppingToken)
+    protected virtual async Task CenterTimerAsync(CancellationToken stoppingToken)
     {
         while (DateTimeOffset.UtcNow.Second % 15 != 0)
         {
