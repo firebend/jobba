@@ -1,4 +1,12 @@
 Lit Redis Changelog
+<a name="12.0.1"></a>
+## [12.0.1](https://www.github.com/firebend/jobba/releases/tag/v12.0.1) (2026-09-23)
+
+### Other
+
+* Update AsyncKeyedLock package version to 8.1.2 (#212) ([e89b005](https://www.github.com/firebend/jobba/commit/e89b005741f15ca283b4a168336e673a8376199b))
+* check additional exception types when application is shutting down ([#213](https://www.github.com/firebend/jobba/issues/213)) ([c369673](https://www.github.com/firebend/jobba/commit/c36967315e50fbbbe47f978d9cf11e097d22077b))
+
 <a name="12.0.0"></a>
 ## [12.0.0](https://www.github.com/firebend/jobba/releases/tag/v12.0.0) (2026-06-04)
 
