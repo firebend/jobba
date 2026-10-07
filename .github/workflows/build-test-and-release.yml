@@ -16,6 +16,13 @@ jobs:
           token : ${{ secrets.FIREBEND_GIT_PUSH_PAT}}
           fetch-depth: 0
 
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          # The .NET 9 SDK supplies the net9.0 runtime for tests; global.json pins the SDK that builds.
+          dotnet-version: 9.0.x
+          global-json-file: global.json
+
       - name: Install Versionize
         run: dotnet tool install --global Versionize
 
@@ -32,14 +39,6 @@ jobs:
       - name: No release required
         if: steps.versionize.outcome != 'success'
         run: echo "Skipping publishing. No release required."
-
-      - name: Setup .NET Core
-        if: steps.versionize.outcome == 'success'
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            9.0.x
-            10.0.x
 
       - name: Install dependencies
         if: steps.versionize.outcome == 'success'
@@ -88,7 +87,6 @@ jobs:
       - name: Publish
         if: steps.versionize.outcome == 'success'
         run: dotnet nuget push ./out/pack/*.nupkg --api-key  ${{secrets.FIREBEND_NUGET_KEY}} --skip-duplicate --source https://api.nuget.org/v3/index.json
-
 
       - name: Push version changes
         if: steps.versionize.outcome == 'success'
