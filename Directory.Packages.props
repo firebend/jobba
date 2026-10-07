@@ -57,7 +57,8 @@
   <ItemGroup>
     <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.1" />
     <PackageVersion Include="coverlet.collector" Version="10.1.0" />
-    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
+    <!-- FluentAssertions v8 requires a commercial license; stay on the latest v7. -->
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
     <PackageVersion Include="Flurl.Http" Version="4.0.2" />
     <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
