@@ -4,7 +4,7 @@
     <Version>12.0.1</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>$(FirebendTargetFrameworks)</TargetFrameworks>
     <Bumper>1</Bumper>
   </PropertyGroup>
 
@@ -20,10 +20,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncKeyedLock" Version="8.1.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageReference Include="AsyncKeyedLock" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 

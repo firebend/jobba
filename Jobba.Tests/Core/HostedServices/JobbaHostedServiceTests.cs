@@ -36,7 +36,9 @@ public class JobbaHostedServiceTests
         var hostedService = fixture.Create<JobbaHostedService>();
 
         //act
+        // On .NET 10 BackgroundService.StartAsync no longer runs ExecuteAsync inline, so wait for the work itself.
         await hostedService.StartAsync(default);
+        await hostedService.ExecuteTask;
 
         //assert
         rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -102,7 +104,11 @@ public class JobbaHostedServiceTests
         var hostedService = fixture.Create<JobbaHostedService>();
 
         //act
+        // On .NET 10 BackgroundService.StartAsync no longer runs ExecuteAsync inline, so wait for the work itself.
         await hostedService.StartAsync(default);
+        await hostedService.ExecuteTask;
+
+        //assert
         registrationStore.VerifyAll();
     }
 
@@ -130,8 +136,12 @@ public class JobbaHostedServiceTests
         var hostedService = fixture.Create<JobbaHostedService>();
 
         //act
-        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-            () => hostedService.StartAsync(default));
+        // On .NET 9 StartAsync surfaces the failure; on .NET 10 it surfaces through ExecuteTask.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+        {
+            await hostedService.StartAsync(default);
+            await hostedService.ExecuteTask;
+        });
 
         //assert
         readyGate.Verify(x => x.WaitAsync(It.IsAny<CancellationToken>()), Times.Once);

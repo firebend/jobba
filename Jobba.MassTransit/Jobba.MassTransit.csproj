@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>$(FirebendTargetFrameworks)</TargetFrameworks>
     <Version>12.0.1</Version>
     <LangVersion>latestmajor</LangVersion>
     <Nullable>disable</Nullable>
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.5.3" />
+    <PackageReference Include="MassTransit" />
   </ItemGroup>
 
 </Project>
