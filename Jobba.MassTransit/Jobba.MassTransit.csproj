@@ -13,9 +13,9 @@
     <PackageTags>firebend;Jobba;job;scheduling;durable;background;jobs;masstransit;events</PackageTags>
     <Authors>Firebend</Authors>
     <RepositoryUrl>https://github.com/firebend/Jobba</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/firebend/Jobba/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/firebend/Jobba</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
+    <PackageIcon>nuget-image.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
