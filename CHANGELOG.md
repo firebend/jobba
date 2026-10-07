@@ -1,4 +1,4 @@
-Lit Redis Changelog
+Jobba Changelog
 <a name="12.0.1"></a>
 ## [12.0.1](https://www.github.com/firebend/jobba/releases/tag/v12.0.1) (2026-09-23)
 
