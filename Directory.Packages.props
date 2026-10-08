@@ -40,7 +40,7 @@
   <ItemGroup>
     <PackageVersion Include="AsyncKeyedLock" Version="8.1.2" />
     <PackageVersion Include="Cronos" Version="0.13.0" />
-    <PackageVersion Include="LitRedis.Core" Version="5.0.0" />
+    <PackageVersion Include="LitRedis.Core" Version="6.0.0" />
     <!-- MassTransit v9 requires a commercial license; stay on the latest v8. -->
     <PackageVersion Include="MassTransit" Version="8.5.11" />
     <PackageVersion Include="MassTransit.Newtonsoft" Version="8.5.11" />
