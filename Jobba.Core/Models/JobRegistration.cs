@@ -8,8 +8,10 @@ namespace Jobba.Core.Models;
 /// </summary>
 public class JobRegistration : IJobbaEntity
 {
-    private string _timeZoneId = "UTC";
+    // The TimeZoneId setter clears this cache, so it has to stay an explicit field rather than a field-backed property.
+#pragma warning disable IDE0032
     private TimeZoneInfo _timeZoneInfo;
+#pragma warning restore IDE0032
 
     /// <summary>
     /// The Id
@@ -91,13 +93,13 @@ public class JobRegistration : IJobbaEntity
     /// </summary>
     public string TimeZoneId
     {
-        get => _timeZoneId;
+        get;
         set
         {
-            _timeZoneId = value;
+            field = value;
             _timeZoneInfo = null;
         }
-    }
+    } = "UTC";
 
     public TimeZoneInfo TimeZoneInfo => _timeZoneInfo ??= TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId ?? "UTC");
 

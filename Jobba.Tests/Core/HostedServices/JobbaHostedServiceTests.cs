@@ -4,11 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using FluentAssertions;
 using Jobba.Core.HostedServices;
 using Jobba.Core.Interfaces;
 using Jobba.Core.Interfaces.Repositories;
 using Jobba.Core.Models;
 using Jobba.Tests.AutoMoqCustomizations;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -36,7 +38,9 @@ public class JobbaHostedServiceTests
         var hostedService = fixture.Create<JobbaHostedService>();
 
         //act
+        // On .NET 10 BackgroundService.StartAsync no longer runs ExecuteAsync inline, so wait for the work itself.
         await hostedService.StartAsync(default);
+        await hostedService.ExecuteTask;
 
         //assert
         rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -102,7 +106,11 @@ public class JobbaHostedServiceTests
         var hostedService = fixture.Create<JobbaHostedService>();
 
         //act
+        // On .NET 10 BackgroundService.StartAsync no longer runs ExecuteAsync inline, so wait for the work itself.
         await hostedService.StartAsync(default);
+        await hostedService.ExecuteTask;
+
+        //assert
         registrationStore.VerifyAll();
     }
 
@@ -129,11 +137,34 @@ public class JobbaHostedServiceTests
 
         var hostedService = fixture.Create<JobbaHostedService>();
 
-        //act
-        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-            () => hostedService.StartAsync(default));
+        // BackgroundService comes from Microsoft.Extensions.Hosting.Abstractions, whose version tracks the
+        // runtime here (9.0.x on net9.0, 10.0.x on net10.0). Guard that so the branch below stays honest.
+        var hostingMajor = typeof(BackgroundService).Assembly.GetName().Version.Major;
+        hostingMajor.Should().Be(Environment.Version.Major);
 
-        //assert
+        //act + assert
+        if (Environment.Version.Major < 10)
+        {
+            // Before .NET 10, StartAsync runs ExecuteAsync inline up to its first incomplete await,
+            // so the gate's synchronous failure is thrown from StartAsync and aborts host startup.
+            var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => hostedService.StartAsync(default));
+            thrown.Message.Should().Be("gate failed");
+        }
+        else
+        {
+            // From .NET 10, StartAsync queues all of ExecuteAsync on the thread pool and returns a completed task;
+            // the failure surfaces only through ExecuteTask, which the host observes.
+            var startTask = hostedService.StartAsync(default);
+            startTask.IsCompletedSuccessfully.Should().BeTrue();
+            await startTask;
+
+            hostedService.ExecuteTask.Should().NotBeNull();
+            var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => hostedService.ExecuteTask);
+            thrown.Message.Should().Be("gate failed");
+            hostedService.ExecuteTask.IsFaulted.Should().BeTrue();
+        }
+
         readyGate.Verify(x => x.WaitAsync(It.IsAny<CancellationToken>()), Times.Once);
         rescheduler.Verify(x => x.RestartFaultedJobsAsync(It.IsAny<CancellationToken>()), Times.Never);
     }

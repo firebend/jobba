@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Jobba.Core.Builders;
@@ -95,8 +96,13 @@ public class MassTransitJobEventPublisherTests
                 .FirstOrDefault(x => x is MassTransitJobbaReceiverHostedService);
 
             hostedService.Should().NotBeNull();
-            // ReSharper disable once PossibleNullReferenceException
-            await hostedService.StartAsync(default);
+
+            // harness.Start() already started every hosted service, including this one. From .NET 10 its StartAsync
+            // returns before ExecuteAsync connects the receive endpoints, so publishing straight away races the
+            // endpoint and the message is never consumed. Wait on the service's ready gate instead.
+            using var readyTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await ((IJobbaReadyGate)hostedService).WaitAsync(readyTimeout.Token);
+
             var publisher = serviceProvider.GetService<IJobEventPublisher>();
             publisher.Should().NotBeNull().And.BeOfType<MassTransitJobEventPublisher>();
 

@@ -9,6 +9,7 @@ using Jobba.Core.Interfaces;
 using Jobba.Core.Models;
 using Jobba.Store.EF.DbContexts;
 using Jobba.Store.EF.Implementations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -217,5 +218,78 @@ public class JobbaEfJobRegistrationStoreTests
         //assert
         jobRegistration.Should().NotBeNull();
         jobRegistration!.IsInactive.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task Should_Round_Trip_TimeZoneId()
+    {
+        //arrange
+        var registration = _fixture.JobCronRegistrationBuilder()
+            .With(x => x.TimeZoneId, "America/Chicago")
+            .Create();
+        var store = _fixture.Create<JobbaEfJobRegistrationStore>();
+
+        //act
+        var result = await store.RegisterJobAsync(registration, default);
+        _dbContext.ChangeTracker.Clear();
+        var column = await _dbContext.Database
+            .SqlQuery<string>($"SELECT TimeZoneId AS Value FROM JobRegistrations WHERE JobName = {registration.JobName}")
+            .SingleAsync();
+        var jobRegistration = await store.GetJobRegistrationAsync(result.Id, default);
+
+        //assert
+        column.Should().Be("America/Chicago");
+        jobRegistration.Should().NotBeNull();
+        jobRegistration!.TimeZoneId.Should().Be("America/Chicago");
+        jobRegistration.TimeZoneInfo.Id.Should().Be("America/Chicago");
+    }
+
+    [TestMethod]
+    public async Task Should_Default_TimeZoneId_To_Utc_When_Not_Set()
+    {
+        //arrange
+        var registration = _fixture.JobCronRegistrationBuilder()
+            .Without(x => x.TimeZoneId)
+            .Create();
+        var store = _fixture.Create<JobbaEfJobRegistrationStore>();
+
+        //act
+        var result = await store.RegisterJobAsync(registration, default);
+        _dbContext.ChangeTracker.Clear();
+        var jobRegistration = await store.GetJobRegistrationAsync(result.Id, default);
+
+        //assert
+        registration.TimeZoneId.Should().Be("UTC");
+        jobRegistration.Should().NotBeNull();
+        jobRegistration!.TimeZoneId.Should().Be("UTC");
+        jobRegistration.TimeZoneInfo.Should().Be(TimeZoneInfo.Utc);
+    }
+
+    [TestMethod]
+    public async Task Should_Update_TimeZoneId_And_Reset_TimeZoneInfo_On_Reregister()
+    {
+        //arrange
+        var registration = _fixture.JobCronRegistrationBuilder()
+            .With(x => x.TimeZoneId, "America/Chicago")
+            .Create();
+        var store = _fixture.Create<JobbaEfJobRegistrationStore>();
+        var original = await store.RegisterJobAsync(registration, default);
+        original.TimeZoneInfo.Id.Should().Be("America/Chicago");
+
+        var reRegistration = _fixture.JobCronRegistrationBuilder()
+            .With(x => x.TimeZoneId, "Asia/Tokyo")
+            .Create();
+
+        //act
+        var updated = await store.RegisterJobAsync(reRegistration, default);
+        _dbContext.ChangeTracker.Clear();
+        var jobRegistration = await store.GetJobRegistrationAsync(original.Id, default);
+
+        //assert
+        updated.Should().BeSameAs(original);
+        updated.TimeZoneInfo.Id.Should().Be("Asia/Tokyo");
+        jobRegistration.Should().NotBeNull();
+        jobRegistration!.TimeZoneId.Should().Be("Asia/Tokyo");
+        jobRegistration.TimeZoneInfo.Id.Should().Be("Asia/Tokyo");
     }
 }

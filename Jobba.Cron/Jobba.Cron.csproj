@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>$(FirebendTargetFrameworks)</TargetFrameworks>
     <Version>12.0.1</Version>
     <LangVersion>latestmajor</LangVersion>
   </PropertyGroup>
@@ -12,9 +12,9 @@
     <PackageTags>firebend;Jobba;job;scheduling;durable;background;jobs;cron</PackageTags>
     <Authors>Firebend</Authors>
     <RepositoryUrl>https://github.com/firebend/Jobba</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/firebend/Jobba/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/firebend/Jobba</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/firebend/Jobba/blob/main/nuget-image.png?raw=true</PackageIconUrl>
+    <PackageIcon>nuget-image.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cronos" Version="0.11.1" />
+    <PackageReference Include="Cronos" />
   </ItemGroup>
 
 </Project>

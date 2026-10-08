@@ -18,17 +18,15 @@ public static class Ext
 public class MongoUpdateDefinitionAsserter<T>
 {
     private readonly UpdateDefinition<T> _updateDefinition;
-    private string _json;
-    private BsonDocument _setDoc;
 
-    public string Json => _json ??= _updateDefinition.Render(new RenderArgs<T>(
+    public string Json => field ??= _updateDefinition.Render(new RenderArgs<T>(
                 BsonSerializer.SerializerRegistry.GetSerializer<T>(),
                 BsonSerializer.SerializerRegistry)
         )
         .ToBsonDocument()
         .ToString();
 
-    public BsonDocument SetDoc => _setDoc ??= BsonDocument.Parse(Json)["$set"].AsBsonDocument;
+    public BsonDocument SetDoc => field ??= BsonDocument.Parse(Json)["$set"].AsBsonDocument;
 
     public MongoUpdateDefinitionAsserter(UpdateDefinition<T> updateDefinition)
     {
