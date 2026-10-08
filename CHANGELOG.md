@@ -1,4 +1,15 @@
 Jobba Changelog
+<a name="13.0.0"></a>
+## [13.0.0](https://www.github.com/firebend/jobba/releases/tag/v13.0.0) (2026-10-08)
+
+### ✨ Features
+
+* target net9.0 and net10.0 with configurable frameworks ([#214](https://www.github.com/firebend/jobba/issues/214)) ([6c0c35c](https://www.github.com/firebend/jobba/commit/6c0c35c3e95b3a1c150f8e63633e5e2c0a3dbf41))
+
+### Breaking Changes
+
+* target net9.0 and net10.0 with configurable frameworks ([#214](https://www.github.com/firebend/jobba/issues/214)) ([6c0c35c](https://www.github.com/firebend/jobba/commit/6c0c35c3e95b3a1c150f8e63633e5e2c0a3dbf41))
+
 <a name="12.0.1"></a>
 ## [12.0.1](https://www.github.com/firebend/jobba/releases/tag/v12.0.1) (2026-09-23)
 
