@@ -42,7 +42,7 @@
     <PackageVersion Include="Cronos" Version="0.13.0" />
     <PackageVersion Include="LitRedis.Core" Version="6.0.0" />
     <!-- MassTransit v9 requires a commercial license; stay on the latest v8. -->
-    <PackageVersion Include="MassTransit" Version="8.5.11" />
+    <PackageVersion Include="MassTransit" Version="9.2.3" />
     <PackageVersion Include="MassTransit.Newtonsoft" Version="8.5.11" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.11" />
     <PackageVersion Include="MongoDB.Driver" Version="3.12.0" />
