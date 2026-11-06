@@ -100,6 +100,18 @@ public class JobbaCronHostedService : AbstractJobbaDependentBackgroundService
 
         _logger.LogDebug("Enqueuing jobs between {Context}", context);
 
-        await scheduler.EnqueueJobsAsync(context, stoppingToken);
+        try
+        {
+            await scheduler.EnqueueJobsAsync(context, stoppingToken);
+        }
+        catch (Exception e) when (!IsCancellation(e))
+        {
+            // Keep ticking: an exception escaping here would end the loop and stop cron scheduling until restart.
+            _logger.LogError(e, "Jobba Cron Hosted Service failed to enqueue jobs between {Context}", context);
+        }
     }
+
+    private static bool IsCancellation(Exception e)
+        => e is OperationCanceledException
+           || (e is AggregateException ae && ae.Flatten().InnerExceptions.All(x => x is OperationCanceledException));
 }
