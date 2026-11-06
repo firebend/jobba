@@ -96,13 +96,29 @@ public class CronScheduler : ICronScheduler
             return;
         }
 
-        var tasks = jobs
-            .Select(x => InvokeJobAsync(x.Registration, cancellationToken))
-            .ToArray();
+        var results = await Task.WhenAll(jobs.Select(x => TryInvokeJobAsync(x, cancellationToken)));
 
-        await Task.WhenAll(tasks);
+        // Save the run dates of every job that was queued, even when another job failed. Otherwise a queued
+        // occurrence on a shared window boundary would be queued again on the next tick.
+        var queued = jobs.Where((_, i) => results[i]).ToList();
 
-        await UpdateJobRegistrationStoreWithNextExecutionAsync(jobs, cancellationToken);
+        await UpdateJobRegistrationStoreWithNextExecutionAsync(queued, cancellationToken);
+    }
+
+    private async Task<bool> TryInvokeJobAsync(JobExecutionInfo job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await InvokeJobAsync(job.Registration, cancellationToken);
+            return true;
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            _logger.LogError(e, "Failed to enqueue cron job. {JobName} {JobRegistrationId}",
+                job.Registration.JobName,
+                job.Registration.Id);
+            return false;
+        }
     }
 
     private Task UpdateJobRegistrationStoreWithNextExecutionAsync(IEnumerable<JobExecutionInfo> jobs, CancellationToken cancellationToken)
@@ -143,33 +159,13 @@ public class CronScheduler : ICronScheduler
         return next?.TrimSeconds();
     }
 
+    // The occurrence must be in the window and later than the previous run. Consecutive windows share a
+    // boundary, so an occurrence on it falls in both; the previous-run check keeps it from running twice.
     public static bool ShouldExecute(DateTimeOffset? previous,
         DateTimeOffset? next,
         DateTimeOffset windowMin,
         DateTimeOffset windowMax)
-    {
-        var isInWindow = next >= windowMin && next <= windowMax;
-
-        //********************************************
-        // Author: JMA
-        // Date: 2023-07-20 03:36:12
-        // Comment: Job has not previously executed, we should invoke it
-        //*******************************************
-        if (previous is null)
-        {
-            return isInWindow;
-        }
-
-        //********************************************
-        // Author: JMA
-        // Date: 2023-07-20 03:39:37
-        // Comment: If we are in the window of execution, make sure this occurrence has not already run.
-        // Consecutive windows share a boundary, so an occurrence on it falls in both.
-        //*******************************************
-        var should = previous < next && isInWindow;
-
-        return should;
-    }
+        => next >= windowMin && next <= windowMax && (previous is null || previous < next);
 
     private async Task<List<JobExecutionInfo>> GetCronJobsAsync(CronSchedulerContext context, CancellationToken cancellationToken)
     {

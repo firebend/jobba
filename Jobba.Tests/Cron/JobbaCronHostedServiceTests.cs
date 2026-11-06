@@ -53,9 +53,48 @@ public class JobbaCronHostedServiceTests
         logger.CriticalLogged.Should().BeFalse();
     }
 
+    [TestMethod]
+    public async Task Jobba_Cron_Hosted_Service_Should_Keep_Running_When_A_Tick_Fails()
+    {
+        var fixture = new Fixture();
+        fixture.Customize(new AutoMoqCustomization());
+
+        using var cts = new CancellationTokenSource();
+
+        var scheduler = fixture.Freeze<Mock<ICronScheduler>>();
+        scheduler
+            .Setup(x => x.EnqueueJobsAsync(It.IsAny<CronSchedulerContext>(), It.IsAny<CancellationToken>()))
+            .Callback(() => cts.Cancel())
+            .Returns(Task.FromException(new InvalidOperationException("enqueue failed")));
+
+        var infoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
+        infoProvider
+            .Setup(x => x.GetSystemInfo())
+            .Returns(new JobSystemInfo { SystemMoniker = "test" });
+
+        fixture.Customize(new ServiceProviderCustomization(new Dictionary<Type, object>
+        {
+            { typeof(ICronScheduler), scheduler.Object },
+            { typeof(IJobSystemInfoProvider), infoProvider.Object }
+        }));
+
+        var logger = new RecordingLogger();
+        var service = new TestableJobbaCronHostedService(
+            logger,
+            fixture.Create<IServiceScopeFactory>());
+
+        await service.RunAsync(cts.Token);
+
+        // The failed tick is logged as an error and the loop goes on to wait for the next tick, which is
+        // cancelled. Before, the exception escaped the loop and was logged as a fatal error.
+        logger.ErrorLogged.Should().BeTrue();
+        logger.CriticalLogged.Should().BeFalse();
+    }
+
     private sealed class RecordingLogger : ILogger<JobbaCronHostedService>
     {
         public bool CriticalLogged { get; private set; }
+        public bool ErrorLogged { get; private set; }
 
         public IDisposable BeginScope<TState>(TState state) where TState : notnull
             => NullScope.Instance;
@@ -69,6 +108,7 @@ public class JobbaCronHostedServiceTests
             Func<TState, Exception, string> formatter)
         {
             CriticalLogged |= logLevel == LogLevel.Critical;
+            ErrorLogged |= logLevel == LogLevel.Error;
         }
     }
 

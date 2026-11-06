@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -40,7 +42,6 @@ public class CronSchedulerWindowTests
     }
 
     [TestMethod]
-    [DataRow(15)]
     [DataRow(16)]
     [DataRow(30)]
     [DataRow(59)]
@@ -61,6 +62,17 @@ public class CronSchedulerWindowTests
         await sut.TickAsync(Noon.AddSeconds(5));
 
         sut.EnqueuedCount.Should().Be(1);
+    }
+
+    // The window [12:00:00, 12:00:15] contains 12:00, but 12:00 already ran.
+    [TestMethod]
+    public async Task Should_Not_Enqueue_An_Occurrence_That_Already_Ran()
+    {
+        var sut = new Sut(previous: Noon);
+
+        await sut.TickAsync(Noon.AddSeconds(15));
+
+        sut.EnqueuedCount.Should().Be(0);
     }
 
     // Windows share their boundary: [11:59:45, 12:00:00] and [12:00:00, 12:00:15] both contain 12:00:00.
@@ -117,6 +129,19 @@ public class CronSchedulerWindowTests
             .Should().BeFalse();
     }
 
+    [TestMethod]
+    public async Task Should_Save_The_Run_Dates_Of_Queued_Jobs_When_Another_Job_Fails_To_Enqueue()
+    {
+        var sut = new Sut(previous: Noon.AddMinutes(-1));
+        var failing = sut.AddRegistration(previous: Noon.AddMinutes(-1), failOnEnqueue: true);
+
+        await sut.TickAsync(Noon.AddSeconds(5));
+
+        sut.EnqueuedCount.Should().Be(1);
+        sut.SavedPrevious.Should().Be(Noon);
+        sut.SavedRegistrationIds.Should().NotContain(failing.Id);
+    }
+
     private sealed class Sut
     {
         private readonly CronScheduler _scheduler;
@@ -126,34 +151,29 @@ public class CronSchedulerWindowTests
         public int EnqueuedCount { get; private set; }
         public DateTimeOffset? SavedNext { get; private set; }
         public DateTimeOffset? SavedPrevious { get; private set; }
+        public List<Guid> SavedRegistrationIds { get; } = [];
+        private readonly List<JobRegistration> _registrations = [];
 
         public Sut(DateTimeOffset? previous)
         {
-            Registration = new JobRegistration
-            {
-                Id = Guid.NewGuid(),
-                JobName = "window-test",
-                SystemMoniker = "test",
-                JobType = typeof(CronSchedulerTests.CronSchedulerTestsJob),
-                CronExpression = EveryMinute,
-                PreviousExecutionDate = previous,
-            };
-
-            _jobScheduler
-                .Setup(x => x.ScheduleJobAsync(Registration.Id, It.IsAny<DefaultJobParams>(),
-                    It.IsAny<DefaultJobState>(), It.IsAny<CancellationToken>()))
-                .Callback(() => EnqueuedCount++)
-                .ReturnsAsync((JobInfo<DefaultJobParams, DefaultJobState>)null);
+            Registration = AddRegistration(previous, failOnEnqueue: false);
 
             var store = new Mock<IJobRegistrationStore>();
             store
                 .Setup(x => x.GetJobsWithCronExpressionsAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(() => [Registration]);
+                .ReturnsAsync(() => _registrations.ToList());
             store
-                .Setup(x => x.UpdateNextAndPreviousInvocationDatesAsync(Registration.Id,
+                .Setup(x => x.UpdateNextAndPreviousInvocationDatesAsync(It.IsAny<Guid>(),
                     It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
-                .Callback<Guid, DateTimeOffset?, DateTimeOffset?, CancellationToken>((_, next, prev, _) =>
+                .Callback<Guid, DateTimeOffset?, DateTimeOffset?, CancellationToken>((id, next, prev, _) =>
                 {
+                    SavedRegistrationIds.Add(id);
+
+                    if (id != Registration.Id)
+                    {
+                        return;
+                    }
+
                     SavedNext = next;
                     SavedPrevious = prev;
                 })
@@ -169,6 +189,35 @@ public class CronSchedulerWindowTests
 
             _scheduler = new CronScheduler(_jobScheduler.Object, NullLogger<CronScheduler>.Instance,
                 new CronService(), store.Object, lockService.Object, registry);
+        }
+
+        public JobRegistration AddRegistration(DateTimeOffset? previous, bool failOnEnqueue)
+        {
+            var registration = new JobRegistration
+            {
+                Id = Guid.NewGuid(),
+                JobName = "window-test",
+                SystemMoniker = "test",
+                JobType = typeof(CronSchedulerTests.CronSchedulerTestsJob),
+                CronExpression = EveryMinute,
+                PreviousExecutionDate = previous,
+            };
+
+            var setup = _jobScheduler.Setup(x => x.ScheduleJobAsync(registration.Id, It.IsAny<DefaultJobParams>(),
+                It.IsAny<DefaultJobState>(), It.IsAny<CancellationToken>()));
+
+            if (failOnEnqueue)
+            {
+                setup.ThrowsAsync(new InvalidOperationException("enqueue failed"));
+            }
+            else
+            {
+                setup.Callback(() => EnqueuedCount++)
+                    .ReturnsAsync((JobInfo<DefaultJobParams, DefaultJobState>)null);
+            }
+
+            _registrations.Add(registration);
+            return registration;
         }
 
         // Interval zero: HoldLockAsync has nothing left to wait for.
