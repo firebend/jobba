@@ -1,4 +1,15 @@
 Jobba Changelog
+<a name="13.1.0"></a>
+## [13.1.0](https://www.github.com/firebend/jobba/releases/tag/v13.1.0) (2026-11-06)
+
+### ✨ Features
+
+* enqueue cron occurrences inside off-phase scheduler windows ([#218](https://www.github.com/firebend/jobba/issues/218)) ([504d1a6](https://www.github.com/firebend/jobba/commit/504d1a60315f86c5bae1e7770985a3211a560f4e))
+
+### Other
+
+* publish to nuget.org with trusted publishing ([#219](https://www.github.com/firebend/jobba/issues/219)) ([a7eb777](https://www.github.com/firebend/jobba/commit/a7eb7774d5503ab594a695d00d3b61e36e25de3f))
+
 <a name="13.0.0"></a>
 ## [13.0.0](https://www.github.com/firebend/jobba/releases/tag/v13.0.0) (2026-10-08)
 
