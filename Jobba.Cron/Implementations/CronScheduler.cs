@@ -163,10 +163,10 @@ public class CronScheduler : ICronScheduler
         //********************************************
         // Author: JMA
         // Date: 2023-07-20 03:39:37
-        // Comment: If we are in the window of execution, make sure our previous execution is old enough
-        // this will prevent the hosted service from triggering jobs too frequently
+        // Comment: If we are in the window of execution, make sure this occurrence has not already run.
+        // Consecutive windows share a boundary, so an occurrence on it falls in both.
         //*******************************************
-        var should = previous <= windowMin && isInWindow;
+        var should = previous < next && isInWindow;
 
         return should;
     }
@@ -181,7 +181,9 @@ public class CronScheduler : ICronScheduler
         {
             var cron = registry.CronExpression;
             var previous = registry.PreviousExecutionDate;
-            var currentExecutionDate = GetNextExecutionDate(cron, registry.TimeZoneInfo, context.Max);
+            // The first occurrence at or after the window start. Starting from Max instead only finds an
+            // occurrence when the window ends exactly on it, and ticks are rarely aligned to the minute.
+            var currentExecutionDate = GetNextExecutionDate(cron, registry.TimeZoneInfo, context.Min);
             var shouldExecute = ShouldExecute(previous, currentExecutionDate, context.Min, context.Max);
 
             if (shouldExecute is false)
