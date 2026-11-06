@@ -108,6 +108,7 @@ public class CronSchedulerWindowTests
     [TestMethod]
     [DataRow(null, true)]
     [DataRow(-60, true)]
+    [DataRow(-5, true)]
     [DataRow(0, false)]
     [DataRow(60, false)]
     public void ShouldExecute_Should_Require_The_Occurrence_To_Be_After_The_Previous_Run(int? previousOffsetSeconds,

@@ -60,12 +60,22 @@ public class JobbaCronHostedServiceTests
         fixture.Customize(new AutoMoqCustomization());
 
         using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
 
         var scheduler = fixture.Freeze<Mock<ICronScheduler>>();
+        var invocationCount = 0;
         scheduler
             .Setup(x => x.EnqueueJobsAsync(It.IsAny<CronSchedulerContext>(), It.IsAny<CancellationToken>()))
-            .Callback(() => cts.Cancel())
-            .Returns(Task.FromException(new InvalidOperationException("enqueue failed")));
+            .Returns(() =>
+            {
+                if (Interlocked.Increment(ref invocationCount) == 1)
+                {
+                    return Task.FromException(new InvalidOperationException("enqueue failed"));
+                }
+
+                cts.Cancel();
+                return Task.CompletedTask;
+            });
 
         var infoProvider = fixture.Freeze<Mock<IJobSystemInfoProvider>>();
         infoProvider
@@ -85,8 +95,8 @@ public class JobbaCronHostedServiceTests
 
         await service.RunAsync(cts.Token);
 
-        // The failed tick is logged as an error and the loop goes on to wait for the next tick, which is
-        // cancelled. Before, the exception escaped the loop and was logged as a fatal error.
+        scheduler.Verify(x => x.EnqueueJobsAsync(
+            It.IsAny<CronSchedulerContext>(), It.IsAny<CancellationToken>()), Times.AtLeast(2));
         logger.ErrorLogged.Should().BeTrue();
         logger.CriticalLogged.Should().BeFalse();
     }
